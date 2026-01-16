@@ -74,6 +74,24 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             </Link>
           </Button>
 
+          {/* Mobile Navigation Arrows */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+
           {/* Image Dots Indicator - Bottom Center */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
             {vehicle.images.map((_, index) => (
