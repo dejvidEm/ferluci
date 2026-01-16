@@ -9,17 +9,22 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative w-full h-[70vh] bg-gradient-to-b from-black via-[#2a0f1a] to-[#4a1a2a] flex items-center">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 z-10"></div>
-          <div
-            className="absolute inset-0 z-0 bg-cover bg-center"
-            style={{
-              backgroundImage: "url('/placeholder.svg?height=1080&width=1920')",
-              backgroundPosition: "center 30%",
-            }}
-          ></div>
-        </div>
+      <section className="relative w-full h-screen md:h-[70vh] flex items-center overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        >
+          <source src="/video/main.mp4" type="video/mp4" />
+        </video>
+        
+        {/* Overlay - Lighter on mobile for better video visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-[#2a0f1a]/50 to-[#4a1a2a]/60 md:from-black/60 md:via-[#2a0f1a]/80 md:to-[#4a1a2a]/80 z-10"></div>
+        
+        {/* Content */}
         <div className="container mx-auto px-4 relative z-20">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Find Your Perfect Drive</h1>
@@ -39,7 +44,7 @@ export default function Home() {
       </section>
 
       {/* Quick Search */}
-      <section className="bg-[#1a0a10] py-8">
+      <section className="bg-[#1a0a10] py-8 border-b border-gray-700/50">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-4">
