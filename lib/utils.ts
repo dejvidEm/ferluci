@@ -13,3 +13,7 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount)
 }
+
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat("en-US").format(num)
+}

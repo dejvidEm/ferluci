@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Fuel, Info, MapPin } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatNumber } from "@/lib/utils"
 import type { Vehicle } from "@/lib/types"
 
 interface VehicleCardProps {
@@ -34,7 +34,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-            <span>{vehicle.mileage.toLocaleString()} miles</span>
+            <span>{formatNumber(vehicle.mileage)} miles</span>
           </div>
           <div className="flex items-center">
             <Fuel className="h-4 w-4 mr-1 text-muted-foreground" />
