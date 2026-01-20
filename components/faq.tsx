@@ -9,53 +9,53 @@ import {
 
 const faqData = [
   {
-    question: "What financing options are available?",
+    question: "Aké finančné možnosti sú k dispozícii?",
     answer:
-      "We offer a variety of financing options including traditional auto loans, lease options, and special financing programs. Our finance experts work with multiple lenders to find the best rates and terms that fit your budget. We also offer competitive rates for customers with various credit profiles.",
+      "Ponúkame rôzne finančné možnosti vrátane tradičných úverov na auto, lízingových možností a špeciálnych finančných programov. Naši finanční odborníci spolupracujú s viacerými veriteľmi, aby našli najlepšie úrokové sadzby a podmienky, ktoré zodpovedajú vášmu rozpočtu. Ponúkame aj konkurencieschopné sadzby pre zákazníkov s rôznymi kreditnými profilmi.",
   },
   {
-    question: "Do you offer vehicle warranties?",
+    question: "Ponúkate záruky na vozidlá?",
     answer:
-      "Yes, we offer comprehensive warranty coverage options for both new and pre-owned vehicles. Our warranty plans include extended warranties, powertrain coverage, and bumper-to-bumper protection. We also provide certified pre-owned vehicles that come with manufacturer-backed warranties.",
+      "Áno, ponúkame komplexné záručné krytie pre nové aj ojazdené vozidlá. Naše záručné plány zahŕňajú predĺžené záruky, krytie pohonnej jednotky a kompletnú ochranu. Poskytujeme aj certifikované ojazdené vozidlá, ktoré prichádzajú so zárukami od výrobcu.",
   },
   {
-    question: "Can I trade in my current vehicle?",
+    question: "Môžem vymeniť svoje súčasné vozidlo?",
     answer:
-      "Absolutely! We accept trade-ins and provide fair market value appraisals. Our experts will evaluate your vehicle and offer you a competitive trade-in value that can be applied toward your new purchase. The process is quick and straightforward.",
+      "Určite! Prijímame výmeny a poskytujeme spravodlivé trhové ocenenia. Naši odborníci vyhodnotia vaše vozidlo a ponúknu vám konkurencieschopnú hodnotu výmeny, ktorá môže byť použitá na váš nový nákup. Proces je rýchly a jednoduchý.",
   },
   {
-    question: "What is your return policy?",
+    question: "Aká je vaša politika vrátenia?",
     answer:
-      "We want you to be completely satisfied with your purchase. We offer a satisfaction guarantee period where you can return the vehicle within a specified timeframe if you're not happy. Please contact us for specific terms and conditions based on your purchase.",
+      "Chceme, aby ste boli úplne spokojní so svojím nákupom. Ponúkame záručnú dobu spokojnosti, počas ktorej môžete vrátiť vozidlo v určitom časovom rámci, ak nie ste spokojní. Kontaktujte nás pre konkrétne podmienky a podmienky na základe vášho nákupu.",
   },
   {
-    question: "Do you provide vehicle history reports?",
+    question: "Poskytujete históriu vozidiel?",
     answer:
-      "Yes, we provide comprehensive vehicle history reports for all pre-owned vehicles. These reports include accident history, service records, title information, and more. We believe in full transparency and want you to make an informed decision.",
+      "Áno, poskytujeme komplexné správy o histórii vozidiel pre všetky ojazdené vozidlá. Tieto správy zahŕňajú históriu nehôd, servisné záznamy, informácie o vlastníctve a ďalšie. Veríme v úplnú transparentnosť a chceme, aby ste sa rozhodovali informovane.",
   },
   {
-    question: "What services do you offer after purchase?",
+    question: "Aké služby ponúkate po kúpe?",
     answer:
-      "We offer comprehensive after-sales services including regular maintenance, repairs, parts replacement, and service appointments. Our certified technicians use genuine parts and follow manufacturer specifications. We also provide roadside assistance and vehicle inspection services.",
+      "Ponúkame komplexné popredajné služby vrátane pravidelnej údržby, opráv, výmeny dielov a servisných termínov. Naši certifikovaní technici používajú originálne diely a dodržiavajú špecifikácie výrobcu. Poskytujeme aj asistenciu na ceste a služby kontroly vozidiel.",
   },
   {
-    question: "How do I schedule a test drive?",
+    question: "Ako si objednám skúšobnú jazdu?",
     answer:
-      "You can schedule a test drive by calling us, using our online contact form, or visiting our showroom. We recommend scheduling in advance to ensure the vehicle you're interested in is available. Test drives are available during our business hours.",
+      "Skúšobnú jazdu si môžete objednať zavolaním nám, použitím nášho online kontaktného formulára alebo návštevou nášho autosalónu. Odporúčame objednať si vopred, aby bolo vozidlo, o ktoré máte záujem, k dispozícii. Skúšobné jazdy sú k dispozícii počas našich otváracích hodín.",
   },
   {
-    question: "Do you deliver vehicles?",
+    question: "Doručujete vozidlá?",
     answer:
-      "Yes, we offer vehicle delivery services within a certain radius of our dealership. Delivery options and fees vary based on location. Contact us to discuss delivery arrangements for your area.",
+      "Áno, ponúkame služby doručenia vozidiel v určitom polomere od nášho autosalónu. Možnosti doručenia a poplatky sa líšia podľa polohy. Kontaktujte nás a dohodnite sa na doručení vo vašej oblasti.",
   },
 ]
 
 export default function FAQ() {
   return (
-    <section className="py-16 bg-[#1a0a10]">
+    <section className="py-16 bg-[#121212]">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-100">Frequently Asked Questions</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-gray-100">Často kladené otázky</h2>
           <Accordion type="single" collapsible className="w-full space-y-4">
             {faqData.map((faq, index) => (
               <AccordionItem

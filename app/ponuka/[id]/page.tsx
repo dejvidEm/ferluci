@@ -1,21 +1,47 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, Car, Check, ChevronLeft, ChevronRight, Fuel, Info, MapPin, Share2, Sliders, Gauge } from "lucide-react"
-import { vehicles } from "@/lib/data"
-import { formatCurrency, formatNumber } from "@/lib/utils"
+import { formatCurrency, formatNumber, translateFuelType, translateTransmission } from "@/lib/utils"
 import FAQ from "@/components/faq"
+import { client, vehicleByIdQuery } from "@/lib/sanity"
+import { transformSanityVehicle } from "@/lib/sanity/utils"
+import type { Vehicle } from "@/lib/types"
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const vehicle = vehicles.find((v) => v.id === id)
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
+  const [loading, setLoading] = useState(true)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+
+  useEffect(() => {
+    async function fetchVehicle() {
+      try {
+        const data = await client.fetch(vehicleByIdQuery, { id })
+        if (data) {
+          setVehicle(transformSanityVehicle(data))
+        }
+      } catch (error) {
+        console.error("Error fetching vehicle:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVehicle()
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <p className="text-white">Načítavanie detailov vozidla...</p>
+      </div>
+    )
+  }
 
   if (!vehicle) {
     notFound()
@@ -41,69 +67,74 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="min-h-screen bg-[#1a0a10]">
+    <div className="min-h-screen bg-[#121212]">
       {/* Mobile Layout */}
       <div className="md:hidden">
-        {/* Main Image - Full Width */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden">
-          <Image
-            src={vehicle.images[activeImageIndex] || "/placeholder.svg"}
-            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-            fill
-            className="object-cover"
-            priority
-          />
-          
-          {/* Floating Back Button - Top Left */}
+        {/* Back Link - Above Image */}
+        <div className="px-4 pt-4 pb-2">
           <Link
             href="/ponuka"
-            className="absolute top-4 left-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors"
+            className="inline-flex items-center text-white hover:text-primary transition-colors"
           >
-            <ChevronLeft className="h-5 w-5 text-white" />
+            <ChevronLeft className="h-5 w-5 mr-1" />
+            <span>Späť</span>
           </Link>
+        </div>
 
-          {/* Floating Info Button - Top Right */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
-            asChild
-          >
-            <Link href={`/contact?vehicle=${vehicle.id}`}>
-              <Info className="h-5 w-5" />
-            </Link>
-          </Button>
+        {/* Main Image - With Padding and Rounded Corners */}
+        <div className="px-4">
+          <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl">
+            <Image
+              src={vehicle.images[activeImageIndex] || "/placeholder.svg"}
+              alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+              fill
+              className="object-cover rounded-2xl"
+              priority
+            />
 
-          {/* Mobile Navigation Arrows */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
-            onClick={prevImage}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
-            onClick={nextImage}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
+            {/* Floating Info Button - Top Right */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
+              asChild
+            >
+              <Link href={`/contact?vehicle=${vehicle.id}`}>
+                <Info className="h-5 w-5" />
+              </Link>
+            </Button>
 
-          {/* Image Dots Indicator - Bottom Center */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {vehicle.images.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => selectImage(index)}
-                className={`rounded-full transition-all ${
-                  index === activeImageIndex ? "bg-white w-6 h-2" : "bg-white/50 w-2 h-2"
-                }`}
-                aria-label={`Go to image ${index + 1}`}
-              />
-            ))}
+            {/* Mobile Navigation Arrows */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
+              onClick={prevImage}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
+              onClick={nextImage}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+
+            {/* Image Dots Indicator - Bottom Center */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {vehicle.images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => selectImage(index)}
+                  className={`rounded-full transition-all ${
+                    index === activeImageIndex ? "bg-white w-6 h-2" : "bg-white/50 w-2 h-2"
+                  }`}
+                  aria-label={`Prejsť na obrázok ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -134,22 +165,76 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             <h1 className="text-2xl font-bold text-white flex-1 pr-4">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
-            <Badge className="bg-primary/20 text-primary border-primary/50 px-4 py-2 text-base font-semibold whitespace-nowrap">
-              {formatCurrency(vehicle.price)}
-            </Badge>
+            <div className="flex flex-col items-end">
+              {vehicle.showOldPrice && vehicle.oldPrice && (
+                <Badge className="bg-gray-800/50 text-gray-400 border-gray-700/50 px-3 py-1 text-sm font-normal mb-1 line-through">
+                  {formatCurrency(vehicle.oldPrice)}
+                </Badge>
+              )}
+              <Badge className="bg-primary/20 text-primary border-primary/50 px-4 py-2 text-base font-semibold whitespace-nowrap">
+                {formatCurrency(vehicle.price)}
+              </Badge>
+            </div>
           </div>
 
           {/* Overview Section */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-3">Overview</h3>
-            <p className="text-gray-300 text-sm leading-relaxed mb-6">
+            <h3 className="text-xl font-semibold text-white mb-3">Popis vozidla</h3>
+            <p className="text-gray-300 text-sm leading-relaxed">
               {vehicle.description}
             </p>
           </div>
 
+          {/* Specifications Section */}
+          <div className="mb-6 border-t border-gray-700/50 pt-6">
+            <h3 className="text-xl font-semibold text-white mb-4">Špecifikácie</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Značka</span>
+                <span className="text-white text-sm font-medium">{vehicle.make}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Model</span>
+                <span className="text-white text-sm font-medium">{vehicle.model}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Rok</span>
+                <span className="text-white text-sm font-medium">{vehicle.year}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Výbava</span>
+                <span className="text-white text-sm font-medium">{vehicle.trim}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Nájazd</span>
+                <span className="text-white text-sm font-medium">{formatNumber(vehicle.mileage)} km</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Farba karosérie</span>
+                <span className="text-white text-sm font-medium">{vehicle.exteriorColor}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Farba interiéru</span>
+                <span className="text-white text-sm font-medium">{vehicle.interiorColor}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Typ paliva</span>
+                <span className="text-white text-sm font-medium">{translateFuelType(vehicle.fuelType)}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Prevodovka</span>
+                <span className="text-white text-sm font-medium">{translateTransmission(vehicle.transmission)}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-gray-400 text-sm">Motor</span>
+                <span className="text-white text-sm font-medium">{vehicle.engine}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Features Section */}
           <div className="mb-6 border-t border-gray-700/50 pt-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Key Features</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">Vybavenie</h3>
             <ul className="space-y-3">
               {vehicle.features.map((feature, index) => (
                 <li key={index} className="flex items-start">
@@ -159,57 +244,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               ))}
             </ul>
           </div>
-
-          {/* Specifications Section */}
-          <div className="mb-6 border-t border-gray-700/50 pt-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Specifications</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Make</span>
-                <span className="text-white text-sm font-medium">{vehicle.make}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Model</span>
-                <span className="text-white text-sm font-medium">{vehicle.model}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Year</span>
-                <span className="text-white text-sm font-medium">{vehicle.year}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Trim</span>
-                <span className="text-white text-sm font-medium">{vehicle.trim}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Mileage</span>
-                <span className="text-white text-sm font-medium">{formatNumber(vehicle.mileage)} miles</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Exterior Color</span>
-                <span className="text-white text-sm font-medium">{vehicle.exteriorColor}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Interior Color</span>
-                <span className="text-white text-sm font-medium">{vehicle.interiorColor}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Fuel Type</span>
-                <span className="text-white text-sm font-medium">{vehicle.fuelType}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Transmission</span>
-                <span className="text-white text-sm font-medium">{vehicle.transmission}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-gray-400 text-sm">Engine</span>
-                <span className="text-white text-sm font-medium">{vehicle.engine}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Contact Button - Full Width, Bottom */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#1a0a10] border-t border-gray-800/50 z-30">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#121212] border-t border-gray-800/50 z-30">
           <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-12 text-base font-semibold" asChild>
             <Link href={`/contact?vehicle=${vehicle.id}`}>Kontaktovať</Link>
           </Button>
@@ -224,7 +262,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
             <Link href="/ponuka" className="flex items-center text-primary hover:underline">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back to Ponuka
+              <ChevronLeft className="h-4 w-4 mr-1" /> Späť na ponuku
             </Link>
           </div>
 
@@ -278,20 +316,49 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 ))}
               </div>
 
-              {/* Tabs Section */}
-              <Tabs defaultValue="overview" className="mt-8">
-                <TabsList className="grid grid-cols-3 w-full">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="features">Features</TabsTrigger>
-                  <TabsTrigger value="specs">Specifications</TabsTrigger>
-                </TabsList>
-                <TabsContent value="overview" className="pt-4">
-                  <h3 className="text-xl font-semibold mb-3 text-gray-100">Vehicle Description</h3>
-                  <p className="text-gray-300 mb-6 leading-relaxed">{vehicle.description}</p>
-                </TabsContent>
-                <TabsContent value="features" className="pt-4">
-                  <h3 className="text-xl font-semibold mb-3 text-gray-100">Key Features</h3>
-                  <ul className="grid md:grid-cols-2 gap-2">
+              {/* Content Sections */}
+              <div className="mt-8 space-y-8">
+                {/* Overview Section */}
+                <section>
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">Popis vozidla</h3>
+                  <p className="text-gray-300 leading-relaxed">{vehicle.description}</p>
+                </section>
+
+                {/* Specifications Section */}
+                <section>
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">Špecifikácie</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="font-medium text-gray-200">Značka:</div>
+                      <div className="text-gray-300">{vehicle.make}</div>
+                      <div className="font-medium text-gray-200">Model:</div>
+                      <div className="text-gray-300">{vehicle.model}</div>
+                      <div className="font-medium text-gray-200">Rok:</div>
+                      <div className="text-gray-300">{vehicle.year}</div>
+                      <div className="font-medium text-gray-200">Výbava:</div>
+                      <div className="text-gray-300">{vehicle.trim}</div>
+                      <div className="font-medium text-gray-200">Nájazd:</div>
+                      <div className="text-gray-300">{formatNumber(vehicle.mileage)} km</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="font-medium text-gray-200">Farba karosérie:</div>
+                      <div className="text-gray-300">{vehicle.exteriorColor}</div>
+                      <div className="font-medium text-gray-200">Farba interiéru:</div>
+                      <div className="text-gray-300">{vehicle.interiorColor}</div>
+                      <div className="font-medium text-gray-200">Typ paliva:</div>
+                      <div className="text-gray-300">{translateFuelType(vehicle.fuelType)}</div>
+                      <div className="font-medium text-gray-200">Prevodovka:</div>
+                      <div className="text-gray-300">{translateTransmission(vehicle.transmission)}</div>
+                      <div className="font-medium text-gray-200">Motor:</div>
+                      <div className="text-gray-300">{vehicle.engine}</div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Features Section */}
+                <section>
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">Vybavenie</h3>
+                  <ul className="grid md:grid-cols-2 gap-3">
                     {vehicle.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
                         <Check className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
@@ -299,37 +366,8 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                       </li>
                     ))}
                   </ul>
-                </TabsContent>
-                <TabsContent value="specs" className="pt-4">
-                  <h3 className="text-xl font-semibold mb-3 text-gray-100">Vehicle Specifications</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="font-medium text-gray-200">Make:</div>
-                      <div className="text-gray-300">{vehicle.make}</div>
-                      <div className="font-medium text-gray-200">Model:</div>
-                      <div className="text-gray-300">{vehicle.model}</div>
-                      <div className="font-medium text-gray-200">Year:</div>
-                      <div className="text-gray-300">{vehicle.year}</div>
-                      <div className="font-medium text-gray-200">Trim:</div>
-                      <div className="text-gray-300">{vehicle.trim}</div>
-                      <div className="font-medium text-gray-200">Mileage:</div>
-                      <div className="text-gray-300">{formatNumber(vehicle.mileage)} miles</div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="font-medium text-gray-200">Exterior Color:</div>
-                      <div className="text-gray-300">{vehicle.exteriorColor}</div>
-                      <div className="font-medium text-gray-200">Interior Color:</div>
-                      <div className="text-gray-300">{vehicle.interiorColor}</div>
-                      <div className="font-medium text-gray-200">Fuel Type:</div>
-                      <div className="text-gray-300">{vehicle.fuelType}</div>
-                      <div className="font-medium text-gray-200">Transmission:</div>
-                      <div className="text-gray-300">{vehicle.transmission}</div>
-                      <div className="font-medium text-gray-200">Engine:</div>
-                      <div className="text-gray-300">{vehicle.engine}</div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                </section>
+              </div>
             </div>
 
             {/* Right Column - Details and Actions */}
@@ -346,26 +384,33 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
                 <div className="mb-2">
                   <Badge variant="outline" className="text-sm font-normal">
-                    Stock# {vehicle.stockNumber}
+                    Skladové číslo: {vehicle.stockNumber}
                   </Badge>
                 </div>
 
                 <p className="text-lg text-muted-foreground mb-6">{vehicle.trim}</p>
 
-                <div className="text-3xl font-bold text-primary mb-6">{formatCurrency(vehicle.price)}</div>
+                <div className="mb-6">
+                  {vehicle.showOldPrice && vehicle.oldPrice && (
+                    <div className="text-xl text-gray-400 line-through mb-1">
+                      {formatCurrency(vehicle.oldPrice)}
+                    </div>
+                  )}
+                  <div className="text-3xl font-bold text-primary">{formatCurrency(vehicle.price)}</div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="flex items-center">
                     <MapPin className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span className="text-gray-300">{formatNumber(vehicle.mileage)} miles</span>
+                    <span className="text-gray-300">{formatNumber(vehicle.mileage)} km</span>
                   </div>
                   <div className="flex items-center">
                     <Fuel className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span className="text-gray-300">{vehicle.fuelType}</span>
+                    <span className="text-gray-300">{translateFuelType(vehicle.fuelType)}</span>
                   </div>
                   <div className="flex items-center">
                     <Sliders className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span className="text-gray-300">{vehicle.transmission}</span>
+                    <span className="text-gray-300">{translateTransmission(vehicle.transmission)}</span>
                   </div>
                   <div className="flex items-center">
                     <Car className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
@@ -375,17 +420,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
                 <div className="space-y-3">
                   <Button className="w-full" size="lg" asChild>
-                    <Link href={`/contact?vehicle=${vehicle.id}`}>Contact Dealer</Link>
-                  </Button>
-                  <Button variant="outline" className="w-full" size="lg" asChild>
-                    <Link href={`/contact?vehicle=${vehicle.id}&action=test-drive`}>
-                      <Calendar className="h-5 w-5 mr-2" />
-                      Schedule Test Drive
-                    </Link>
+                    <Link href={`/contact?vehicle=${vehicle.id}`}>Kontaktovať predajcu</Link>
                   </Button>
                   <Button variant="secondary" className="w-full" size="lg">
                     <Info className="h-5 w-5 mr-2" />
-                    Request More Info
+                    Požiadať o viac informácií
                   </Button>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,32 +8,59 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { vehicles } from "@/lib/data"
 import VehicleCard from "@/components/vehicle-card"
 import { formatCurrency } from "@/lib/utils"
 import type { Vehicle } from "@/lib/types"
 import { Filter, Search } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import FAQ from "@/components/faq"
+import { client, vehiclesQuery } from "@/lib/sanity"
+import { transformSanityVehicle } from "@/lib/sanity/utils"
 
 export default function InventoryPage() {
-  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>(vehicles)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [priceRange, setPriceRange] = useState([0, 100000])
   const [yearRange, setYearRange] = useState([2010, 2024])
   const [selectedMakes, setSelectedMakes] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchVehicles() {
+      try {
+        const data = await client.fetch(vehiclesQuery)
+        const transformedVehicles = data.map(transformSanityVehicle)
+        setVehicles(transformedVehicles)
+        setFilteredVehicles(transformedVehicles)
+        
+        // Set initial filter ranges based on fetched data
+        if (transformedVehicles.length > 0) {
+          const prices = transformedVehicles.map((v) => v.price)
+          const years = transformedVehicles.map((v) => v.year)
+          setPriceRange([Math.min(...prices), Math.max(...prices)])
+          setYearRange([Math.min(...years), Math.max(...years)])
+        }
+      } catch (error) {
+        console.error("Error fetching vehicles:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVehicles()
+  }, [])
 
   // Get unique makes
   const makes = Array.from(new Set(vehicles.map((v) => v.make))).sort()
 
   // Get min and max prices
-  const minPrice = Math.min(...vehicles.map((v) => v.price))
-  const maxPrice = Math.max(...vehicles.map((v) => v.price))
+  const minPrice = vehicles.length > 0 ? Math.min(...vehicles.map((v) => v.price)) : 0
+  const maxPrice = vehicles.length > 0 ? Math.max(...vehicles.map((v) => v.price)) : 100000
 
   // Get min and max years
-  const minYear = Math.min(...vehicles.map((v) => v.year))
-  const maxYear = Math.max(...vehicles.map((v) => v.year))
+  const minYear = vehicles.length > 0 ? Math.min(...vehicles.map((v) => v.year)) : 2010
+  const maxYear = vehicles.length > 0 ? Math.max(...vehicles.map((v) => v.year)) : 2024
 
   const handleSearch = () => {
     let results = vehicles
@@ -72,8 +99,19 @@ export default function InventoryPage() {
     setFilteredVehicles(vehicles)
   }
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Načítavanie vozidiel...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-[#121212] min-h-screen">
       <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
 
       <div className="flex flex-col lg:flex-row gap-6 mb-8">
@@ -83,18 +121,18 @@ export default function InventoryPage() {
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search by make, model, year..."
+                placeholder="Hľadať podľa značky, modelu, roku..."
                 className="pl-10 h-12"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Button className="h-12" onClick={handleSearch}>
-              Search
+              Hľadať
             </Button>
             <Button variant="outline" className="h-12 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-5 w-5 mr-2" />
-              Filters
+              Filtre
             </Button>
           </div>
         </div>
@@ -106,25 +144,27 @@ export default function InventoryPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Filters</h2>
+                <h2 className="text-xl font-semibold">Filtre</h2>
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
-                  Reset
+                  Resetovať
                 </Button>
               </div>
 
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="price">
-                  <AccordionTrigger>Price Range</AccordionTrigger>
-                  <AccordionContent>
+                  <AccordionTrigger>Rozsah cien</AccordionTrigger>
+                  <AccordionContent className="pt-4 px-1">
                     <div className="space-y-4">
-                      <Slider
-                        defaultValue={[minPrice, maxPrice]}
-                        min={minPrice}
-                        max={maxPrice}
-                        step={1000}
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                      />
+                      <div className="px-3">
+                        <Slider
+                          defaultValue={[minPrice, maxPrice]}
+                          min={minPrice}
+                          max={maxPrice}
+                          step={1000}
+                          value={priceRange}
+                          onValueChange={setPriceRange}
+                        />
+                      </div>
                       <div className="flex items-center justify-between">
                         <span>{formatCurrency(priceRange[0])}</span>
                         <span>{formatCurrency(priceRange[1])}</span>
@@ -134,17 +174,19 @@ export default function InventoryPage() {
                 </AccordionItem>
 
                 <AccordionItem value="year">
-                  <AccordionTrigger>Year Range</AccordionTrigger>
-                  <AccordionContent>
+                  <AccordionTrigger>Rozsah rokov</AccordionTrigger>
+                  <AccordionContent className="pt-4 px-1">
                     <div className="space-y-4">
-                      <Slider
-                        defaultValue={[minYear, maxYear]}
-                        min={minYear}
-                        max={maxYear}
-                        step={1}
-                        value={yearRange}
-                        onValueChange={setYearRange}
-                      />
+                      <div className="px-3">
+                        <Slider
+                          defaultValue={[minYear, maxYear]}
+                          min={minYear}
+                          max={maxYear}
+                          step={1}
+                          value={yearRange}
+                          onValueChange={setYearRange}
+                        />
+                      </div>
                       <div className="flex items-center justify-between">
                         <span>{yearRange[0]}</span>
                         <span>{yearRange[1]}</span>
@@ -154,7 +196,7 @@ export default function InventoryPage() {
                 </AccordionItem>
 
                 <AccordionItem value="make">
-                  <AccordionTrigger>Make</AccordionTrigger>
+                  <AccordionTrigger>Značka</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-2">
                       {makes.map((make) => (
@@ -179,7 +221,7 @@ export default function InventoryPage() {
               </Accordion>
 
               <Button className="w-full mt-6" onClick={handleSearch}>
-                Apply Filters
+                Použiť filtre
               </Button>
             </CardContent>
           </Card>
@@ -188,16 +230,16 @@ export default function InventoryPage() {
         {/* Results */}
         <div className="w-full lg:w-3/4">
           <div className="flex justify-between items-center mb-4">
-            <p className="text-muted-foreground">Showing {filteredVehicles.length} vehicles</p>
+            <p className="text-muted-foreground">Zobrazených {filteredVehicles.length} vozidiel</p>
             <Select defaultValue="newest">
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder="Zoradiť podľa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="newest">Najnovšie prvé</SelectItem>
+                <SelectItem value="oldest">Najstaršie prvé</SelectItem>
+                <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
+                <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -210,9 +252,9 @@ export default function InventoryPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">No vehicles found</h3>
-              <p className="text-muted-foreground mb-4">Try adjusting your search criteria or filters</p>
-              <Button onClick={resetFilters}>Reset Filters</Button>
+              <h3 className="text-xl font-semibold mb-2">Nenašli sa žiadne vozidlá</h3>
+              <p className="text-muted-foreground mb-4">Skúste upraviť kritériá vyhľadávania alebo filtre</p>
+              <Button onClick={resetFilters}>Resetovať filtre</Button>
             </div>
           )}
         </div>

@@ -5,6 +5,8 @@ export interface Vehicle {
   year: number
   trim: string
   price: number
+  showOldPrice?: boolean
+  oldPrice?: number
   mileage: number
   exteriorColor: string
   interiorColor: string

@@ -17,45 +17,45 @@ export default function ServicesPage() {
   const services = [
     {
       icon: Car,
-      title: "New Vehicle Sales",
+      title: "Predaj nových vozidiel",
       description:
-        "Browse our extensive selection of brand new vehicles from top manufacturers. We offer the latest models with cutting-edge technology and features.",
-      features: ["Latest models", "Factory warranty", "Custom ordering", "Trade-in options"],
+        "Prehľadajte našu rozsiahlu ponuku úplne nových vozidiel od popredných výrobcov. Ponúkame najnovšie modely s najmodernejšou technológiou a funkciami.",
+      features: ["Najnovšie modely", "Továrenská záruka", "Individuálne objednávky", "Možnosti výmeny"],
     },
     {
       icon: Car,
-      title: "Pre-Owned Vehicle Sales",
+      title: "Predaj ojazdených vozidiel",
       description:
-        "Quality pre-owned vehicles that have been thoroughly inspected and certified. Get premium quality at a great value.",
-      features: ["Certified pre-owned", "Vehicle history reports", "Quality inspection", "Warranty options"],
+        "Kvalitné ojazdené vozidlá, ktoré boli dôkladne skontrolované a certifikované. Získajte prémiovú kvalitu za skvelú cenu.",
+      features: ["Certifikované ojazdené", "História vozidiel", "Kvalitná kontrola", "Záručné možnosti"],
     },
     {
       icon: DollarSign,
-      title: "Financing Solutions",
+      title: "Finančné riešenia",
       description:
-        "Flexible financing options tailored to your budget. Our finance experts will help you find the best rates and terms.",
-      features: ["Competitive rates", "Flexible terms", "Quick approval", "Multiple lenders"],
+        "Flexibilné finančné možnosti prispôsobené vášmu rozpočtu. Naši finanční odborníci vám pomôžu nájsť najlepšie úrokové sadzby a podmienky.",
+      features: ["Konkurencieschopné sadzby", "Flexibilné podmienky", "Rýchle schválenie", "Viacerí veritelia"],
     },
     {
       icon: Wrench,
-      title: "Service & Maintenance",
+      title: "Servis a údržba",
       description:
-        "Expert service and maintenance for all makes and models. Keep your vehicle running smoothly with our certified technicians.",
-      features: ["Expert technicians", "Genuine parts", "Quick service", "Warranty coverage"],
+        "Odborný servis a údržba pre všetky značky a modely. Udržujte svoje vozidlo v perfektnom stave s našimi certifikovanými technikmi.",
+      features: ["Odborní technici", "Originálne diely", "Rýchly servis", "Záručné krytie"],
     },
     {
       icon: FileText,
-      title: "Trade-In Appraisal",
+      title: "Ocenenie vozidla",
       description:
-        "Get a fair market value for your current vehicle. Our experts will provide a quick and accurate appraisal.",
-      features: ["Fair valuation", "Quick process", "Multiple options", "Instant offers"],
+        "Získajte spravodlivú trhovú hodnotu pre vaše súčasné vozidlo. Naši odborníci poskytnú rýchle a presné ocenenie.",
+      features: ["Spravodlivé ocenenie", "Rýchly proces", "Viaceré možnosti", "Okamžité ponuky"],
     },
     {
       icon: Shield,
-      title: "Extended Warranty",
+      title: "Predĺžená záruka",
       description:
-        "Protect your investment with comprehensive extended warranty options. Drive with confidence knowing you're covered.",
-      features: ["Comprehensive coverage", "Flexible plans", "Nationwide service", "Peace of mind"],
+        "Chráňte svoju investíciu komplexnými možnosťami predĺženej záruky. Jazdite s istotou, vediac, že ste chránení.",
+      features: ["Komplexné krytie", "Flexibilné plány", "Celonárodný servis", "Pokojná myseľ"],
     },
   ]
 
@@ -65,17 +65,16 @@ export default function ServicesPage() {
       <section className="relative w-full py-24 bg-gradient-to-b from-black via-[#2a0f1a] to-[#4a1a2a]">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Our Services</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Naše služby</h1>
             <p className="text-xl text-gray-200 mb-8">
-              Comprehensive automotive solutions to meet all your vehicle needs, from purchase to maintenance and
-              beyond.
+              Komplexné automobilové riešenia na uspokojenie všetkých vašich potrieb týkajúcich sa vozidiel, od nákupu až po údržbu a ďalšie.
             </p>
           </div>
         </div>
       </section>
 
       {/* Services Grid */}
-      <section className="py-16 bg-[#1a0a10]">
+      <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((service, index) => {
@@ -100,7 +99,7 @@ export default function ServicesPage() {
                   </ul>
                   <Button variant="outline" className="w-full" asChild>
                     <Link href="/contact">
-                      Learn More <ArrowRight className="ml-2 h-4 w-4" />
+                      Zistiť viac <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                 </div>
@@ -111,36 +110,36 @@ export default function ServicesPage() {
       </section>
 
       {/* Why Choose Our Services */}
-      <section className="py-16 bg-[#1a0a10]">
+      <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12 text-gray-100">Why Choose Our Services?</h2>
+            <h2 className="text-3xl font-bold text-center mb-12 text-gray-100">Prečo si vybrať naše služby?</h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Clock className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-100">Quick & Efficient</h3>
+                <h3 className="text-xl font-semibold mb-2 text-gray-100">Rýchle a efektívne</h3>
                 <p className="text-gray-300">
-                  We value your time and work efficiently to get you on the road as quickly as possible.
+                  Vážime si váš čas a pracujeme efektívne, aby sme vás dostali na cestu čo najrýchlejšie.
                 </p>
               </div>
               <div className="text-center">
                 <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-100">Best Value</h3>
+                <h3 className="text-xl font-semibold mb-2 text-gray-100">Najlepšia hodnota</h3>
                 <p className="text-gray-300">
-                  Competitive pricing and flexible options ensure you get the best value for your investment.
+                  Konkurencieschopné ceny a flexibilné možnosti zabezpečujú, že získate najlepšiu hodnotu za vašu investíciu.
                 </p>
               </div>
               <div className="text-center">
                 <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-100">Trusted Service</h3>
+                <h3 className="text-xl font-semibold mb-2 text-gray-100">Dôveryhodná služba</h3>
                 <p className="text-gray-300">
-                  Years of experience and thousands of satisfied customers speak to our commitment to excellence.
+                  Ročné skúsenosti a tisíce spokojných zákazníkov svedčia o našej oddanosti vynikajúcej kvalite.
                 </p>
               </div>
             </div>
@@ -151,16 +150,16 @@ export default function ServicesPage() {
       {/* CTA */}
       <section className="py-16 bg-primary text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-bold mb-6">Ste pripravení začať?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Contact us today to learn more about our services or schedule an appointment.
+            Kontaktujte nás ešte dnes, aby ste sa dozvedeli viac o našich službách alebo si objednali termín.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/contact">Contact Us</Link>
+              <Link href="/contact">Kontaktovať nás</Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
-              <Link href="/ponuka">Browse Ponuka</Link>
+              <Link href="/ponuka">Prehľadať ponuku</Link>
             </Button>
           </div>
         </div>

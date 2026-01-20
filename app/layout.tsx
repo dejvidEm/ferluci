@@ -8,8 +8,8 @@ import Footer from "@/components/footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Ferlucicars - Find Your Perfect Drive",
-  description: "Browse our extensive collection of premium vehicles and drive away with confidence.",
+  title: "Ferlucicars - Nájdite svoje ideálne vozidlo",
+  description: "Prehľadajte našu rozsiahlu ponuku prémiových vozidiel a odíďte s istotou.",
     generator: 'v0.app'
 }
 
@@ -19,10 +19,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
+    <html lang="sk" className="dark">
+      <body className={`${inter.className} bg-[#121212]`}>
         <Header />
-        <main>{children}</main>
+        <main className="bg-[#121212]">{children}</main>
         <Footer />
       </body>
     </html>

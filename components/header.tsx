@@ -1,29 +1,37 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Phone, X } from "lucide-react"
 import { useState } from "react"
 
 const navigation = [
-  { name: "Home", href: "/" },
+  { name: "Domov", href: "/" },
   { name: "Ponuka", href: "/ponuka" },
-  { name: "Services", href: "/services" },
-  { name: "About Us", href: "/about" },
-  { name: "Contact", href: "/contact" },
+  { name: "Služby", href: "/services" },
+  { name: "O nás", href: "/about" },
+  { name: "Kontakt", href: "/contact" },
 ]
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <header className="bg-[#1a0a10]/80 backdrop-blur-xl sticky top-0 z-50 border-b-0">
+    <header className="bg-[#121212]/80 backdrop-blur-xl sticky top-0 z-50 border-b-0">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary">Ferlucicars</span>
+              <Image
+                src="/logo.png"
+                alt="Ferlucicars"
+                width={200}
+                height={60}
+                className="h-14 w-auto brightness-0 invert"
+                priority
+              />
             </Link>
           </div>
 
@@ -41,7 +49,7 @@ export default function Header() {
               <span className="font-medium">1-800-555-CARS</span>
             </div>
             <Button asChild>
-              <Link href="/contact">Schedule Test Drive</Link>
+              <Link href="/contact">Kontaktovať</Link>
             </Button>
           </div>
 
@@ -53,10 +61,16 @@ export default function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] border-0 rounded-tl-2xl rounded-bl-2xl [&>button]:hidden">
                 <div className="flex items-center justify-between">
                   <Link href="/" className="flex items-center" onClick={() => setIsOpen(false)}>
-                    <span className="text-xl font-bold text-primary">Ferlucicars</span>
+                    <Image
+                      src="/logo.png"
+                      alt="Ferlucicars"
+                      width={160}
+                      height={48}
+                      className="h-12 w-auto brightness-0 invert"
+                    />
                   </Link>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                     <X className="h-6 w-6" />
@@ -81,7 +95,7 @@ export default function Header() {
                     </div>
                     <Button className="w-full" asChild>
                       <Link href="/contact" onClick={() => setIsOpen(false)}>
-                        Schedule Test Drive
+                        Kontaktovať
                       </Link>
                     </Button>
                   </div>

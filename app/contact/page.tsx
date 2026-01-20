@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,32 +12,60 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon, Check, MapPin, Phone } from "lucide-react"
-import { vehicles } from "@/lib/data"
+import { CalendarIcon, Check, MapPin, Phone, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import FAQ from "@/components/faq"
+import { client, vehicleByIdQuery } from "@/lib/sanity"
+import { transformSanityVehicle } from "@/lib/sanity/utils"
+import type { Vehicle } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
 
 export default function ContactPage() {
   const searchParams = useSearchParams()
   const vehicleId = searchParams.get("vehicle")
   const action = searchParams.get("action")
 
-  const vehicle = vehicleId ? vehicles.find((v) => v.id === vehicleId) : null
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
+  const [loadingVehicle, setLoadingVehicle] = useState(false)
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
-  const [message, setMessage] = useState(
-    vehicle ? `I'm interested in the ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}.` : "",
-  )
+  const [message, setMessage] = useState("")
   const [contactMethod, setContactMethod] = useState("email")
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [submitted, setSubmitted] = useState(false)
 
+  useEffect(() => {
+    async function fetchVehicle() {
+      if (vehicleId) {
+        setLoadingVehicle(true)
+        try {
+          const data = await client.fetch(vehicleByIdQuery, { id: vehicleId })
+          if (data) {
+            const transformedVehicle = transformSanityVehicle(data)
+            setVehicle(transformedVehicle)
+            setMessage(`Zaujíma ma ${transformedVehicle.year} ${transformedVehicle.make} ${transformedVehicle.model} ${transformedVehicle.trim}.`)
+          }
+        } catch (error) {
+          console.error("Error fetching vehicle:", error)
+        } finally {
+          setLoadingVehicle(false)
+        }
+      }
+    }
+    fetchVehicle()
+  }, [vehicleId])
+
+  const removeVehicle = () => {
+    setVehicle(null)
+    setMessage("")
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // In a real app, you would send this data to your backend
-    console.log({
+    const formData = {
       name,
       email,
       phone,
@@ -45,7 +73,23 @@ export default function ContactPage() {
       contactMethod,
       date,
       vehicleId,
-    })
+      vehicle: vehicle
+        ? {
+            id: vehicle.id,
+            year: vehicle.year,
+            make: vehicle.make,
+            model: vehicle.model,
+            trim: vehicle.trim,
+            price: vehicle.price,
+            fullName: `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}`,
+          }
+        : null,
+    }
+
+    console.log(formData)
+
+    // In a real app, you would send formData to your backend/email service
+    // Example: await fetch('/api/contact', { method: 'POST', body: JSON.stringify(formData) })
 
     // Show success message
     setSubmitted(true)
@@ -58,24 +102,24 @@ export default function ContactPage() {
           <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Check className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-green-800 mb-2">Thank You!</h2>
+          <h2 className="text-2xl font-bold text-green-800 mb-2">Ďakujeme!</h2>
           <p className="text-green-700 mb-6">
-            Your message has been sent successfully. One of our representatives will contact you shortly.
+            Vaša správa bola úspešne odoslaná. Jeden z našich zástupcov vás čoskoro kontaktuje.
           </p>
-          <Button onClick={() => setSubmitted(false)}>Send Another Message</Button>
+          <Button onClick={() => setSubmitted(false)}>Odoslať ďalšiu správu</Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-[#121212] min-h-screen">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Contact Us</h1>
+        <h1 className="text-3xl font-bold mb-2">Kontaktujte nás</h1>
         <p className="text-muted-foreground mb-8">
           {action === "test-drive"
-            ? "Schedule a test drive or get in touch with our sales team."
-            : "Have questions? We're here to help! Fill out the form below and we'll get back to you as soon as possible."}
+            ? "Objednajte si skúšobnú jazdu alebo sa spojte s naším predajným tímom."
+            : "Máte otázky? Sme tu, aby sme vám pomohli! Vyplňte formulár nižšie a čoskoro sa vám ozveme."}
         </p>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -83,18 +127,28 @@ export default function ContactPage() {
             <div className="bg-[#2a0f1a]/50 backdrop-blur-sm rounded-2xl p-6 border-0">
               <h2 className="text-xl font-semibold mb-6">
                 {action === "test-drive"
-                  ? "Schedule a Test Drive"
+                  ? "Objednať skúšobnú jazdu"
                   : vehicle
-                    ? "Request Information"
-                    : "Send Us a Message"}
+                    ? "Požiadať o informácie"
+                    : "Odoslať správu"}
               </h2>
 
               {vehicle && (
-                <div className="mb-6 p-4 bg-muted/50 backdrop-blur-sm rounded-xl">
-                  <h3 className="font-medium mb-2">Selected Vehicle:</h3>
-                  <p>
-                    {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim}
-                  </p>
+                <div className="mb-6">
+                  <Label className="mb-2 block">Vybrané vozidlo:</Label>
+                  <Badge variant="outline" className="text-base px-4 py-2 h-auto flex items-center gap-2 w-fit">
+                    <span>
+                      {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={removeVehicle}
+                      className="ml-2 hover:bg-muted rounded-full p-0.5 transition-colors"
+                      aria-label="Odstrániť vozidlo"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </Badge>
                 </div>
               )}
 
@@ -102,17 +156,17 @@ export default function ContactPage() {
                 <div className="grid gap-4 mb-6">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">Celé meno</Label>
                       <Input
                         id="name"
-                        placeholder="John Smith"
+                        placeholder="Ján Novák"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email">Emailová adresa</Label>
                       <Input
                         id="email"
                         type="email"
@@ -125,10 +179,10 @@ export default function ContactPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">Telefónne číslo</Label>
                     <Input
                       id="phone"
-                      placeholder="(123) 456-7890"
+                      placeholder="+421 912 345 678"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                     />
@@ -136,7 +190,7 @@ export default function ContactPage() {
 
                   {action === "test-drive" && (
                     <div className="space-y-2">
-                      <Label>Preferred Test Drive Date</Label>
+                      <Label>Preferovaný dátum skúšobnej jazdy</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -147,7 +201,7 @@ export default function ContactPage() {
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP") : "Select a date"}
+                            {date ? format(date, "PPP") : "Vyberte dátum"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -166,10 +220,10 @@ export default function ContactPage() {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="message">Message</Label>
+                    <Label htmlFor="message">Správa</Label>
                     <Textarea
                       id="message"
-                      placeholder="How can we help you?"
+                      placeholder="Ako vám môžeme pomôcť?"
                       rows={5}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
@@ -177,7 +231,7 @@ export default function ContactPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Preferred Contact Method</Label>
+                    <Label>Preferovaný spôsob kontaktu</Label>
                     <RadioGroup
                       defaultValue="email"
                       value={contactMethod}
@@ -190,30 +244,30 @@ export default function ContactPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="phone" id="contact-phone" />
-                        <Label htmlFor="contact-phone">Phone</Label>
+                        <Label htmlFor="contact-phone">Telefón</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="text" id="contact-text" />
-                        <Label htmlFor="contact-text">Text Message</Label>
+                        <Label htmlFor="contact-text">SMS</Label>
                       </div>
                     </RadioGroup>
                   </div>
                 </div>
 
                 <Button type="submit" size="lg">
-                  {action === "test-drive" ? "Schedule Test Drive" : "Send Message"}
+                  {action === "test-drive" ? "Objednať skúšobnú jazdu" : "Odoslať správu"}
                 </Button>
               </form>
             </div>
           </div>
 
           <div>
-            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 sticky top-24 border-0">
-              <h2 className="text-xl font-semibold mb-6">Contact Information</h2>
+            <div className="bg-[#121212]/50 backdrop-blur-sm rounded-2xl p-6 sticky top-24 border-0 border-gray-800">
+              <h2 className="text-xl font-semibold mb-6">Kontaktné informácie</h2>
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-medium mb-2">Dealership Address</h3>
+                  <h3 className="font-medium mb-2">Adresa autosalónu</h3>
                   <div className="flex items-start">
                     <MapPin className="h-5 w-5 text-primary mr-2 mt-0.5" />
                     <address className="not-italic">
@@ -225,34 +279,34 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <h3 className="font-medium mb-2">Phone Numbers</h3>
+                  <h3 className="font-medium mb-2">Telefónne čísla</h3>
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <Phone className="h-5 w-5 text-primary mr-2" />
-                      <span>Sales: 1-800-555-CARS</span>
+                      <span>Predaj: 1-800-555-CARS</span>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-5 w-5 text-primary mr-2" />
-                      <span>Service: 1-800-555-SERV</span>
+                      <span>Servis: 1-800-555-SERV</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-medium mb-2">Business Hours</h3>
+                  <h3 className="font-medium mb-2">Otváracie hodiny</h3>
                   <table className="w-full text-sm">
                     <tbody>
                       <tr>
-                        <td className="py-1">Monday - Friday:</td>
-                        <td className="py-1 text-right">9:00 AM - 8:00 PM</td>
+                        <td className="py-1">Pondelok - Piatok:</td>
+                        <td className="py-1 text-right">9:00 - 20:00</td>
                       </tr>
                       <tr>
-                        <td className="py-1">Saturday:</td>
-                        <td className="py-1 text-right">9:00 AM - 6:00 PM</td>
+                        <td className="py-1">Sobota:</td>
+                        <td className="py-1 text-right">9:00 - 18:00</td>
                       </tr>
                       <tr>
-                        <td className="py-1">Sunday:</td>
-                        <td className="py-1 text-right">Closed</td>
+                        <td className="py-1">Nedeľa:</td>
+                        <td className="py-1 text-right">Zatvorené</td>
                       </tr>
                     </tbody>
                   </table>

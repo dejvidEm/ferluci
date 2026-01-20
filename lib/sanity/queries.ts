@@ -1,0 +1,98 @@
+import { groq } from 'next-sanity'
+
+export const vehiclesQuery = groq`*[_type == "vehicle"] | order(year desc, _createdAt desc) {
+  _id,
+  make,
+  model,
+  year,
+  trim,
+  price,
+  showOldPrice,
+  oldPrice,
+  mileage,
+  exteriorColor,
+  interiorColor,
+  fuelType,
+  transmission,
+  engine,
+  vin,
+  stockNumber,
+  description,
+  features,
+  images,
+  featured,
+  "slug": slug.current
+}`
+
+export const vehicleBySlugQuery = groq`*[_type == "vehicle" && slug.current == $slug][0] {
+  _id,
+  make,
+  model,
+  year,
+  trim,
+  price,
+  showOldPrice,
+  oldPrice,
+  mileage,
+  exteriorColor,
+  interiorColor,
+  fuelType,
+  transmission,
+  engine,
+  vin,
+  stockNumber,
+  description,
+  features,
+  images,
+  featured,
+  "slug": slug.current
+}`
+
+export const vehicleByIdQuery = groq`*[_type == "vehicle" && _id == $id][0] {
+  _id,
+  make,
+  model,
+  year,
+  trim,
+  price,
+  showOldPrice,
+  oldPrice,
+  mileage,
+  exteriorColor,
+  interiorColor,
+  fuelType,
+  transmission,
+  engine,
+  vin,
+  stockNumber,
+  description,
+  features,
+  images,
+  featured,
+  "slug": slug.current
+}`
+
+export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == true] | order(year desc, _createdAt desc) [0...6] {
+  _id,
+  make,
+  model,
+  year,
+  trim,
+  price,
+  showOldPrice,
+  oldPrice,
+  mileage,
+  exteriorColor,
+  interiorColor,
+  fuelType,
+  transmission,
+  engine,
+  vin,
+  stockNumber,
+  description,
+  features,
+  images,
+  featured,
+  "slug": slug.current
+}`
+
