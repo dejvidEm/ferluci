@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Car, Award, Users, Shield, TrendingUp, Heart } from "lucide-react"
 import FAQ from "@/components/faq"
@@ -7,8 +8,19 @@ export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative w-full py-24 bg-gradient-to-b from-black via-[#2a0f1a] to-[#4a1a2a]">
-        <div className="container mx-auto px-4">
+      <section className="relative w-full py-24 overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/about.jpeg"
+          alt="About Background"
+          fill
+          className="object-cover z-0"
+          priority
+        />
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80 z-10"></div>
+        {/* Content */}
+        <div className="container mx-auto px-4 relative z-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">O Ferlucicars</h1>
             <p className="text-xl text-gray-200 mb-8">
@@ -135,14 +147,25 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Ste pripravení nájsť svoje ideálne auto?</h2>
+      <section className="relative py-16 text-white overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/banner.jpg"
+          alt="CTA Background"
+          fill
+          className="object-cover z-0"
+          priority
+        />
+        {/* Black Overlay */}
+        <div className="absolute inset-0 bg-black/80 z-10"></div>
+        {/* Content */}
+        <div className="container mx-auto px-4 text-center relative z-20">
+          <h2 className="text-3xl font-bold mb-6">Ste pripravení nájsť svoje vysnívané auto?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Navštívte naše autosalóny alebo prehľadajte našu online ponuku a objavte svoje ďalšie vozidlo.
+            Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
               <Link href="/ponuka">Prehľadať ponuku</Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>

@@ -53,3 +53,7 @@ const imageUrl = urlFor(sanityImage).width(800).height(600).url()
 The vehicle schema is defined in `/ferlucicars/schemaTypes/vehicle.ts`. Make sure to deploy it to Sanity Studio.
 
 
+
+
+
+

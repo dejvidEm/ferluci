@@ -1,16 +1,19 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Car, ChevronRight, Search } from "lucide-react"
+import { Car, ChevronRight } from "lucide-react"
 import FeaturedVehicles from "@/components/featured-vehicles"
-import { Input } from "@/components/ui/input"
 import FAQ from "@/components/faq"
+import Testimonials from "@/components/testimonials"
+import HomeSearch from "@/components/home-search"
+import { AuroraText } from "@/components/ui/aurora-text"
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative w-full h-screen flex flex-col overflow-hidden">
-        {/* Video Background */}
+      <section className="relative w-full md:pt-48 md:pb-48 flex overflow-hidden">
+        {/* Video Background - full width */}
         <video
           autoPlay
           loop
@@ -20,52 +23,39 @@ export default function Home() {
         >
           <source src="/video/main.mp4" type="video/mp4" />
         </video>
-        
-        {/* Overlay - Lighter on mobile for better video visibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-[#2a0f1a]/50 to-[#4a1a2a]/60 md:from-black/60 md:via-[#2a0f1a]/80 md:to-[#4a1a2a]/80 z-10"></div>
-        
-        {/* Content - Centered Text */}
-        <div className="container mx-auto px-4 relative z-20 flex-1 flex items-center justify-center">
-          <div className="max-w-3xl text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Nájdite svoje ideálne vozidlo</h1>
-            <p className="text-xl text-gray-200">
-              Prehľadajte našu rozsiahlu ponuku prémiových vozidiel a odíďte s istotou.
-            </p>
-          </div>
-        </div>
 
-        {/* Buttons - Bottom (moved higher from bottom edge) */}
-        <div className="container mx-auto px-4 relative z-20 pb-16 md:pb-20">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#2a0f1a]/30 to-[#4a1a2a]/30 md:from-black/30 md:via-[#2a0f1a]/50 md:to-[#121212] z-10"></div>
+
+        {/* Content - Left side */}
+        <div className="relative z-20 flex-1 flex flex-col justify-center px-4 md:pl-16 md:pr-4 py-16">
+          {/* Subheading */}
+          <p className="text-base md:text-lg text-gray-300 mb-4">Vitajte v Ferlucicars</p>
+
+          {/* Heading */}
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 md:mb-12">
+            Nájdite svoje <AuroraText speed={2000} colors={["#ef4444", "#dc2626", "#b91c1c", "#991b1b"]}>ideálne</AuroraText> vozidlo
+          </h1>
+
+          <p className="text-base md:text-lg text-gray-300 max-w-3xl mb-8">Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality. Pomôžeme vám vybrať auto, ktoré presne zodpovedá vašim potrebám a očakávaniam.</p>
+
+          {/* CTA Buttons */}
+          <div className="mb-8 md:mb-24 flex gap-4">
             <Button size="lg" asChild>
               <Link href="/ponuka">Prehľadať ponuku</Link>
             </Button>
-            <Button size="lg" variant="outline" className="bg-white/10 text-white hover:bg-white/20" asChild>
-              <Link href="/contact">Kontaktovať nás</Link>
+            <Button size="lg" variant="outline" className="bg-transparent border border-white/30 text-white hover:bg-white/10" asChild>
+              <Link href="/contact">Kontaktovať</Link>
             </Button>
           </div>
+
+          {/* 4 Square Cards with Glassmorphism */}
+
         </div>
       </section>
 
       {/* Quick Search */}
-      <section className="bg-[#121212] py-8 border-b border-gray-700/50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-grow">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
-                <Input 
-                  placeholder="Hľadať podľa značky, modelu alebo kľúčových slov..." 
-                  className="pl-10 h-12 bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/50" 
-                />
-              </div>
-              <Button size="lg" className="h-12">
-                <Search className="mr-2 h-5 w-5" /> Hľadať
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeSearch />
 
       {/* Featured Vehicles */}
       <section className="py-16 bg-[#121212]">
@@ -83,7 +73,7 @@ export default function Home() {
       </section>
 
       {/* Services */}
-      <section className="py-16 bg-[#121212] relative overflow-hidden">
+      <section className="pt-28 pb-48 bg-[#121212] relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <h2 className="text-3xl font-bold text-center mb-12">Naše služby</h2>
           <div className="grid md:grid-cols-3 gap-8 relative">
@@ -91,7 +81,7 @@ export default function Home() {
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-red-600/30 via-red-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute top-10 right-1/4 w-80 h-80 bg-gradient-to-br from-red-700/25 via-red-600/15 to-transparent rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-gradient-to-tl from-red-600/30 via-red-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-            
+
             <div className="relative bg-white/5 backdrop-blur-md p-8 rounded-2xl text-center border border-white/10 shadow-lg">
               <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Car className="h-8 w-8 text-primary" />
@@ -138,39 +128,28 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 bg-[#121212]">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Čo hovoria naši zákazníci</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-[#2a0f1a]/50 backdrop-blur-sm p-8 rounded-2xl shadow-sm border-0">
-                <div className="flex items-center text-amber-400 mb-4">
-                  {[...Array(5)].map((_, j) => (
-                    <svg key={j} className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-300 mb-4">
-                  "Tím v tomto autosalóne urobil kúpu auta tak jednoduchou. Boli znalí, priateľskí a vôbec neboli
-                  dotieraví. Milujem svoje nové auto!"
-                </p>
-                <div className="font-semibold text-gray-100">Sarah T.</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Testimonials />
 
       {/* CTA */}
-      <section className="py-16 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
+      <section className="relative py-16 text-white overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/banner.jpg"
+          alt="CTA Background"
+          fill
+          className="object-cover z-0"
+          priority
+        />
+        {/* Black Overlay */}
+        <div className="absolute inset-0 bg-black/80 z-10"></div>
+        {/* Content */}
+        <div className="container mx-auto px-4 text-center relative z-20">
           <h2 className="text-3xl font-bold mb-6">Ste pripravení nájsť svoje vysnívané auto?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
               <Link href="/ponuka">Prehľadať ponuku</Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>

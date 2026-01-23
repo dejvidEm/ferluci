@@ -1,31 +1,44 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import VehicleCard from "@/components/vehicle-card"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, translateFuelType, translateTransmission } from "@/lib/utils"
 import type { Vehicle } from "@/lib/types"
-import { Filter, Search } from "lucide-react"
+import { Filter, Search, Grid3x3, List } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import FAQ from "@/components/faq"
 import { client, vehiclesQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 
 export default function InventoryPage() {
+  const searchParams = useSearchParams()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [priceRange, setPriceRange] = useState([0, 100000])
   const [yearRange, setYearRange] = useState([2010, 2024])
   const [selectedMakes, setSelectedMakes] = useState<string[]>([])
+  const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([])
+  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid")
+  const [sortBy, setSortBy] = useState<string>("newest")
+
+  // Read search query from URL parameter
+  useEffect(() => {
+    const searchParam = searchParams.get("search")
+    if (searchParam) {
+      setSearchQuery(decodeURIComponent(searchParam))
+    }
+  }, [searchParams])
 
   useEffect(() => {
     async function fetchVehicles() {
@@ -37,8 +50,8 @@ export default function InventoryPage() {
         
         // Set initial filter ranges based on fetched data
         if (transformedVehicles.length > 0) {
-          const prices = transformedVehicles.map((v) => v.price)
-          const years = transformedVehicles.map((v) => v.year)
+          const prices = transformedVehicles.map((v: Vehicle) => v.price)
+          const years = transformedVehicles.map((v: Vehicle) => v.year)
           setPriceRange([Math.min(...prices), Math.max(...prices)])
           setYearRange([Math.min(...years), Math.max(...years)])
         }
@@ -54,6 +67,12 @@ export default function InventoryPage() {
   // Get unique makes
   const makes = Array.from(new Set(vehicles.map((v) => v.make))).sort()
 
+  // Get unique fuel types
+  const fuelTypes = Array.from(new Set(vehicles.map((v) => v.fuelType).filter(Boolean))).sort()
+
+  // Get unique transmission types
+  const transmissions = Array.from(new Set(vehicles.map((v) => v.transmission).filter(Boolean))).sort()
+
   // Get min and max prices
   const minPrice = vehicles.length > 0 ? Math.min(...vehicles.map((v) => v.price)) : 0
   const maxPrice = vehicles.length > 0 ? Math.max(...vehicles.map((v) => v.price)) : 100000
@@ -62,7 +81,7 @@ export default function InventoryPage() {
   const minYear = vehicles.length > 0 ? Math.min(...vehicles.map((v) => v.year)) : 2010
   const maxYear = vehicles.length > 0 ? Math.max(...vehicles.map((v) => v.year)) : 2024
 
-  const handleSearch = () => {
+  const applyFiltersAndSort = useCallback(() => {
     let results = vehicles
 
     // Filter by search query
@@ -88,7 +107,37 @@ export default function InventoryPage() {
       results = results.filter((vehicle) => selectedMakes.includes(vehicle.make))
     }
 
-    setFilteredVehicles(results)
+    // Filter by fuel types
+    if (selectedFuelTypes.length > 0) {
+      results = results.filter((vehicle) => vehicle.fuelType && selectedFuelTypes.includes(vehicle.fuelType))
+    }
+
+    // Filter by transmission types
+    if (selectedTransmissions.length > 0) {
+      results = results.filter((vehicle) => vehicle.transmission && selectedTransmissions.includes(vehicle.transmission))
+    }
+
+    // Apply sorting
+    const sortedResults = [...results].sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return b.year - a.year
+        case "oldest":
+          return a.year - b.year
+        case "price-low":
+          return a.price - b.price
+        case "price-high":
+          return b.price - a.price
+        default:
+          return 0
+      }
+    })
+
+    setFilteredVehicles(sortedResults)
+  }, [vehicles, searchQuery, priceRange, yearRange, selectedMakes, selectedFuelTypes, selectedTransmissions, sortBy])
+
+  const handleSearch = () => {
+    applyFiltersAndSort()
   }
 
   const resetFilters = () => {
@@ -96,8 +145,18 @@ export default function InventoryPage() {
     setPriceRange([minPrice, maxPrice])
     setYearRange([minYear, maxYear])
     setSelectedMakes([])
-    setFilteredVehicles(vehicles)
+    setSelectedFuelTypes([])
+    setSelectedTransmissions([])
+    setSortBy("newest")
+    applyFiltersAndSort()
   }
+
+  // Apply filters automatically when filter values change
+  useEffect(() => {
+    if (!loading && vehicles.length > 0) {
+      applyFiltersAndSort()
+    }
+  }, [applyFiltersAndSort, loading, vehicles.length])
 
   if (loading) {
     return (
@@ -119,16 +178,16 @@ export default function InventoryPage() {
         <div className="w-full lg:w-2/3">
           <div className="flex gap-2">
             <div className="relative flex-grow">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
               <Input
                 placeholder="Hľadať podľa značky, modelu, roku..."
-                className="pl-10 h-12"
+                className="pl-10 h-12 bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Button className="h-12" onClick={handleSearch}>
-              Hľadať
+              <Search className="mr-2 h-5 w-5" /> Hľadať
             </Button>
             <Button variant="outline" className="h-12 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-5 w-5 mr-2" />
@@ -141,9 +200,9 @@ export default function InventoryPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filters - Collapsible on mobile */}
         <div className={`w-full lg:w-1/4 ${showFilters ? "block" : "hidden lg:block"}`}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
+          <div className="bg-[#121212] border border-white/20 rounded-lg">
+            <div className="px-6 pb-6 pt-0">
+              <div className="flex items-center justify-between mb-4 pt-6">
                 <h2 className="text-xl font-semibold">Filtre</h2>
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
                   Resetovať
@@ -156,14 +215,14 @@ export default function InventoryPage() {
                   <AccordionContent className="pt-4 px-1">
                     <div className="space-y-4">
                       <div className="px-3">
-                        <Slider
-                          defaultValue={[minPrice, maxPrice]}
-                          min={minPrice}
-                          max={maxPrice}
-                          step={1000}
-                          value={priceRange}
-                          onValueChange={setPriceRange}
-                        />
+                      <Slider
+                        defaultValue={[minPrice, maxPrice]}
+                        min={minPrice}
+                        max={maxPrice}
+                        step={1000}
+                        value={priceRange}
+                        onValueChange={setPriceRange}
+                      />
                       </div>
                       <div className="flex items-center justify-between">
                         <span>{formatCurrency(priceRange[0])}</span>
@@ -178,14 +237,14 @@ export default function InventoryPage() {
                   <AccordionContent className="pt-4 px-1">
                     <div className="space-y-4">
                       <div className="px-3">
-                        <Slider
-                          defaultValue={[minYear, maxYear]}
-                          min={minYear}
-                          max={maxYear}
-                          step={1}
-                          value={yearRange}
-                          onValueChange={setYearRange}
-                        />
+                      <Slider
+                        defaultValue={[minYear, maxYear]}
+                        min={minYear}
+                        max={maxYear}
+                        step={1}
+                        value={yearRange}
+                        onValueChange={setYearRange}
+                      />
                       </div>
                       <div className="flex items-center justify-between">
                         <span>{yearRange[0]}</span>
@@ -218,38 +277,111 @@ export default function InventoryPage() {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
 
-              <Button className="w-full mt-6" onClick={handleSearch}>
-                Použiť filtre
-              </Button>
-            </CardContent>
-          </Card>
+                <AccordionItem value="fuelType">
+                  <AccordionTrigger>Typ paliva</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      {fuelTypes.map((fuelType) => (
+                        <div key={fuelType} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`fuel-${fuelType}`}
+                            checked={selectedFuelTypes.includes(fuelType)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedFuelTypes([...selectedFuelTypes, fuelType])
+                              } else {
+                                setSelectedFuelTypes(selectedFuelTypes.filter((f) => f !== fuelType))
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`fuel-${fuelType}`}>{translateFuelType(fuelType)}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="transmission">
+                  <AccordionTrigger>Prevodovka</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      {transmissions.map((transmission) => (
+                        <div key={transmission} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`transmission-${transmission}`}
+                            checked={selectedTransmissions.includes(transmission)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedTransmissions([...selectedTransmissions, transmission])
+                              } else {
+                                setSelectedTransmissions(selectedTransmissions.filter((t) => t !== transmission))
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`transmission-${transmission}`}>{translateTransmission(transmission)}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
         </div>
 
         {/* Results */}
         <div className="w-full lg:w-3/4">
           <div className="flex justify-between items-center mb-4">
             <p className="text-muted-foreground">Zobrazených {filteredVehicles.length} vozidiel</p>
-            <Select defaultValue="newest">
+            <div className="flex items-center gap-4">
+              {/* Display Mode Toggle - Desktop Only */}
+              <div className="hidden md:flex items-center gap-2 border rounded-lg p-1">
+                <Button
+                  variant={displayMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setDisplayMode("grid")}
+                  className="h-8"
+                >
+                  <Grid3x3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={displayMode === "list" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setDisplayMode("list")}
+                  className="h-8"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Zoradiť podľa" />
+                  <SelectValue placeholder="Zoradiť podľa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">Najnovšie prvé</SelectItem>
-                <SelectItem value="oldest">Najstaršie prvé</SelectItem>
-                <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
-                <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
+                  <SelectItem value="newest">Najnovšie prvé</SelectItem>
+                  <SelectItem value="oldest">Najstaršie prvé</SelectItem>
+                  <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
+                  <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
               </SelectContent>
             </Select>
+            </div>
           </div>
 
           {filteredVehicles.length > 0 ? (
+            displayMode === "grid" ? (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredVehicles.map((vehicle) => (
                 <VehicleCard key={vehicle.id} vehicle={vehicle} />
               ))}
             </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredVehicles.map((vehicle) => (
+                  <VehicleCard key={vehicle.id} vehicle={vehicle} displayMode="list" />
+                ))}
+              </div>
+            )
           ) : (
             <div className="text-center py-12">
               <h3 className="text-xl font-semibold mb-2">Nenašli sa žiadne vozidlá</h3>

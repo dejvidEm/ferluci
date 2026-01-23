@@ -4,10 +4,13 @@ import { Facebook, Instagram, Twitter, Youtube } from "lucide-react"
 export default function Footer() {
   return (
     <footer className="bg-[#121212] text-gray-200">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 pt-20 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">Ferlucicars</h3>
+            <h3 className="text-white text-lg font-bold mb-4 relative pb-2">
+              Ferlucicars
+              <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
+            </h3>
             <p className="mb-4">
               Váš dôveryhodný partner pri hľadaní ideálneho vozidla, ktoré zodpovedá vášmu životnému štýlu a potrebám.
             </p>
@@ -32,7 +35,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">Rýchle odkazy</h3>
+            <h3 className="text-white text-lg font-bold mb-4 relative  pb-2">
+              Rýchle odkazy
+              <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="hover:text-white">
@@ -63,7 +69,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">Služby</h3>
+            <h3 className="text-white text-lg font-bold mb-4 relative  pb-2">
+              Služby
+              <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="#" className="hover:text-white">
@@ -94,11 +103,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">Kontakt</h3>
+            <h3 className="text-white text-lg font-bold mb-4 relative pb-2">
+              Kontakt
+              <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
+            </h3>
             <address className="not-italic">
-              <p>123 Auto Drive</p>
-              <p>Cartown, CT 12345</p>
-              <p className="mt-3">Telefón: 1-800-555-CARS</p>
+              <p>Kopčianska 41</p>
+              <p>851 01 Petržalka</p>
+              <p className="mt-3">Telefón: 0905 326 292</p>
               <p>Email: info@ferlucicars.com</p>
             </address>
             <p className="mt-3">

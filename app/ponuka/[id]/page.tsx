@@ -92,48 +92,48 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               priority
             />
 
-            {/* Floating Info Button - Top Right */}
-            <Button
-              variant="ghost"
-              size="icon"
+          {/* Floating Info Button - Top Right */}
+          <Button
+            variant="ghost"
+            size="icon"
               className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
-              asChild
-            >
-              <Link href={`/contact?vehicle=${vehicle.id}`}>
-                <Info className="h-5 w-5" />
-              </Link>
-            </Button>
+            asChild
+          >
+            <Link href={`/contact?vehicle=${vehicle.id}`}>
+              <Info className="h-5 w-5" />
+            </Link>
+          </Button>
 
-            {/* Mobile Navigation Arrows */}
-            <Button
-              variant="ghost"
-              size="icon"
+          {/* Mobile Navigation Arrows */}
+          <Button
+            variant="ghost"
+            size="icon"
               className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
-              onClick={prevImage}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
-              onClick={nextImage}
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
 
-            {/* Image Dots Indicator - Bottom Center */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-              {vehicle.images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => selectImage(index)}
-                  className={`rounded-full transition-all ${
-                    index === activeImageIndex ? "bg-white w-6 h-2" : "bg-white/50 w-2 h-2"
-                  }`}
+          {/* Image Dots Indicator - Bottom Center */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {vehicle.images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => selectImage(index)}
+                className={`rounded-full transition-all ${
+                  index === activeImageIndex ? "bg-white w-6 h-2" : "bg-white/50 w-2 h-2"
+                }`}
                   aria-label={`Prejsť na obrázok ${index + 1}`}
-                />
-              ))}
+              />
+            ))}
             </div>
           </div>
         </div>
@@ -171,9 +171,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   {formatCurrency(vehicle.oldPrice)}
                 </Badge>
               )}
-              <Badge className="bg-primary/20 text-primary border-primary/50 px-4 py-2 text-base font-semibold whitespace-nowrap">
-                {formatCurrency(vehicle.price)}
-              </Badge>
+            <Badge className="bg-primary/20 text-primary border-primary/50 px-4 py-2 text-base font-semibold whitespace-nowrap">
+              {formatCurrency(vehicle.price)}
+            </Badge>
             </div>
           </div>
 

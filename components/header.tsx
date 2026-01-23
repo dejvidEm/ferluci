@@ -19,9 +19,9 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <header className="bg-[#121212]/80 backdrop-blur-xl sticky top-0 z-50 border-b-0">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+    <header className="bg-[#121212]/80 backdrop-blur-xl h-24 sticky top-0 z-50 border-b-0">
+      <div className="container mx-auto px-4 h-full">
+        <div className="flex h-full items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <Image
@@ -46,7 +46,7 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center">
               <Phone className="h-5 w-5 text-primary mr-2" />
-              <span className="font-medium">1-800-555-CARS</span>
+              <span className="font-medium">0905 326 292</span>
             </div>
             <Button asChild>
               <Link href="/contact">Kontaktovať</Link>
@@ -91,7 +91,7 @@ export default function Header() {
                   <div className="pt-4">
                     <div className="flex items-center mb-4">
                       <Phone className="h-5 w-5 text-primary mr-2" />
-                      <span className="font-medium">1-800-555-CARS</span>
+                      <span className="font-medium">0905 326 292</span>
                     </div>
                     <Button className="w-full" asChild>
                       <Link href="/contact" onClick={() => setIsOpen(false)}>
