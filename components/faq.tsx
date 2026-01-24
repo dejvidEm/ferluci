@@ -9,44 +9,59 @@ import {
 
 const faqData = [
   {
-    question: "Aké finančné možnosti sú k dispozícii?",
+    question: "Sú kilometre na vozidlách garantované?",
     answer:
-      "Ponúkame rôzne finančné možnosti vrátane tradičných úverov na auto, lízingových možností a špeciálnych finančných programov. Naši finanční odborníci spolupracujú s viacerými veriteľmi, aby našli najlepšie úrokové sadzby a podmienky, ktoré zodpovedajú vášmu rozpočtu. Ponúkame aj konkurencieschopné sadzby pre zákazníkov s rôznymi kreditnými profilmi.",
+      "Áno. Pri všetkých našich vozidlách garantujeme skutočný nájazd kilometrov.",
   },
   {
-    question: "Ponúkate záruky na vozidlá?",
+    question: "Je možné vozidlo preveriť v autorizovanom servise?",
     answer:
-      "Áno, ponúkame komplexné záručné krytie pre nové aj ojazdené vozidlá. Naše záručné plány zahŕňajú predĺžené záruky, krytie pohonnej jednotky a kompletnú ochranu. Poskytujeme aj certifikované ojazdené vozidlá, ktoré prichádzajú so zárukami od výrobcu.",
+      "Samozrejme. Nemáme žiadny problém s kontrolou vozidla nezávislým technikom ani v autorizovanom servise. Zakladáme si na transparentnosti.",
   },
   {
-    question: "Môžem vymeniť svoje súčasné vozidlo?",
+    question: "Poskytujete záruku na vozidlá?",
     answer:
-      "Určite! Prijímame výmeny a poskytujeme spravodlivé trhové ocenenia. Naši odborníci vyhodnotia vaše vozidlo a ponúknu vám konkurencieschopnú hodnotu výmeny, ktorá môže byť použitá na váš nový nákup. Proces je rýchly a jednoduchý.",
+      "Áno, ponúkame možnosť záruky až na 36 mesiacov. Pre viac informácií o podmienkach nás neváhajte kontaktovať telefonicky.",
   },
   {
-    question: "Aká je vaša politika vrátenia?",
+    question: "Aké možnosti financovania ponúkate?",
     answer:
-      "Chceme, aby ste boli úplne spokojní so svojím nákupom. Ponúkame záručnú dobu spokojnosti, počas ktorej môžete vrátiť vozidlo v určitom časovom rámci, ak nie ste spokojní. Kontaktujte nás pre konkrétne podmienky a podmienky na základe vášho nákupu.",
+      "Zabezpečíme autoúver aj leasing prostredníctvom všetkých dostupných finančných spoločností – rýchlo a bez zbytočných komplikácií.",
   },
   {
-    question: "Poskytujete históriu vozidiel?",
+    question: "Je možné započítať vozidlo do protihodnoty?",
     answer:
-      "Áno, poskytujeme komplexné správy o histórii vozidiel pre všetky ojazdené vozidlá. Tieto správy zahŕňajú históriu nehôd, servisné záznamy, informácie o vlastníctve a ďalšie. Veríme v úplnú transparentnosť a chceme, aby ste sa rozhodovali informovane.",
+      "Áno, výmena vozidla je možná. Keďže sa špecializujeme výhradne na prémiové jazdené vozidlá, uplatňujeme individuálne podmienky.",
   },
   {
-    question: "Aké služby ponúkate po kúpe?",
+    question: "Vykupujete vozidlá?",
     answer:
-      "Ponúkame komplexné popredajné služby vrátane pravidelnej údržby, opráv, výmeny dielov a servisných termínov. Naši certifikovaní technici používajú originálne diely a dodržiavajú špecifikácie výrobcu. Poskytujeme aj asistenciu na ceste a služby kontroly vozidiel.",
+      "Áno, ponúkame aj výkup vozidiel. Aj v tomto prípade platia špecifické kritériá zamerané na prémiový segment. Pre viac informácií nás kontaktujte.",
   },
   {
-    question: "Ako si objednám skúšobnú jazdu?",
+    question: "Viete zabezpečiť exportné značky a dokumenty?",
     answer:
-      "Skúšobnú jazdu si môžete objednať zavolaním nám, použitím nášho online kontaktného formulára alebo návštevou nášho autosalónu. Odporúčame objednať si vopred, aby bolo vozidlo, o ktoré máte záujem, k dispozícii. Skúšobné jazdy sú k dispozícii počas našich otváracích hodín.",
+      "Áno. Vozidlá predávame do celej Európy a kompletnú exportnú dokumentáciu vrátane značiek zabezpečíme za vás.",
   },
   {
-    question: "Doručujete vozidlá?",
+    question: "Pomáhate s prihlásením vozidla?",
     answer:
-      "Áno, ponúkame služby doručenia vozidiel v určitom polomere od nášho autosalónu. Možnosti doručenia a poplatky sa líšia podľa polohy. Kontaktujte nás a dohodnite sa na doručení vo vašej oblasti.",
+      "Samozrejme. U nás nájdete všetko pod jednou strechou – poskytujeme all-inclusive služby vrátane prihlásenia vozidla.",
+  },
+  {
+    question: "Pomáhate s poistením vozidla?",
+    answer:
+      "Áno. Zabezpečíme pre vás PZP aj havarijné poistenie za výhodné ceny.",
+  },
+  {
+    question: "Viete zabezpečiť servis, detailing alebo ochranu laku?",
+    answer:
+      "Áno, tieto služby vieme zabezpečiť prostredníctvom overených partnerov.",
+  },
+  {
+    question: "Chcem predať auto. Poskytujete komisionálny predaj?",
+    answer:
+      "Áno, ponúkame komisionálny predaj vozidiel. Postaráme sa o celý proces – profesionálnu prezentáciu, marketing, komunikáciu so záujemcami aj samotný predaj. Podmienky komisionálneho predaja nastavujeme individuálne podľa typu a hodnoty vozidla.",
   },
 ]
 

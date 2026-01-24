@@ -57,3 +57,4 @@ The vehicle schema is defined in `/ferlucicars/schemaTypes/vehicle.ts`. Make sur
 
 
 
+

@@ -15,6 +15,7 @@ import { format } from "date-fns"
 import { CalendarIcon, Check, MapPin, Phone, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import FAQ from "@/components/faq"
+import CustomVehicleForm from "@/components/custom-vehicle-form"
 import { client, vehicleByIdQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
@@ -326,6 +327,13 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Custom Vehicle Request Form */}
+      <div className="mt-48 mb-32">
+        <div className="max-w-6xl mx-auto px-8 lg:px-16">
+          <CustomVehicleForm />
         </div>
       </div>
 

@@ -30,17 +30,17 @@ export default function HomeSearch() {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
-              <Search className="absolute left-8 top-[20px] h-5 w-5 text-white z-10" />
+              <Search className="absolute left-8 top-[14px] md:top-[20px] h-5 w-5 text-white z-10" />
               <Input
                 placeholder="Hľadať podľa značky, modelu alebo kľúčových slov..."
-                className="pl-16 h-16 rounded-full bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/30"
+                className="pl-16 h-12 md:h-16 rounded-full bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
             </div>
-            <Button size="lg" className="h-16 text-xl rounded-full" onClick={handleSearch}>
-              <Search className="mr-2 h-6 w-6" /> Hľadať
+            <Button size="lg" className="h-12 md:h-16 text-base md:text-xl rounded-full" onClick={handleSearch}>
+              <Search className="mr-2 h-5 w-5 md:h-6 md:w-6" /> Hľadať
             </Button>
           </div>
         </div>

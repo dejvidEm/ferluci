@@ -14,6 +14,7 @@ import type { Vehicle } from "@/lib/types"
 import { Filter, Search, Grid3x3, List } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import FAQ from "@/components/faq"
+import CustomVehicleForm from "@/components/custom-vehicle-form"
 import { client, vehiclesQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 
@@ -389,6 +390,13 @@ export default function InventoryPage() {
               <Button onClick={resetFilters}>Resetovať filtre</Button>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Custom Vehicle Request Form */}
+      <div className="mt-48 mb-32">
+        <div className="max-w-6xl mx-auto px-8 lg:px-16">
+          <CustomVehicleForm />
         </div>
       </div>
 

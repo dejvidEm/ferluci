@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Car, Check, ChevronLeft, ChevronRight, Fuel, Info, MapPin, Share2, Sliders, Gauge } from "lucide-react"
 import { formatCurrency, formatNumber, translateFuelType, translateTransmission } from "@/lib/utils"
 import FAQ from "@/components/faq"
+import CustomVehicleForm from "@/components/custom-vehicle-form"
 import { client, vehicleByIdQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
@@ -382,12 +383,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   </Button>
                 </div>
 
-                <div className="mb-2">
-                  <Badge variant="outline" className="text-sm font-normal">
-                    Skladové číslo: {vehicle.stockNumber}
-                  </Badge>
-                </div>
-
                 <p className="text-lg text-muted-foreground mb-6">{vehicle.trim}</p>
 
                 <div className="mb-6">
@@ -430,6 +425,13 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Custom Vehicle Request Form */}
+      <div className="mt-48 mb-32">
+        <div className="max-w-6xl mx-auto px-8 lg:px-16">
+          <CustomVehicleForm />
         </div>
       </div>
 
