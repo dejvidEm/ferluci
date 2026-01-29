@@ -103,3 +103,99 @@ export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, 
   order
 }`
 
+export const servicesPageQuery = groq`*[_type == "servicesPage"][0] {
+  heroTitle,
+  heroImage,
+  serviceCards[] {
+    title,
+    description
+  },
+  financingSection {
+    title,
+    description,
+    image
+  },
+  warrantySection {
+    title,
+    description
+  },
+  showroomSection {
+    title,
+    description,
+    image
+  },
+  benefitsSection {
+    title,
+    description
+  },
+  whyChooseSection {
+    title,
+    items[] {
+      title,
+      description
+    }
+  },
+  ctaSection {
+    title,
+    description,
+    image
+  }
+}`
+
+export const aboutPageQuery = groq`*[_type == "aboutPage"][0] {
+  heroTitle,
+  heroDescription,
+  heroImage,
+  storySection {
+    title,
+    paragraphs
+  },
+  valuesSection {
+    title,
+    values[] {
+      title,
+      description
+    }
+  },
+  whyChooseSection {
+    title,
+    items[] {
+      title,
+      description
+    }
+  },
+  ctaSection {
+    title,
+    description,
+    image
+  }
+}`
+
+export const faqQuery = groq`*[_type == "faq"][0] {
+  title,
+  items[] | order(order asc) {
+    question,
+    answer,
+    order
+  }
+}`
+
+export const contactInfoQuery = groq`*[_type == "contactInfo"][0] {
+  address {
+    street,
+    city,
+    postalCode,
+    coordinates {
+      lat,
+      lng
+    }
+  },
+  phone,
+  email,
+  openingHours {
+    mondayFriday,
+    saturday,
+    sunday
+  }
+}`
+

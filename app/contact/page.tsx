@@ -21,11 +21,13 @@ import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import Map from "@/components/map"
+import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
 export default function ContactPage() {
   const searchParams = useSearchParams()
   const vehicleId = searchParams.get("vehicle")
   const action = searchParams.get("action")
+  const { contactInfo } = useContactInfo()
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loadingVehicle, setLoadingVehicle] = useState(false)
@@ -286,9 +288,19 @@ export default function ContactPage() {
                   <div className="flex items-start">
                       <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
                       <address className="not-italic text-gray-300">
-                        Kopčianska 41
-                      <br />
-                        851 01 Petržalka
+                        {contactInfo.address ? (
+                          <>
+                            {contactInfo.address.street}
+                            <br />
+                            {contactInfo.address.postalCode} {contactInfo.address.city}
+                          </>
+                        ) : (
+                          <>
+                            Kopčianska 41
+                            <br />
+                            851 01 Petržalka
+                          </>
+                        )}
                     </address>
                   </div>
                 </div>
@@ -298,7 +310,7 @@ export default function ContactPage() {
                   <div className="space-y-2">
                     <div className="flex items-center">
                         <Phone className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                        <span className="text-gray-300">0905 326 292</span>
+                        <span className="text-gray-300">{contactInfo.phone || "0905 326 292"}</span>
                     </div>
                   </div>
                 </div>
@@ -309,15 +321,21 @@ export default function ContactPage() {
                     <tbody>
                       <tr>
                           <td className="py-1 text-gray-300">Pondelok - Piatok:</td>
-                          <td className="py-1 text-right text-gray-300">9:00 - 20:00</td>
+                          <td className="py-1 text-right text-gray-300">
+                            {contactInfo.openingHours?.mondayFriday || "9:00 - 20:00"}
+                          </td>
                       </tr>
                       <tr>
                           <td className="py-1 text-gray-300">Sobota:</td>
-                          <td className="py-1 text-right text-gray-300">9:00 - 18:00</td>
+                          <td className="py-1 text-right text-gray-300">
+                            {contactInfo.openingHours?.saturday || "9:00 - 18:00"}
+                          </td>
                       </tr>
                       <tr>
                           <td className="py-1 text-gray-300">Nedeľa:</td>
-                          <td className="py-1 text-right text-gray-300">Zatvorené</td>
+                          <td className="py-1 text-right text-gray-300">
+                            {contactInfo.openingHours?.sunday || "Zatvorené"}
+                          </td>
                       </tr>
                     </tbody>
                   </table>

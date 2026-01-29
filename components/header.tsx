@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Menu, Phone, X, Facebook, Instagram } from "lucide-react"
 import { useState } from "react"
+import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
 const navigation = [
   { name: "Domov", href: "/" },
@@ -20,6 +21,7 @@ const navigation = [
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { contactInfo } = useContactInfo()
 
   return (
     <header className="bg-[#121212]/80 backdrop-blur-xl h-24 sticky top-0 z-50 border-b-0">
@@ -61,7 +63,7 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center">
               <Phone className="h-5 w-5 text-primary mr-2" />
-              <span className="font-medium">0905 326 292</span>
+              <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
             </div>
             <Button asChild>
               <Link href="/contact">Kontaktovať</Link>
@@ -115,7 +117,7 @@ export default function Header() {
                   <div className="pt-4">
                     <div className="flex items-center mb-4">
                       <Phone className="h-5 w-5 text-primary mr-2" />
-                      <span className="font-medium">0905 326 292</span>
+                      <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
                     </div>
                     <Button className="w-full mb-6" asChild>
                       <Link href="/contact" onClick={() => setIsOpen(false)}>

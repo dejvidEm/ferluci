@@ -1,7 +1,11 @@
+"use client"
+
 import Link from "next/link"
 import { Facebook, Instagram } from "lucide-react"
+import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
 export default function Footer() {
+  const { contactInfo } = useContactInfo()
   return (
     <footer className="bg-[#121212] text-gray-200 relative overflow-hidden">
       <span className="text-center text-red-400 md:text-[160px] text-[45px] font-bold absolute left-2 md:left-10 -bottom-5 md:-bottom-20 opacity-5 pointer-events-none z-0">FERLUCICARS</span>
@@ -132,19 +136,41 @@ export default function Footer() {
               <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
             </h3>
             <address className="not-italic">
-              <p>Kopčianska 41</p>
-              <p>851 01 Petržalka</p>
-              <p className="mt-3">Telefón: 0905 326 292</p>
-              <p>Email: info@ferlucicars.com</p>
+              {contactInfo.address && (
+                <>
+                  <p>{contactInfo.address.street}</p>
+                  <p>{contactInfo.address.postalCode} {contactInfo.address.city}</p>
+                </>
+              )}
+              {!contactInfo.address && (
+                <>
+                  <p>Kopčianska 41</p>
+                  <p>851 01 Petržalka</p>
+                </>
+              )}
+              <p className="mt-3">Telefón: {contactInfo.phone || "0905 326 292"}</p>
+              <p>Email: {contactInfo.email || "info@ferlucicars.com"}</p>
             </address>
             <p className="mt-3">
               <strong>Otáčacie hodiny:</strong>
               <br />
-              Po-Pia: 9:00 - 20:00
-              <br />
-              So: 9:00 - 18:00
-              <br />
-              Ne: Zatvorené
+              {contactInfo.openingHours ? (
+                <>
+                  Po-Pia: {contactInfo.openingHours.mondayFriday}
+                  <br />
+                  So: {contactInfo.openingHours.saturday}
+                  <br />
+                  Ne: {contactInfo.openingHours.sunday}
+                </>
+              ) : (
+                <>
+                  Po-Pia: 9:00 - 20:00
+                  <br />
+                  So: 9:00 - 18:00
+                  <br />
+                  Ne: Zatvorené
+                </>
+              )}
             </p>
           </div>
         </div>

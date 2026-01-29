@@ -100,3 +100,139 @@ export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): G
   }
 }
 
+export interface SanityImage {
+  _type: 'image'
+  asset: any
+  alt?: string
+}
+
+export interface ServicesPageData {
+  heroTitle?: string
+  heroImage?: SanityImage
+  serviceCards?: Array<{
+    title: string
+    description: string
+  }>
+  financingSection?: {
+    title: string
+    description: string
+    image?: SanityImage
+  }
+  warrantySection?: {
+    title: string
+    description: string
+  }
+  showroomSection?: {
+    title: string
+    description: string
+    image?: SanityImage
+  }
+  benefitsSection?: {
+    title: string
+    description: string
+  }
+  whyChooseSection?: {
+    title: string
+    items?: Array<{
+      title: string
+      description: string
+    }>
+  }
+  ctaSection?: {
+    title: string
+    description: string
+    image?: SanityImage
+  }
+}
+
+export interface AboutPageData {
+  heroTitle?: string
+  heroDescription?: string
+  heroImage?: SanityImage
+  storySection?: {
+    title: string
+    paragraphs?: string[]
+  }
+  valuesSection?: {
+    title: string
+    values?: Array<{
+      title: string
+      description: string
+    }>
+  }
+  whyChooseSection?: {
+    title: string
+    items?: Array<{
+      title: string
+      description: string
+    }>
+  }
+  ctaSection?: {
+    title: string
+    description: string
+    image?: SanityImage
+  }
+}
+
+export function getImageUrl(image: SanityImage | undefined, fallback: string = '/placeholder.svg'): string {
+  if (!image) return fallback
+  try {
+    return urlFor(image).width(1920).height(1080).url()
+  } catch (error) {
+    console.error('Error generating image URL:', error)
+    return fallback
+  }
+}
+
+export interface FAQData {
+  title?: string
+  items?: Array<{
+    question: string
+    answer: string
+    order?: number
+  }>
+}
+
+export interface SanityFAQ {
+  title?: string
+  items?: Array<{
+    question: string
+    answer: string
+    order?: number
+  }>
+}
+
+export interface ContactInfo {
+  address?: {
+    street: string
+    city: string
+    postalCode: string
+    coordinates?: {
+      lat: number
+      lng: number
+    }
+  }
+  phone?: string
+  email?: string
+  openingHours?: {
+    mondayFriday: string
+    saturday: string
+    sunday: string
+  }
+}
+
+export interface SanityContactInfo {
+  address?: {
+    street: string
+    city: string
+    postalCode: string
+  }
+  phone?: string
+  email?: string
+  openingHours?: {
+    mondayFriday: string
+    saturday: string
+    sunday: string
+  }
+}
+

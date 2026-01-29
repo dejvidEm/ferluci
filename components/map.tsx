@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
 declare global {
   interface Window {
@@ -18,6 +19,13 @@ if (typeof window !== "undefined" && !window.__googleMapsCallbacks) {
 
 export default function Map() {
   const mapRef = useRef<HTMLDivElement>(null)
+  const { contactInfo } = useContactInfo()
+
+  const address = contactInfo.address
+    ? `${contactInfo.address.street}, ${contactInfo.address.postalCode} ${contactInfo.address.city}`
+    : "Kopčianska 41, 851 01 Petržalka"
+  
+  const coordinates = contactInfo.address?.coordinates || { lat: 48.1204, lng: 17.1077 }
 
   useEffect(() => {
     // Create custom car icon SVG
@@ -37,7 +45,7 @@ export default function Map() {
     const initMap = () => {
       if (!mapRef.current || !window.google) return
 
-      const location = { lat: 48.1204, lng: 17.1077 } // Kopčianska 41, Petržalka coordinates
+      const location = coordinates
 
       const map = new window.google.maps.Map(mapRef.current, {
         center: location,
@@ -75,7 +83,7 @@ export default function Map() {
       const marker = new window.google.maps.Marker({
         position: location,
         map: map,
-        title: "Kopčianska 41, 851 01 Petržalka",
+        title: address,
         icon: {
           url: carIconUrl,
           scaledSize: new window.google.maps.Size(48, 48),
@@ -87,8 +95,8 @@ export default function Map() {
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
           <div style="color: #000; padding: 8px;">
-            <strong style="font-size: 16px;">Kopčianska 41</strong><br>
-            <span style="font-size: 14px;">851 01 Petržalka</span>
+            <strong style="font-size: 16px;">${contactInfo.address?.street || "Kopčianska 41"}</strong><br>
+            <span style="font-size: 14px;">${contactInfo.address?.postalCode || "851 01"} ${contactInfo.address?.city || "Petržalka"}</span>
           </div>
         `,
       })
@@ -158,12 +166,12 @@ export default function Map() {
         }
       }
     }
-  }, [])
+  }, [coordinates, address, contactInfo])
 
   // Fallback to iframe embed if API key is not available
   // Note: Custom car icon requires Google Maps JavaScript API key
   if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-    const encodedAddress = encodeURIComponent("Kopčianska 41, 851 01 Petržalka")
+    const encodedAddress = encodeURIComponent(address)
 
     return (
       <div className="w-full h-[500px] overflow-hidden">
