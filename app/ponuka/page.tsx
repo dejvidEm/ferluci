@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +18,7 @@ import CustomVehicleForm from "@/components/custom-vehicle-form"
 import { client, vehiclesQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 
-export default function InventoryPage() {
+function InventoryPageContent() {
   const searchParams = useSearchParams()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
@@ -402,5 +402,20 @@ export default function InventoryPage() {
       {/* FAQ */}
       <FAQ />
     </div>
+  )
+}
+
+export default function InventoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Načítavanie...</p>
+        </div>
+      </div>
+    }>
+      <InventoryPageContent />
+    </Suspense>
   )
 }
