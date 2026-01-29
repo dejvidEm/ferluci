@@ -25,7 +25,7 @@ export default function Home() {
         </video>
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#2a0f1a]/30 to-[#4a1a2a]/30 md:from-black/30 md:via-[#2a0f1a]/50 md:to-[#121212] z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-[#121212]/50 to-[#121212]/40 md:from-black/60 md:via-[#121212]/70 md:to-[#121212] z-10"></div>
 
         {/* Content - Left side */}
         <div className="relative z-20 flex-1 flex flex-col justify-center px-4 md:pl-16 md:pr-4 py-24 md:py-32">
@@ -58,9 +58,9 @@ export default function Home() {
       <HomeSearch />
 
       {/* Featured Vehicles */}
-      <section className="py-16 bg-[#121212]">
+      <section className="py-16 bg-[#121212] relative z-30">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
+          <div className="flex justify-between items-center mb-10 relative z-10">
             <h2 className="text-3xl font-bold">Odporúčané vozidlá</h2>
             <Button variant="ghost" asChild>
               <Link href="/ponuka" className="flex items-center">

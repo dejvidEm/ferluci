@@ -28,6 +28,7 @@ function InventoryPageContent() {
   const [selectedMakes, setSelectedMakes] = useState<string[]>([])
   const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([])
   const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([])
+  const [selectedPohon, setSelectedPohon] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [loading, setLoading] = useState(true)
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid")
@@ -74,6 +75,9 @@ function InventoryPageContent() {
   // Get unique transmission types
   const transmissions = Array.from(new Set(vehicles.map((v) => v.transmission).filter(Boolean))).sort()
 
+  // Get unique pohon types
+  const pohonTypes = Array.from(new Set(vehicles.map((v) => v.pohon).filter(Boolean))).sort()
+
   // Get min and max prices
   const minPrice = vehicles.length > 0 ? Math.min(...vehicles.map((v) => v.price)) : 0
   const maxPrice = vehicles.length > 0 ? Math.max(...vehicles.map((v) => v.price)) : 100000
@@ -117,6 +121,11 @@ function InventoryPageContent() {
       results = results.filter((vehicle) => vehicle.transmission && selectedTransmissions.includes(vehicle.transmission))
     }
 
+    // Filter by pohon types
+    if (selectedPohon.length > 0) {
+      results = results.filter((vehicle) => vehicle.pohon && selectedPohon.includes(vehicle.pohon))
+    }
+
     // Apply sorting
     const sortedResults = [...results].sort((a, b) => {
       switch (sortBy) {
@@ -134,7 +143,7 @@ function InventoryPageContent() {
     })
 
     setFilteredVehicles(sortedResults)
-  }, [vehicles, searchQuery, priceRange, yearRange, selectedMakes, selectedFuelTypes, selectedTransmissions, sortBy])
+  }, [vehicles, searchQuery, priceRange, yearRange, selectedMakes, selectedFuelTypes, selectedTransmissions, selectedPohon, sortBy])
 
   const handleSearch = () => {
     applyFiltersAndSort()
@@ -147,6 +156,7 @@ function InventoryPageContent() {
     setSelectedMakes([])
     setSelectedFuelTypes([])
     setSelectedTransmissions([])
+    setSelectedPohon([])
     setSortBy("newest")
     applyFiltersAndSort()
   }
@@ -173,9 +183,9 @@ function InventoryPageContent() {
     <div className="container mx-auto px-4 py-8 bg-[#121212] min-h-screen">
       <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
 
-      <div className="flex flex-col lg:flex-row gap-6 mb-8">
+      <div className="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center">
         {/* Search Bar - Always visible */}
-        <div className="w-full lg:w-2/3">
+        <div className="w-full lg:flex-1">
           <div className="flex gap-2">
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
@@ -186,7 +196,7 @@ function InventoryPageContent() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button className="h-12" onClick={handleSearch}>
+            <Button className="h-12 min-w-[140px]" onClick={handleSearch}>
               <Search className="mr-2 h-5 w-5" /> Hľadať
             </Button>
             <Button variant="outline" className="h-12 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
@@ -194,6 +204,39 @@ function InventoryPageContent() {
               Filtre
             </Button>
           </div>
+        </div>
+        {/* Layout selector and Sort - Same level as search */}
+        <div className="flex items-center gap-4 w-full lg:w-auto">
+          {/* Display Mode Toggle */}
+          <div className="flex items-center gap-2 border rounded-lg p-1">
+            <Button
+              variant={displayMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setDisplayMode("grid")}
+              className="h-8"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={displayMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setDisplayMode("list")}
+              className="h-8"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px] bg-[#121212] border border-white/30">
+              <SelectValue placeholder="Zoradiť podľa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Najnovšie prvé</SelectItem>
+              <SelectItem value="oldest">Najstaršie prvé</SelectItem>
+              <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
+              <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -325,6 +368,30 @@ function InventoryPageContent() {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
+
+                <AccordionItem value="pohon">
+                  <AccordionTrigger>Pohon</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      {pohonTypes.map((pohon) => (
+                        <div key={pohon} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`pohon-${pohon}`}
+                            checked={selectedPohon.includes(pohon)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedPohon([...selectedPohon, pohon])
+                              } else {
+                                setSelectedPohon(selectedPohon.filter((p) => p !== pohon))
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`pohon-${pohon}`}>{pohon}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
               </Accordion>
             </div>
           </div>
@@ -332,42 +399,6 @@ function InventoryPageContent() {
 
         {/* Results */}
         <div className="w-full lg:w-3/4">
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-muted-foreground">Zobrazených {filteredVehicles.length} vozidiel</p>
-            <div className="flex items-center gap-4">
-              {/* Display Mode Toggle - Desktop Only */}
-              <div className="hidden md:flex items-center gap-2 border rounded-lg p-1">
-                <Button
-                  variant={displayMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setDisplayMode("grid")}
-                  className="h-8"
-                >
-                  <Grid3x3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={displayMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setDisplayMode("list")}
-                  className="h-8"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Zoradiť podľa" />
-              </SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="newest">Najnovšie prvé</SelectItem>
-                  <SelectItem value="oldest">Najstaršie prvé</SelectItem>
-                  <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
-                  <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
-              </SelectContent>
-            </Select>
-            </div>
-          </div>
-
           {filteredVehicles.length > 0 ? (
             displayMode === "grid" ? (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">

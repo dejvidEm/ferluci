@@ -1,110 +1,158 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
   Car,
   DollarSign,
-  Wrench,
-  FileText,
   Shield,
   TrendingUp,
   Clock,
-  CheckCircle,
-  ArrowRight,
 } from "lucide-react"
 import FAQ from "@/components/faq"
 
 export default function ServicesPage() {
-  const services = [
-    {
-      icon: Car,
-      title: "Predaj nových vozidiel",
-      description:
-        "Prehľadajte našu rozsiahlu ponuku úplne nových vozidiel od popredných výrobcov. Ponúkame najnovšie modely s najmodernejšou technológiou a funkciami.",
-      features: ["Najnovšie modely", "Továrenská záruka", "Individuálne objednávky", "Možnosti výmeny"],
-    },
-    {
-      icon: Car,
-      title: "Predaj ojazdených vozidiel",
-      description:
-        "Kvalitné ojazdené vozidlá, ktoré boli dôkladne skontrolované a certifikované. Získajte prémiovú kvalitu za skvelú cenu.",
-      features: ["Certifikované ojazdené", "História vozidiel", "Kvalitná kontrola", "Záručné možnosti"],
-    },
-    {
-      icon: DollarSign,
-      title: "Finančné riešenia",
-      description:
-        "Flexibilné finančné možnosti prispôsobené vášmu rozpočtu. Naši finanční odborníci vám pomôžu nájsť najlepšie úrokové sadzby a podmienky.",
-      features: ["Konkurencieschopné sadzby", "Flexibilné podmienky", "Rýchle schválenie", "Viacerí veritelia"],
-    },
-    {
-      icon: Wrench,
-      title: "Servis a údržba",
-      description:
-        "Odborný servis a údržba pre všetky značky a modely. Udržujte svoje vozidlo v perfektnom stave s našimi certifikovanými technikmi.",
-      features: ["Odborní technici", "Originálne diely", "Rýchly servis", "Záručné krytie"],
-    },
-    {
-      icon: FileText,
-      title: "Ocenenie vozidla",
-      description:
-        "Získajte spravodlivú trhovú hodnotu pre vaše súčasné vozidlo. Naši odborníci poskytnú rýchle a presné ocenenie.",
-      features: ["Spravodlivé ocenenie", "Rýchly proces", "Viaceré možnosti", "Okamžité ponuky"],
-    },
-    {
-      icon: Shield,
-      title: "Predĺžená záruka",
-      description:
-        "Chráňte svoju investíciu komplexnými možnosťami predĺženej záruky. Jazdite s istotou, vediac, že ste chránení.",
-      features: ["Komplexné krytie", "Flexibilné plány", "Celonárodný servis", "Pokojná myseľ"],
-    },
-  ]
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative w-full py-24 bg-gradient-to-b from-black via-[#2a0f1a] to-[#4a1a2a]">
-        <div className="container mx-auto px-4">
+      <section className="relative w-full py-24 overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/banner.jpg"
+          alt="Services Background"
+          fill
+          className="object-cover z-0"
+          priority
+        />
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80 z-10"></div>
+        {/* Content */}
+        <div className="container mx-auto px-4 relative z-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Naše služby</h1>
-            <p className="text-xl text-gray-200 mb-8">
-              Komplexné automobilové riešenia na uspokojenie všetkých vašich potrieb týkajúcich sa vozidiel, od nákupu až po údržbu a ďalšie.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* Services Grid */}
+      {/* First Section: 3 Cards - Predaj, Výkup, Komisionálny predaj */}
       <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => {
-              const Icon = service.icon
-              return (
-                <div
-                  key={index}
-                  className="bg-[#2a0f1a]/50 backdrop-blur-sm p-8 rounded-2xl border-0 hover:bg-[#2a0f1a]/70 transition-colors"
-                >
-                  <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                    <Icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3 text-gray-100">{service.title}</h3>
-                  <p className="text-gray-300 mb-6">{service.description}</p>
-                  <ul className="space-y-2 mb-6">
-                    {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start text-sm text-gray-300">
-                        <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/contact">
-                      Zistiť viac <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Predaj */}
+            <div className="bg-[#2a0f1a]/50 backdrop-blur-sm p-8 rounded-2xl border-0 hover:bg-[#2a0f1a]/70 transition-colors">
+              <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                <Car className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-100">Predaj</h3>
+              <p className="text-gray-300">
+                Ponúkame rýchly výkup, možnosť započítania auta do protihodnoty aj komisionálny predaj s kompletným servisom a maximálnou transparentnosťou.
+              </p>
+            </div>
+
+            {/* Výkup */}
+            <div className="bg-[#2a0f1a]/50 backdrop-blur-sm p-8 rounded-2xl border-0 hover:bg-[#2a0f1a]/70 transition-colors">
+              <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                <Car className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-100">Výkup</h3>
+              <p className="text-gray-300">
+                Ponúkame rýchly výkup, možnosť započítania auta do protihodnoty aj komisionálny predaj s kompletným servisom a maximálnou transparentnosťou.
+              </p>
+            </div>
+
+            {/* Komisionálny predaj */}
+            <div className="bg-[#2a0f1a]/50 backdrop-blur-sm p-8 rounded-2xl border-0 hover:bg-[#2a0f1a]/70 transition-colors">
+              <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                <Car className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-100">Komisionálny predaj</h3>
+              <p className="text-gray-300">
+                Ponúkame rýchly výkup, možnosť započítania auta do protihodnoty aj komisionálny predaj s kompletným servisom a maximálnou transparentnosťou.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Second Section: Financovanie and Záručné krytie with Image */}
+      <section className="py-16 bg-[#121212]">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
+            {/* Left Side: Text Content */}
+            <div className="space-y-12">
+              {/* Financovanie */}
+              <div>
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                  <DollarSign className="h-8 w-8 text-primary" />
                 </div>
-              )
-            })}
+                <h3 className="text-2xl font-semibold mb-4 text-gray-100">Financovanie</h3>
+                <p className="text-gray-300 text-lg">
+                  Zabezpečíme autoúver aj leasing cez všetky finančné spoločnosti – rýchlo, flexibilne a aj online.
+                </p>
+              </div>
+
+              {/* Záručné krytie */}
+              <div>
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-gray-100">Záručné krytie</h3>
+                <p className="text-gray-300 text-lg">
+                  Ponúkame možnosť záruky až na 36 mesiacov, aby ste si mohli svoje vozidlo užívať bez starostí.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Side: Image */}
+            <div className="relative h-[600px] rounded-2xl overflow-hidden">
+              <Image
+                src="/banner.jpg"
+                alt="Financovanie a záručné krytie"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Third Section: Showroom and Výhody a zľavy with Image */}
+      <section className="py-16 bg-[#121212]">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
+            {/* Left Side: Image */}
+            <div className="relative h-[600px] rounded-2xl overflow-hidden order-2 md:order-1">
+              <Image
+                src="/banner.jpg"
+                alt="Showroom a výhody"
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            {/* Right Side: Text Content */}
+            <div className="space-y-12 order-1 md:order-2">
+              {/* SHOWROOM */}
+              <div>
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                  <Car className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-gray-100">SHOWROOM</h3>
+                <p className="text-gray-300 text-lg">
+                  V našom showroome spájame výber prémiových vozidiel s osobným prístupom a maximálnym komfortom pri kúpe.
+                </p>
+              </div>
+
+              {/* VÝHODY A ZĽAVY */}
+              <div>
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                  <TrendingUp className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-gray-100">VÝHODY A ZĽAVY</h3>
+                <p className="text-gray-300 text-lg">
+                  Kúpou vozidla u nás sa spolupráca nekončí. Našim klientom ponúkame zvýhodnené podmienky v licencovanom BMW servise, zľavy na prezutie, detailing, ochranné fólie a ďalšie služby spojené so starostlivosťou o vozidlo.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -148,18 +196,30 @@ export default function ServicesPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Ste pripravení začať?</h2>
+      {/* CTA */}
+      <section className="relative py-16 text-white overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/banner.jpg"
+          alt="CTA Background"
+          fill
+          className="object-cover z-0"
+          priority
+        />
+        {/* Black Overlay */}
+        <div className="absolute inset-0 bg-black/80 z-10"></div>
+        {/* Content */}
+        <div className="container mx-auto px-4 text-center relative z-20">
+          <h2 className="text-3xl font-bold mb-6">Ste pripravení nájsť svoje vysnívané auto?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Kontaktujte nás ešte dnes, aby ste sa dozvedeli viac o našich službách alebo si objednali termín.
+            Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/contact">Kontaktovať nás</Link>
-            </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
               <Link href="/ponuka">Prehľadať ponuku</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
+              <Link href="/contact">Kontaktovať nás</Link>
             </Button>
           </div>
         </div>

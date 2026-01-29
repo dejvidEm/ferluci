@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Menu, Phone, X, Facebook, Instagram } from "lucide-react"
@@ -18,6 +19,7 @@ const navigation = [
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   return (
     <header className="bg-[#121212]/80 backdrop-blur-xl h-24 sticky top-0 z-50 border-b-0">
@@ -37,11 +39,23 @@ export default function Header() {
           </div>
 
           <nav className="hidden md:flex space-x-8">
-            {navigation.map((item) => (
-              <Link key={item.name} href={item.href} className="text-gray-200 hover:text-primary font-medium">
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
+              return (
+                <Link 
+                  key={item.name} 
+                  href={item.href} 
+                  className={`text-gray-200 hover:text-primary font-medium relative pb-1 ${
+                    isActive ? "text-primary" : ""
+                  }`}
+                >
+                  {item.name}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
+                  )}
+                </Link>
+              )
+            })}
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -80,16 +94,24 @@ export default function Header() {
                   </Button>
                 </div>
                 <nav className="mt-8 flex flex-col space-y-6">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className="text-gray-200 hover:text-primary font-medium text-lg"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
+                  {navigation.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`text-gray-200 hover:text-primary font-medium text-lg relative pb-1 ${
+                          isActive ? "text-primary" : ""
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {item.name}
+                        {isActive && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
+                        )}
+                      </Link>
+                    )
+                  })}
                   <div className="pt-4">
                     <div className="flex items-center mb-4">
                       <Phone className="h-5 w-5 text-primary mr-2" />
