@@ -178,6 +178,26 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
+          {/* Quick Overview Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex items-center">
+              <MapPin className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
+              <span className="text-gray-300">{formatNumber(vehicle.mileage)} km</span>
+            </div>
+            <div className="flex items-center">
+              <Fuel className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
+              <span className="text-gray-300">{translateFuelType(vehicle.fuelType)}</span>
+            </div>
+            <div className="flex items-center">
+              <Sliders className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
+              <span className="text-gray-300">{translateTransmission(vehicle.transmission)}</span>
+            </div>
+            <div className="flex items-center">
+              <Gauge className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
+              <span className="text-gray-300">{vehicle.pohon}</span>
+            </div>
+          </div>
+
           {/* Overview Section */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-white mb-3">Popis vozidla</h3>
@@ -203,10 +223,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-white text-sm font-medium">{vehicle.year}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-700/30">
-                <span className="text-gray-400 text-sm">Výbava</span>
-                <span className="text-white text-sm font-medium">{vehicle.trim}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-700/30">
                 <span className="text-gray-400 text-sm">Nájazd</span>
                 <span className="text-white text-sm font-medium">{formatNumber(vehicle.mileage)} km</span>
               </div>
@@ -225,6 +241,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               <div className="flex justify-between py-2 border-b border-gray-700/30">
                 <span className="text-gray-400 text-sm">Prevodovka</span>
                 <span className="text-white text-sm font-medium">{translateTransmission(vehicle.transmission)}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700/30">
+                <span className="text-gray-400 text-sm">Pohon</span>
+                <span className="text-white text-sm font-medium">{vehicle.pohon}</span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-gray-400 text-sm">Motor</span>
@@ -336,8 +356,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                       <div className="text-gray-300">{vehicle.model}</div>
                       <div className="font-medium text-gray-200">Rok:</div>
                       <div className="text-gray-300">{vehicle.year}</div>
-                      <div className="font-medium text-gray-200">Výbava:</div>
-                      <div className="text-gray-300">{vehicle.trim}</div>
                       <div className="font-medium text-gray-200">Nájazd:</div>
                       <div className="text-gray-300">{formatNumber(vehicle.mileage)} km</div>
                     </div>
@@ -350,6 +368,8 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                       <div className="text-gray-300">{translateFuelType(vehicle.fuelType)}</div>
                       <div className="font-medium text-gray-200">Prevodovka:</div>
                       <div className="text-gray-300">{translateTransmission(vehicle.transmission)}</div>
+                      <div className="font-medium text-gray-200">Pohon:</div>
+                      <div className="text-gray-300">{vehicle.pohon}</div>
                       <div className="font-medium text-gray-200">Motor:</div>
                       <div className="text-gray-300">{vehicle.engine}</div>
                     </div>
@@ -383,7 +403,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   </Button>
                 </div>
 
-                <p className="text-lg text-muted-foreground mb-6">{vehicle.trim}</p>
 
                 <div className="mb-6">
                   {vehicle.showOldPrice && vehicle.oldPrice && (
@@ -408,8 +427,8 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-gray-300">{translateTransmission(vehicle.transmission)}</span>
                   </div>
                   <div className="flex items-center">
-                    <Car className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span className="text-gray-300">{vehicle.engine}</span>
+                    <Gauge className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
+                    <span className="text-gray-300">{vehicle.pohon}</span>
                   </div>
                 </div>
 

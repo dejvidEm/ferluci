@@ -1,24 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-
-// Gallery images - showroom photos
-const galleryImages = [
-  { src: "/about.jpeg", alt: "Showroom interior" },
-  { src: "/bmw/1.png", alt: "Showroom vehicle 1" },
-  { src: "/bmw/2.png", alt: "Showroom vehicle 2" },
-  { src: "/bmw/3.png", alt: "Showroom vehicle 3" },
-  { src: "/bmw/4.png", alt: "Showroom vehicle 4" },
-  { src: "/bmw/5.png", alt: "Showroom vehicle 5" },
-  { src: "/bmw/6.png", alt: "Showroom vehicle 6" },
-  { src: "/bmw/7.png", alt: "Showroom vehicle 7" },
-  { src: "/bmw/8.png", alt: "Showroom vehicle 8" },
-]
+import { client, galleryImagesQuery } from "@/lib/sanity"
+import { transformSanityGalleryImage, type GalleryImage } from "@/lib/sanity/utils"
 
 export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchGalleryImages() {
+      try {
+        const data = await client.fetch(galleryImagesQuery)
+        if (data && data.length > 0) {
+          const transformedImages = data.map(transformSanityGalleryImage)
+          setGalleryImages(transformedImages)
+        }
+      } catch (error) {
+        console.error("Error fetching gallery images:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchGalleryImages()
+  }, [])
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -39,24 +47,38 @@ export default function GalleryPage() {
       {/* Gallery Grid */}
       <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryImages.map((image, index) => (
-              <div
-                key={index}
-                className="relative group cursor-pointer overflow-hidden rounded-lg bg-[#1a1a1a] aspect-square"
-                onClick={() => setSelectedImage(image.src)}
-              >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-24">
+              <p className="text-gray-400">Načítavanie galérie...</p>
+            </div>
+          ) : galleryImages.length === 0 ? (
+            <div className="flex items-center justify-center py-24">
+              <p className="text-gray-400">V galérii zatiaľ nie sú žiadne obrázky.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {galleryImages.map((image) => (
+                <div
+                  key={image.id}
+                  className="relative group cursor-pointer overflow-hidden rounded-lg bg-[#1a1a1a] aspect-square"
+                  onClick={() => setSelectedImage(image.src)}
+                >
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                  {/* Title Overlay - Bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white font-medium text-sm md:text-base">{image.title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

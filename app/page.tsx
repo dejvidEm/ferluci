@@ -12,23 +12,23 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative w-full md:pt-48 md:pb-48 flex overflow-hidden">
+      <section className="relative w-full min-h-screen flex overflow-hidden -mt-28 md:-mt-44">
         {/* Video Background - full width */}
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0"
+          className="absolute inset-0 w-full h-full object-cover object-center z-0"
         >
-          <source src="/video/main.mp4" type="video/mp4" />
+          <source src="/video/final.mp4" type="video/mp4" />
         </video>
 
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#2a0f1a]/30 to-[#4a1a2a]/30 md:from-black/30 md:via-[#2a0f1a]/50 md:to-[#121212] z-10"></div>
 
         {/* Content - Left side */}
-        <div className="relative z-20 flex-1 flex flex-col justify-center px-4 md:pl-16 md:pr-4 py-16">
+        <div className="relative z-20 flex-1 flex flex-col justify-center px-4 md:pl-16 md:pr-4 py-24 md:py-32">
           {/* Subheading */}
           <p className="text-base md:text-lg text-gray-300 mb-4">Vitajte v Ferlucicars</p>
 

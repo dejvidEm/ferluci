@@ -25,7 +25,7 @@ export default function HomeSearch() {
   }
 
   return (
-    <section className="py-8 -mt-16 z-20">
+    <section className="pb-8 md:pb-8 md:pt-8 pt-4 -mt-36 md:-mt-[210px] z-20 md:bg-transparent bg-[#121212]">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row gap-4">
@@ -33,7 +33,7 @@ export default function HomeSearch() {
               <Search className="absolute left-8 top-[14px] md:top-[20px] h-5 w-5 text-white z-10" />
               <Input
                 placeholder="Hľadať podľa značky, modelu alebo kľúčových slov..."
-                className="pl-16 h-12 md:h-16 rounded-full bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/30"
+                className="pl-16 h-12 md:h-16 rounded-full md:bg-[#121212]/10 bg-[#121212] border border-white/30 text-sm md:text-base text-white placeholder:text-gray-400 focus:border-white/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}

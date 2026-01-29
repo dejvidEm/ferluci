@@ -92,7 +92,6 @@ export default function InventoryPage() {
         (vehicle) =>
           vehicle.make.toLowerCase().includes(query) ||
           vehicle.model.toLowerCase().includes(query) ||
-          vehicle.trim.toLowerCase().includes(query) ||
           vehicle.year.toString().includes(query),
       )
     }

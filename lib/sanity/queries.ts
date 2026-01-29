@@ -5,7 +5,6 @@ export const vehiclesQuery = groq`*[_type == "vehicle"] | order(year desc, _crea
   make,
   model,
   year,
-  trim,
   price,
   showOldPrice,
   oldPrice,
@@ -14,6 +13,7 @@ export const vehiclesQuery = groq`*[_type == "vehicle"] | order(year desc, _crea
   interiorColor,
   fuelType,
   transmission,
+  pohon,
   engine,
   vin,
   stockNumber,
@@ -29,7 +29,6 @@ export const vehicleBySlugQuery = groq`*[_type == "vehicle" && slug.current == $
   make,
   model,
   year,
-  trim,
   price,
   showOldPrice,
   oldPrice,
@@ -38,6 +37,7 @@ export const vehicleBySlugQuery = groq`*[_type == "vehicle" && slug.current == $
   interiorColor,
   fuelType,
   transmission,
+  pohon,
   engine,
   vin,
   stockNumber,
@@ -53,7 +53,6 @@ export const vehicleByIdQuery = groq`*[_type == "vehicle" && _id == $id][0] {
   make,
   model,
   year,
-  trim,
   price,
   showOldPrice,
   oldPrice,
@@ -62,6 +61,7 @@ export const vehicleByIdQuery = groq`*[_type == "vehicle" && _id == $id][0] {
   interiorColor,
   fuelType,
   transmission,
+  pohon,
   engine,
   vin,
   stockNumber,
@@ -77,7 +77,6 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
   make,
   model,
   year,
-  trim,
   price,
   showOldPrice,
   oldPrice,
@@ -86,6 +85,7 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
   interiorColor,
   fuelType,
   transmission,
+  pohon,
   engine,
   vin,
   stockNumber,
@@ -94,5 +94,12 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
   images,
   featured,
   "slug": slug.current
+}`
+
+export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, _createdAt desc) {
+  _id,
+  title,
+  image,
+  order
 }`
 

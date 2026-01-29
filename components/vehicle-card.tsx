@@ -53,7 +53,6 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
                     <h3 className="font-semibold text-xl mb-1">
                       {vehicle.year} {vehicle.make} {vehicle.model}
                     </h3>
-                    <p className="text-sm text-muted-foreground">{vehicle.trim}</p>
                   </div>
                   <div className="flex flex-col items-end ml-4">
                     {vehicle.showOldPrice && vehicle.oldPrice && (
@@ -138,7 +137,6 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
           <span className="font-bold text-lg text-primary">{formatCurrency(vehicle.price)}</span>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">{vehicle.trim}</p>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />

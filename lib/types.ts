@@ -3,7 +3,6 @@ export interface Vehicle {
   make: string
   model: string
   year: number
-  trim: string
   price: number
   showOldPrice?: boolean
   oldPrice?: number
@@ -12,6 +11,7 @@ export interface Vehicle {
   interiorColor: string
   fuelType: string
   transmission: string
+  pohon: string
   engine: string
   vin: string
   stockNumber: string
