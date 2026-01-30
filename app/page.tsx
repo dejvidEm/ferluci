@@ -33,12 +33,12 @@ export default function Home() {
           <p className="text-base md:text-lg text-gray-300 mb-4">Vitajte v Ferlucicars</p>
 
           {/* Heading */}
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 md:mb-12">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-8">
             Nájdite svoje <AuroraText speed={2000} colors={["#ef4444", "#dc2626", "#b91c1c", "#991b1b"]}>ideálne</AuroraText> vozidlo
           </h1>
 
-          <p className="text-base md:text-lg text-gray-300 max-w-3xl mb-8">Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality. Pomôžeme vám vybrať auto, ktoré presne zodpovedá vašim potrebám a očakávaniam.</p>
-
+          <p className="text-sm md:text-lg text-gray-300 max-w-3xl md:mb-2 mb-8">Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality.</p>
+    <p className="hidden md:flex text-sm md:text-lg text-gray-300 max-w-3xl mb-8">Pomôžeme vám vybrať auto, ktoré presne zodpovedá vašim potrebám a očakávaniam.</p>
           {/* CTA Buttons */}
           <div className="mb-8 md:mb-24 flex gap-4">
             <Button size="lg" asChild>
@@ -149,10 +149,10 @@ export default function Home() {
             Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
+            <Button size="lg" variant="outline" className="border border-white/10 text-white hover:bg-white/20" asChild>
               <Link href="/ponuka">Prehľadať ponuku</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
+            <Button size="lg" variant="outline" className="border border-white/10 text-white hover:bg-white/20" asChild>
               <Link href="/contact">Kontaktovať nás</Link>
             </Button>
           </div>

@@ -190,25 +190,27 @@ function InventoryPageContent() {
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
               <Input
-                placeholder="Hľadať podľa značky, modelu, roku..."
+                placeholder="Vyhľadať vozidlo"
                 className="pl-10 h-12 bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button className="h-12 min-w-[140px]" onClick={handleSearch}>
-              <Search className="mr-2 h-5 w-5" /> Hľadať
-            </Button>
-            <Button variant="outline" className="h-12 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="h-5 w-5 mr-2" />
-              Filtre
+            <Button className="h-12 min-w-[140px] md:min-w-[140px] min-w-[48px]" onClick={handleSearch}>
+              <Search className="h-5 w-5 md:mr-2" />
+              <span className="hidden md:inline">Hľadať</span>
             </Button>
           </div>
         </div>
-        {/* Layout selector and Sort - Same level as search */}
+        {/* Layout selector, Sort, and Filter button - Same level as search */}
         <div className="flex items-center gap-4 w-full lg:w-auto">
-          {/* Display Mode Toggle */}
-          <div className="flex items-center gap-2 border rounded-lg p-1">
+          {/* Filter button - Mobile only */}
+          <Button variant="outline" className="h-12 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="h-5 w-5 mr-2" />
+            Filtre
+          </Button>
+          {/* Display Mode Toggle - Hidden on mobile */}
+          <div className="hidden md:flex items-center gap-2 border rounded-lg p-1">
             <Button
               variant={displayMode === "grid" ? "default" : "ghost"}
               size="sm"

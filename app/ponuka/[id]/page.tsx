@@ -6,7 +6,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Car, Check, ChevronLeft, ChevronRight, Fuel, Info, MapPin, Share2, Sliders, Gauge } from "lucide-react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Calendar, Car, Check, ChevronLeft, ChevronRight, Fuel, Info, MapPin, Share2, Sliders, Gauge, X } from "lucide-react"
 import { formatCurrency, formatNumber, translateFuelType, translateTransmission } from "@/lib/utils"
 import FAQ from "@/components/faq"
 import CustomVehicleForm from "@/components/custom-vehicle-form"
@@ -19,6 +20,8 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false)
+  const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0)
 
   useEffect(() => {
     async function fetchVehicle() {
@@ -84,7 +87,13 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Main Image - With Padding and Rounded Corners */}
         <div className="px-4">
-          <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl">
+          <div 
+            className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl cursor-pointer"
+            onClick={() => {
+              setFullscreenImageIndex(activeImageIndex)
+              setIsFullscreenOpen(true)
+            }}
+          >
             <Image
               src={vehicle.images[activeImageIndex] || "/placeholder.svg"}
               alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
@@ -110,7 +119,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             variant="ghost"
             size="icon"
               className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
-            onClick={prevImage}
+            onClick={(e) => {
+              e.stopPropagation()
+              prevImage()
+            }}
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
@@ -118,7 +130,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             variant="ghost"
             size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#121212]/50 backdrop-blur-sm hover:bg-[#121212]/70 text-white"
-            onClick={nextImage}
+            onClick={(e) => {
+              e.stopPropagation()
+              nextImage()
+            }}
           >
             <ChevronRight className="h-6 w-6" />
           </Button>
@@ -276,6 +291,76 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Add bottom padding for fixed button */}
         <div className="h-20"></div>
+
+        {/* Fullscreen Image Dialog - Mobile Only */}
+        <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
+          <DialogContent className="max-w-full w-full h-full m-0 p-0 bg-black/95 border-0 rounded-none">
+            <DialogTitle className="sr-only">
+              {vehicle.year} {vehicle.make} {vehicle.model} - Obrázok {fullscreenImageIndex + 1} z {vehicle.images.length}
+            </DialogTitle>
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+                onClick={() => setIsFullscreenOpen(false)}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+
+              {/* Image */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <Image
+                  src={vehicle.images[fullscreenImageIndex] || "/placeholder.svg"}
+                  alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} - Image ${fullscreenImageIndex + 1}`}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+
+              {/* Navigation Arrows */}
+              {vehicle.images.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const newIndex = fullscreenImageIndex === 0 ? vehicle.images.length - 1 : fullscreenImageIndex - 1
+                      setFullscreenImageIndex(newIndex)
+                      setActiveImageIndex(newIndex)
+                    }}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const newIndex = fullscreenImageIndex === vehicle.images.length - 1 ? 0 : fullscreenImageIndex + 1
+                      setFullscreenImageIndex(newIndex)
+                      setActiveImageIndex(newIndex)
+                    }}
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
+                </>
+              )}
+
+              {/* Image Counter */}
+              {vehicle.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm">
+                  {fullscreenImageIndex + 1} / {vehicle.images.length}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Desktop Layout - Original Design */}
@@ -448,7 +533,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Custom Vehicle Request Form */}
-      <div className="mt-48 mb-32">
+      <div className="mt-12 md:mt-48 mb-32">
         <div className="max-w-6xl mx-auto px-8 lg:px-16">
           <CustomVehicleForm />
         </div>
