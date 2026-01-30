@@ -30,7 +30,7 @@ export default function Home() {
         {/* Content - Left side */}
         <div className="relative z-20 flex-1 flex flex-col justify-center px-4 md:pl-16 md:pr-4 py-24 md:py-32">
           {/* Subheading */}
-          <p className="text-base md:text-lg text-gray-300 mb-4">Vitajte v Ferlucicars</p>
+          <p className="text-base md:text-lg text-gray-300 mb-4">Vitajte vo Ferlucicars</p>
 
           {/* Heading */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-8">
@@ -146,7 +146,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center relative z-20">
           <h2 className="text-3xl font-bold mb-6">Ste pripravení nájsť svoje vysnívané auto?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
+            Navštívte náš showroom ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="outline" className="border border-white/10 text-white hover:bg-white/20" asChild>

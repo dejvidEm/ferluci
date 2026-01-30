@@ -49,7 +49,7 @@ export default function GalleryPage() {
               Galéria
             </h1>
             <p className="text-xl text-gray-200">
-              Pozrite si našu showroom a vozidlá v našej ponuke
+              Pozrite si náš showroom a vozidlá v našej ponuke
             </p>
           </div>
         </div>

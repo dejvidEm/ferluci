@@ -51,11 +51,11 @@ export default function Header() {
                     isActive ? "text-primary" : ""
                   }`}
                 >
-                  {item.name}
+                {item.name}
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                   )}
-                </Link>
+              </Link>
               )
             })}
           </nav>
@@ -99,19 +99,19 @@ export default function Header() {
                   {navigation.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                     return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
+                    <Link
+                      key={item.name}
+                      href={item.href}
                         className={`text-gray-200 hover:text-primary font-medium text-lg relative pb-1 ${
                           isActive ? "text-primary" : ""
                         }`}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {item.name}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.name}
                         {isActive && (
                           <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                         )}
-                      </Link>
+                    </Link>
                     )
                   })}
                   <div className="pt-4">

@@ -119,12 +119,12 @@ export default function AboutPage() {
               const Icon = icons[index] || Shield
               return (
                 <div key={index} className="bg-[#2a0f1a]/50 backdrop-blur-sm p-8 rounded-2xl text-center border-0">
-                  <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Icon className="h-8 w-8 text-primary" />
-                  </div>
+              </div>
                   <h3 className="text-xl font-semibold mb-3 text-gray-100">{value.title}</h3>
                   <p className="text-gray-300">{value.description}</p>
-                </div>
+            </div>
               )
             })}
           </div>
@@ -141,14 +141,14 @@ export default function AboutPage() {
               const Icon = icons[index] || Car
               return (
                 <div key={index} className="flex items-start space-x-4">
-                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
+              </div>
+              <div>
                     <h3 className="text-xl font-semibold mb-2 text-gray-100">{item.title}</h3>
                     <p className="text-gray-300">{item.description}</p>
-                  </div>
-                </div>
+              </div>
+            </div>
               )
             })}
           </div>

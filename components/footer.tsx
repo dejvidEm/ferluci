@@ -13,7 +13,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-white text-lg font-bold mb-4 relative pb-2">
-              Ferlucicars
+              Ferluci Cars
               <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
             </h3>
             <p className="mb-4">
@@ -152,23 +152,19 @@ export default function Footer() {
               <p>Email: {contactInfo.email || "info@ferlucicars.com"}</p>
             </address>
             <p className="mt-3">
-              <strong>Otáčacie hodiny:</strong>
+              <strong>Otváracie hodiny:</strong>
               <br />
               {contactInfo.openingHours ? (
                 <>
                   Po-Pia: {contactInfo.openingHours.mondayFriday}
                   <br />
-                  So: {contactInfo.openingHours.saturday}
-                  <br />
-                  Ne: {contactInfo.openingHours.sunday}
+                  So-Ne: {contactInfo.openingHours.saturday}
                 </>
               ) : (
                 <>
-                  Po-Pia: 9:00 - 20:00
-                  <br />
-                  So: 9:00 - 18:00
-                  <br />
-                  Ne: Zatvorené
+                  Po-Pia: Na objednávku
+              <br />
+                  So-Ne: Na objednávku
                 </>
               )}
             </p>

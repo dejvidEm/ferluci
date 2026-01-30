@@ -284,7 +284,7 @@ export default function ContactPage() {
 
               <div className="space-y-6">
                 <div>
-                    <h3 className="font-medium mb-2 text-gray-300">Adresa autosalónu</h3>
+                    <h3 className="font-medium mb-2 text-gray-300">Adresa showroomu</h3>
                   <div className="flex items-start">
                       <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
                       <address className="not-italic text-gray-300">
@@ -297,7 +297,7 @@ export default function ContactPage() {
                         ) : (
                           <>
                             Kopčianska 41
-                            <br />
+                      <br />
                             851 01 Petržalka
                           </>
                         )}

@@ -44,9 +44,21 @@ export default function ServicesPage() {
   const defaultData: ServicesPageData = {
     heroTitle: "Naše služby",
     serviceCards: [
-      { title: "Predaj", description: "Ponúkame rýchly výkup, možnosť započítania auta do protihodnoty aj komisionálny predaj s kompletným servisom a maximálnou transparentnosťou." },
-      { title: "Výkup", description: "Ponúkame rýchly výkup, možnosť započítania auta do protihodnoty aj komisionálny predaj s kompletným servisom a maximálnou transparentnosťou." },
-      { title: "Komisionálny predaj", description: "Ponúkame rýchly výkup, možnosť započítania auta do protihodnoty aj komisionálny predaj s kompletným servisom a maximálnou transparentnosťou." },
+      {
+        title: "Predaj",
+        description:
+          "Ponúkame starostlivo vybrané vozidlá z našej ponuky s overeným pôvodom, jasnou históriou a dôrazom na kvalitu a transparentnosť."
+      },
+      {
+        title: "Výkup",
+        description:
+          "Vykúpime vaše vozidlo rýchlo a férovo, s možnosťou okamžitej platby alebo započítania auta do protihodnoty."
+      },
+      {
+        title: "Komisionálny predaj",
+        description:
+          "Zabezpečíme komisionálny predaj vášho vozidla s kompletným servisom, profesionálnou prezentáciou a maximálnou transparentnosťou."
+      }
     ],
     financingSection: {
       title: "Financovanie",
@@ -74,7 +86,7 @@ export default function ServicesPage() {
     },
     ctaSection: {
       title: "Ste pripravení nájsť svoje vysnívané auto?",
-      description: "Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.",
+      description: "Navštívte náš showroom ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.",
     },
   }
 
@@ -148,7 +160,7 @@ export default function ServicesPage() {
             </div>
 
             {/* Right Side: Image */}
-            <div className="relative h-[600px] rounded-2xl overflow-hidden">
+            <div className="relative md:h-[500px] h-[300px] rounded-2xl overflow-hidden">
               <Image
                 src={data.financingSection?.image ? getImageUrl(data.financingSection.image) : "/banner.jpg"}
                 alt="Financovanie a záručné krytie"
@@ -165,7 +177,7 @@ export default function ServicesPage() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
             {/* Left Side: Image */}
-            <div className="relative h-[600px] rounded-2xl overflow-hidden order-2 md:order-1">
+            <div className="relative h-[600px] hidden md:block rounded-2xl overflow-hidden order-2 md:order-1">
               <Image
                 src={data.showroomSection?.image ? getImageUrl(data.showroomSection.image) : "/banner.jpg"}
                 alt="Showroom a výhody"
@@ -213,12 +225,12 @@ export default function ServicesPage() {
                 const Icon = icons[index] || Clock
                 return (
                   <div key={index} className="text-center">
-                    <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <Icon className="h-8 w-8 text-primary" />
-                    </div>
+                </div>
                     <h3 className="text-xl font-semibold mb-2 text-gray-100">{item.title}</h3>
                     <p className="text-gray-300">{item.description}</p>
-                  </div>
+              </div>
                 )
               })}
             </div>
@@ -243,7 +255,7 @@ export default function ServicesPage() {
         <div className="container mx-auto px-4 text-center relative z-20">
           <h2 className="text-3xl font-bold mb-6">{data.ctaSection?.title || "Ste pripravení nájsť svoje vysnívané auto?"}</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            {data.ctaSection?.description || "Navštívte naše autosalóny ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet."}
+            {data.ctaSection?.description || "Navštívte náš showroom ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20" asChild>
