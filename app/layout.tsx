@@ -20,7 +20,7 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "Ferlucicars - Nájdite svoje ideálne vozidlo",
+  title: "Ferluci cars - Nájdite svoje ideálne vozidlo",
   description: "Prehľadajte našu rozsiahlu ponuku prémiových vozidiel a odíďte s istotou.",
     generator: 'v0.app'
 }
