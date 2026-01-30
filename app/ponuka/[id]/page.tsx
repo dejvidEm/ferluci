@@ -294,7 +294,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Fullscreen Image Dialog - Mobile Only */}
         <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
-          <DialogContent className="max-w-full w-full h-full m-0 p-0 bg-black/95 border-0 rounded-none">
+          <DialogContent className="max-w-full w-full h-full m-0 p-0 bg-black/95 border-0 rounded-none [&>button]:hidden">
             <DialogTitle className="sr-only">
               {vehicle.year} {vehicle.make} {vehicle.model} - Obrázok {fullscreenImageIndex + 1} z {vehicle.images.length}
             </DialogTitle>
