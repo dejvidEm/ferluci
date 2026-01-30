@@ -19,6 +19,8 @@ export default function Home() {
           loop
           muted
           playsInline
+          preload="metadata"
+          poster="/banner2.png"
           className="absolute inset-0 w-full h-full object-cover object-center z-0"
         >
           <source src="/video/final.mp4" type="video/mp4" />
