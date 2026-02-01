@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative w-full min-h-screen flex overflow-hidden -mt-28 md:-mt-44">
+      <section className="relative w-full min-h-screen flex overflow-hidden -mt-28 md:-mt-24">
         {/* Video Background - full width */}
         <video
           autoPlay

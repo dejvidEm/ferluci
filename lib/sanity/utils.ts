@@ -6,12 +6,29 @@ export interface GalleryImage {
   title: string
   src: string
   alt: string
+  type: 'image' | 'video'
+  videoUrl?: string
+  thumbnail?: string
 }
 
 export interface SanityGalleryImage {
   _id: string
   title: string
-  image: {
+  mediaType?: 'image' | 'video'
+  image?: {
+    _type: 'image'
+    asset: any
+    alt?: string
+  }
+  video?: {
+    asset?: {
+      _id: string
+      url: string
+      mimeType?: string
+      size?: number
+    }
+  }
+  videoThumbnail?: {
     _type: 'image'
     asset: any
     alt?: string
@@ -83,6 +100,33 @@ export function transformSanityVehicle(vehicle: SanityVehicle): Vehicle {
 }
 
 export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): GalleryImage {
+  const mediaType = galleryImage.mediaType || (galleryImage.image ? 'image' : 'video')
+  
+  if (mediaType === 'video') {
+    const videoUrl = galleryImage.video?.asset?.url || ''
+    const thumbnail = galleryImage.videoThumbnail
+      ? (() => {
+          try {
+            return urlFor(galleryImage.videoThumbnail).width(1200).height(1200).url()
+          } catch (error) {
+            console.error('Error generating video thumbnail URL:', error)
+            return undefined
+          }
+        })()
+      : undefined
+    
+    return {
+      id: galleryImage._id,
+      title: galleryImage.title,
+      src: thumbnail || videoUrl, // Use video URL as fallback if no thumbnail
+      alt: galleryImage.videoThumbnail?.alt || galleryImage.title || 'Gallery video',
+      type: 'video',
+      videoUrl,
+      thumbnail,
+    }
+  }
+  
+  // Image type
   return {
     id: galleryImage._id,
     title: galleryImage.title,
@@ -97,6 +141,7 @@ export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): G
         })()
       : '/placeholder.svg',
     alt: galleryImage.image?.alt || galleryImage.title || 'Gallery image',
+    type: 'image',
   }
 }
 

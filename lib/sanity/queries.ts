@@ -99,7 +99,17 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
 export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, _createdAt desc) {
   _id,
   title,
+  mediaType,
   image,
+  video {
+    asset-> {
+      _id,
+      url,
+      mimeType,
+      size
+    }
+  },
+  videoThumbnail,
   order
 }`
 

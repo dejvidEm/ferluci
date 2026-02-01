@@ -51,7 +51,7 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
                 <div className="mb-2 flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-xl mb-1">
-                      {vehicle.year} {vehicle.make} {vehicle.model}
+                      {vehicle.make} {vehicle.model}
                     </h3>
                   </div>
                   <div className="flex flex-col items-end ml-4">
@@ -126,7 +126,7 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
       <CardContent className="p-4 relative z-10">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="font-semibold text-lg">
-            {vehicle.year} {vehicle.make} {vehicle.model}
+            {vehicle.make} {vehicle.model}
           </h3>
           <div className="flex flex-col items-end">
             {vehicle.showOldPrice && vehicle.oldPrice && (

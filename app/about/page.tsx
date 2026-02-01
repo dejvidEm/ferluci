@@ -95,20 +95,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Our Story */}
-      <section className="py-16 bg-[#121212]">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-6 text-gray-100">{data.storySection?.title || "Náš príbeh"}</h2>
-            <div className="space-y-4 text-gray-300">
-              {data.storySection?.paragraphs?.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Our Values */}
       <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">

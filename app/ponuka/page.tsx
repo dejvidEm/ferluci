@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,6 +20,7 @@ import { transformSanityVehicle } from "@/lib/sanity/utils"
 
 function InventoryPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -38,7 +39,10 @@ function InventoryPageContent() {
   useEffect(() => {
     const searchParam = searchParams.get("search")
     if (searchParam) {
-      setSearchQuery(decodeURIComponent(searchParam))
+      const decoded = decodeURIComponent(searchParam)
+      setSearchQuery(decoded)
+    } else {
+      setSearchQuery("")
     }
   }, [searchParams])
 
@@ -89,15 +93,37 @@ function InventoryPageContent() {
   const applyFiltersAndSort = useCallback(() => {
     let results = vehicles
 
-    // Filter by search query
+    // Filter by search query - search only in make, model, and year
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      results = results.filter(
-        (vehicle) =>
-          vehicle.make.toLowerCase().includes(query) ||
-          vehicle.model.toLowerCase().includes(query) ||
-          vehicle.year.toString().includes(query),
-      )
+      const query = searchQuery.toLowerCase().trim()
+      const queryWords = query.split(/\s+/).filter(word => word.length > 0)
+      
+      results = results.filter((vehicle) => {
+        const makeLower = vehicle.make.toLowerCase()
+        const modelLower = vehicle.model.toLowerCase()
+        const yearStr = vehicle.year.toString()
+        const combined = `${makeLower} ${modelLower} ${yearStr}`
+        
+        // Check if combined string contains the full query (for exact matches like "bmw 740")
+        if (combined.includes(query)) {
+          return true
+        }
+        
+        // For multi-word queries, check if all words are found in the vehicle data
+        // Each word must be found in at least one field (make, model, or year)
+        if (queryWords.length > 1) {
+          return queryWords.every(word => 
+            makeLower.includes(word) ||
+            modelLower.includes(word) ||
+            yearStr.includes(word)
+          )
+        }
+        
+        // Single word query - check if it matches any field
+        return makeLower.includes(query) ||
+               modelLower.includes(query) ||
+               yearStr.includes(query)
+      })
     }
 
     // Filter by price range
@@ -146,7 +172,21 @@ function InventoryPageContent() {
   }, [vehicles, searchQuery, priceRange, yearRange, selectedMakes, selectedFuelTypes, selectedTransmissions, selectedPohon, sortBy])
 
   const handleSearch = () => {
+    // Update URL with search query
+    const params = new URLSearchParams(searchParams.toString())
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim())
+    } else {
+      params.delete("search")
+    }
+    router.push(`/ponuka?${params.toString()}`, { scroll: false })
     applyFiltersAndSort()
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch()
+    }
   }
 
   const resetFilters = () => {
@@ -190,10 +230,11 @@ function InventoryPageContent() {
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
               <Input
-                placeholder="Vyhľadať vozidlo"
+                placeholder="Vyhľadať vozidlo (značka, model, rok...)"
                 className="pl-10 h-12 bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
               />
             </div>
             <Button className="h-12 min-w-[140px] md:min-w-[140px] min-w-[48px]" onClick={handleSearch}>
@@ -205,7 +246,7 @@ function InventoryPageContent() {
         {/* Layout selector, Sort, and Filter button - Same level as search */}
         <div className="flex items-center gap-4 w-full lg:w-auto">
           {/* Filter button - Mobile only */}
-          <Button variant="outline" className="h-12 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
+          <Button variant="outline" className="h-10 bg-[#121212] lg:hidden border border-white/30" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-5 w-5 mr-2" />
             Filtre
           </Button>

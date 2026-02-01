@@ -11,6 +11,7 @@ import { Calendar, Car, Check, ChevronLeft, ChevronRight, Fuel, Info, MapPin, Sh
 import { formatCurrency, formatNumber, translateFuelType, translateTransmission } from "@/lib/utils"
 import FAQ from "@/components/faq"
 import CustomVehicleForm from "@/components/custom-vehicle-form"
+import LoanCalculator from "@/components/loan-calculator"
 import { client, vehicleByIdQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
@@ -280,6 +281,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               ))}
             </ul>
           </div>
+
+          {/* Loan Calculator */}
+          <div className="mt-8">
+            <LoanCalculator vehiclePrice={vehicle.price} vehicleId={vehicle.id} />
+          </div>
         </div>
 
         {/* Contact Button - Full Width, Bottom */}
@@ -431,7 +437,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 </section>
 
                 {/* Specifications Section */}
-                <section>
+                <section id="specifications">
                   <h3 className="text-2xl font-semibold mb-4 text-gray-100">Špecifikácie</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="grid grid-cols-2 gap-3">
@@ -477,8 +483,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Right Column - Details and Actions */}
-            <div>
-              <div className="bg-[#2a0f1a]/50 backdrop-blur-sm rounded-2xl p-6 sticky top-24 border-0">
+            <div className="sticky top-24 self-start">
+              <div className="space-y-6">
+                <div className="bg-[#2a0f1a]/50 backdrop-blur-sm rounded-2xl p-6 border-0">
                 <div className="flex items-center justify-between mb-4">
                   <h1 className="text-2xl font-bold text-gray-100 pr-2">
                     {vehicle.year} {vehicle.make} {vehicle.model}
@@ -521,11 +528,25 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   <Button className="w-full" size="lg" asChild>
                     <Link href={`/contact?vehicle=${vehicle.id}`}>Kontaktovať predajcu</Link>
                   </Button>
-                  <Button variant="secondary" className="w-full" size="lg">
+                  <Button 
+                    variant="secondary" 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => {
+                      const specsSection = document.getElementById('specifications')
+                      if (specsSection) {
+                        specsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }
+                    }}
+                  >
                     <Info className="h-5 w-5 mr-2" />
-                    Požiadať o viac informácií
+                    Viac informácii
                   </Button>
                 </div>
+                </div>
+
+                {/* Loan Calculator */}
+                <LoanCalculator vehiclePrice={vehicle.price} vehicleId={vehicle.id} />
               </div>
             </div>
           </div>

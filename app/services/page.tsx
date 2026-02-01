@@ -130,115 +130,62 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Second Section: Financovanie and Záručné krytie with Image */}
-      <section className="py-16 bg-[#121212]">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
-            {/* Left Side: Text Content */}
-            <div className="space-y-12">
-              {/* Financovanie */}
-              {data.financingSection && (
-                <div>
-                  <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                    <DollarSign className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">{data.financingSection.title}</h3>
-                  <p className="text-gray-300 text-lg">{data.financingSection.description}</p>
-                </div>
-              )}
+      {/* Second Section: 4 Sections in 2x2 Grid */}
+      <section className="pt-24 pb-48 bg-[#121212] relative overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto relative">
+            {/* Red gradient blobs behind cards */}
+            <div className="absolute -top-20 -left-20 w-32 h-32 bg-gradient-to-br from-red-600/30 via-red-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-10 right-1/4 w-80 h-80 bg-gradient-to-br from-red-700/25 via-red-600/15 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-gradient-to-tl from-red-600/30 via-red-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
-              {/* Záručné krytie */}
-              {data.warrantySection && (
-                <div>
-                  <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                    <Shield className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">{data.warrantySection.title}</h3>
-                  <p className="text-gray-300 text-lg">{data.warrantySection.description}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Right Side: Image */}
-            <div className="relative md:h-[500px] h-[300px] rounded-2xl overflow-hidden">
-              <Image
-                src={data.financingSection?.image ? getImageUrl(data.financingSection.image) : "/banner.jpg"}
-                alt="Financovanie a záručné krytie"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Third Section: Showroom and Výhody a zľavy with Image */}
-      <section className="py-16 bg-[#121212]">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
-            {/* Left Side: Image */}
-            <div className="relative h-[600px] hidden md:block rounded-2xl overflow-hidden order-2 md:order-1">
-              <Image
-                src={data.showroomSection?.image ? getImageUrl(data.showroomSection.image) : "/banner.jpg"}
-                alt="Showroom a výhody"
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            {/* Right Side: Text Content */}
-            <div className="space-y-12 order-1 md:order-2">
-              {/* SHOWROOM */}
-              {data.showroomSection && (
-                <div>
-                  <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                    <Car className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">{data.showroomSection.title}</h3>
-                  <p className="text-gray-300 text-lg">{data.showroomSection.description}</p>
-                </div>
-              )}
-
-              {/* VÝHODY A ZĽAVY */}
-              {data.benefitsSection && (
-                <div>
-                  <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                    <TrendingUp className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-4 text-gray-100">{data.benefitsSection.title}</h3>
-                  <p className="text-gray-300 text-lg">{data.benefitsSection.description}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Our Services */}
-      <section className="py-16 bg-[#121212]">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12 text-gray-100">{data.whyChooseSection?.title || "Prečo si vybrať naše služby?"}</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {data.whyChooseSection?.items?.map((item, index) => {
-                const icons = [Clock, TrendingUp, Shield]
-                const Icon = icons[index] || Clock
-                return (
-                  <div key={index} className="text-center">
+            {/* Financovanie */}
+            {data.financingSection && (
+              <div className="relative bg-white/5 backdrop-blur-md p-8 rounded-2xl text-center border border-white/10 shadow-lg">
                 <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Icon className="h-8 w-8 text-primary" />
+                  <DollarSign className="h-8 w-8 text-primary" />
                 </div>
-                    <h3 className="text-xl font-semibold mb-2 text-gray-100">{item.title}</h3>
-                    <p className="text-gray-300">{item.description}</p>
+                <h3 className="text-xl font-semibold mb-3 text-gray-100">{data.financingSection.title}</h3>
+                <p className="text-gray-300">{data.financingSection.description}</p>
               </div>
-                )
-              })}
-            </div>
+            )}
+
+            {/* Záručné krytie */}
+            {data.warrantySection && (
+              <div className="relative bg-white/5 backdrop-blur-md p-8 rounded-2xl text-center border border-white/10 shadow-lg">
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-gray-100">{data.warrantySection.title}</h3>
+                <p className="text-gray-300">{data.warrantySection.description}</p>
+              </div>
+            )}
+
+            {/* SHOWROOM */}
+            {data.showroomSection && (
+              <div className="relative bg-white/5 backdrop-blur-md p-8 rounded-2xl text-center border border-white/10 shadow-lg">
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Car className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-gray-100">{data.showroomSection.title}</h3>
+                <p className="text-gray-300">{data.showroomSection.description}</p>
+              </div>
+            )}
+
+            {/* VÝHODY A ZĽAVY */}
+            {data.benefitsSection && (
+              <div className="relative bg-white/5 backdrop-blur-md p-8 rounded-2xl text-center border border-white/10 shadow-lg">
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-gray-100">{data.benefitsSection.title}</h3>
+                <p className="text-gray-300">{data.benefitsSection.description}</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
       {/* CTA */}
       <section className="relative py-16 text-white overflow-hidden">
         {/* Background Image */}

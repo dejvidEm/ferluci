@@ -10,7 +10,7 @@ export default function Footer() {
     <footer className="bg-[#121212] text-gray-200 relative overflow-hidden">
       <span className="text-center text-red-400 md:text-[160px] text-[45px] font-bold absolute left-2 md:left-10 -bottom-5 md:-bottom-20 opacity-5 pointer-events-none z-0">FERLUCICARS</span>
       <div className="container mx-auto px-4 pt-20 py-12 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <h3 className="text-white text-lg font-bold mb-4 relative pb-2">
               Ferluci Cars
@@ -97,40 +97,6 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white text-lg font-bold mb-4 relative  pb-2">
-              Služby
-              <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="#" className="hover:text-white">
-                  Nové vozidlá
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white">
-                  Ojazdené vozidlá
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white">
-                  Financovanie
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white">
-                  Servis a náhradné diely
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white">
-                  Ocenenie vozidla
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
             <h3 className="text-white text-lg font-bold mb-4 relative pb-2">
               Kontakt
               <span className="absolute bottom-0 left-0 w-20 h-0.5 bg-red-500"></span>
@@ -172,7 +138,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-8 text-sm text-center">
-          <p>&copy; {new Date().getFullYear()} Ferlucicars. Všetky práva vyhradené.</p>
+          <p>&copy; {new Date().getFullYear()} Ferluci Cars. Všetky práva vyhradené.</p>
           <p className="mt-2">
             <Link href="#" className="hover:text-white">
               Zásady ochrany súkromia

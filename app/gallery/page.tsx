@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Play } from "lucide-react"
 import { client, galleryImagesQuery } from "@/lib/sanity"
 import { transformSanityGalleryImage, type GalleryImage } from "@/lib/sanity/utils"
 
 export default function GalleryPage() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedMedia, setSelectedMedia] = useState<GalleryImage | null>(null)
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
+  const [videoErrors, setVideoErrors] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function fetchGalleryImages() {
@@ -68,23 +70,72 @@ export default function GalleryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {galleryImages.map((image) => (
+              {galleryImages.map((item) => (
                 <div
-                  key={image.id}
+                  key={item.id}
                   className="relative group cursor-pointer overflow-hidden rounded-lg bg-[#1a1a1a] aspect-square"
-                  onClick={() => setSelectedImage(image.src)}
+                  onClick={() => setSelectedMedia(item)}
                 >
-                  <Image
-                    src={image.src}
-                    alt={image.alt}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
+                  {item.type === 'video' && item.videoUrl ? (
+                    <>
+                      {videoErrors.has(item.id) && item.thumbnail ? (
+                        <Image
+                          src={item.thumbnail}
+                          alt={item.alt}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <video
+                          src={item.videoUrl}
+                          preload="auto"
+                          poster={item.thumbnail || undefined}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          muted
+                          playsInline
+                          onLoadedData={(e) => {
+                            // Seek to first frame to ensure it's visible
+                            const video = e.currentTarget
+                            if (video.readyState >= 2) {
+                              video.currentTime = 0.01
+                            }
+                          }}
+                          onLoadedMetadata={(e) => {
+                            // Ensure first frame is displayed
+                            const video = e.currentTarget
+                            if (video.duration > 0 && video.readyState >= 2) {
+                              video.currentTime = 0.01
+                            }
+                          }}
+                          onError={() => {
+                            console.error('Video load error for:', item.videoUrl)
+                            setVideoErrors((prev) => new Set(prev).add(item.id))
+                          }}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <Image
+                      src={item.src}
+                      alt={item.alt}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                  {/* Play Icon for Videos */}
+                  {item.type === 'video' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-black/60 rounded-full p-4 group-hover:bg-black/80 transition-colors duration-300">
+                        <Play className="h-12 w-12 text-white fill-white" />
+                      </div>
+                    </div>
+                  )}
                   {/* Title Overlay - Bottom */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="text-white font-medium text-sm md:text-base">{image.title}</p>
+                    <p className="text-white font-medium text-sm md:text-base">{item.title}</p>
                   </div>
                 </div>
               ))}
@@ -93,25 +144,34 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Image Modal */}
-      <Dialog open={selectedImage !== null} onOpenChange={() => setSelectedImage(null)}>
+      {/* Media Modal */}
+      <Dialog open={selectedMedia !== null} onOpenChange={() => setSelectedMedia(null)}>
         <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 bg-black/95 border-0">
           <DialogTitle className="sr-only">
-            {selectedImage 
-              ? galleryImages.find(img => img.src === selectedImage)?.alt || "Gallery image"
-              : "Gallery image"
-            }
+            {selectedMedia?.alt || "Gallery media"}
           </DialogTitle>
-          {selectedImage && (
+          {selectedMedia && (
             <div className="relative w-full h-full flex items-center justify-center">
-              <Image
-                src={selectedImage}
-                alt={galleryImages.find(img => img.src === selectedImage)?.alt || "Gallery image"}
-                fill
-                className="object-contain p-4"
-                sizes="95vw"
-                priority
-              />
+              {selectedMedia.type === 'video' && selectedMedia.videoUrl ? (
+                <video
+                  src={selectedMedia.videoUrl}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-full w-auto h-auto"
+                  style={{ maxHeight: '95vh' }}
+                >
+                  Váš prehliadač nepodporuje prehrávanie videa.
+                </video>
+              ) : (
+                <Image
+                  src={selectedMedia.src}
+                  alt={selectedMedia.alt}
+                  fill
+                  className="object-contain p-4"
+                  sizes="95vw"
+                  priority
+                />
+              )}
             </div>
           )}
         </DialogContent>
