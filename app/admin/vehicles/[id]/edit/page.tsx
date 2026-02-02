@@ -236,6 +236,13 @@ export default function EditVehiclePage() {
     )
   }
 
+  // Scroll to top when success message appears
+  useEffect(() => {
+    if (success) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [success])
+
   if (success) {
     return (
       <div className="min-h-screen bg-[#121212] p-4 md:p-8">
