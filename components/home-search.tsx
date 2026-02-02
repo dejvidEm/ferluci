@@ -113,8 +113,8 @@ export default function HomeSearch() {
         setShowDropdown(false)
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
-        handleSearch()
-      }
+      handleSearch()
+    }
     } else if (e.key === "ArrowDown") {
       e.preventDefault()
       setSelectedIndex((prev) =>

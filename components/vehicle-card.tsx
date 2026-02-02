@@ -128,7 +128,7 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
         {vehicle.featured && <Badge className="absolute top-2 left-2 z-10">Odporúčané</Badge>}
       </div>
       <CardContent className="p-4 relative z-10">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <h3 className="font-semibold text-lg">
             {vehicle.make} {vehicle.model}
           </h3>
@@ -143,7 +143,6 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
         </div>
         <div className="grid grid-cols-3 gap-2 text-sm">
           <div className="flex items-center">
-            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
             <span>{formatNumber(vehicle.mileage)} km</span>
           </div>
           <div className="flex items-center">

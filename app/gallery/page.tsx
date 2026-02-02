@@ -60,9 +60,9 @@ export default function GalleryPage() {
               {pageData?.heroTitle || "Galéria"}
             </h1>
             {pageData?.heroDescription && (
-              <p className="text-xl text-gray-200">
+            <p className="text-xl text-gray-200">
                 {pageData.heroDescription}
-              </p>
+            </p>
             )}
           </div>
         </div>
@@ -127,13 +127,13 @@ export default function GalleryPage() {
                       )}
                     </>
                   ) : (
-                    <Image
+                  <Image
                       src={item.src}
                       alt={item.alt}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
                   )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                   {/* Play Icon for Videos */}
@@ -174,14 +174,14 @@ export default function GalleryPage() {
                   Váš prehliadač nepodporuje prehrávanie videa.
                 </video>
               ) : (
-                <Image
+              <Image
                   src={selectedMedia.src}
                   alt={selectedMedia.alt}
-                  fill
-                  className="object-contain p-4"
-                  sizes="95vw"
-                  priority
-                />
+                fill
+                className="object-contain p-4"
+                sizes="95vw"
+                priority
+              />
               )}
             </div>
           )}
