@@ -34,6 +34,7 @@ export default function Home() {
   const defaultData: HomePageData = {
     heroSubheading: "Vitajte vo Ferlucicars",
     heroHeading: "Nájdite svoje ideálne vozidlo",
+    heroHighlightedWord: "ideálne",
     heroDescription1: "Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality.",
     heroDescription2: "Pomôžeme vám vybrať auto, ktoré presne zodpovedá vašim potrebám a očakávaniam.",
     servicesSection: {
@@ -57,10 +58,15 @@ export default function Home() {
 
   const data = pageData || defaultData
 
-  // Extract the word "ideálne" from heading if present
-  const getHeadingParts = (heading: string) => {
-    const parts = heading.split(/(ideálne)/i)
-    return parts
+  // Extract the highlighted word from heading if present
+  const getHeadingParts = (heading: string, highlightedWord?: string) => {
+    if (!highlightedWord) {
+      return [heading]
+    }
+    // Create a regex that matches the word case-insensitively
+    const regex = new RegExp(`(${highlightedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i')
+    const parts = heading.split(regex)
+    return parts.filter(part => part.length > 0) // Remove empty strings
   }
   return (
     <div className="flex flex-col">
@@ -89,15 +95,17 @@ export default function Home() {
 
           {/* Heading */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-8">
-            {getHeadingParts(data.heroHeading || "Nájdite svoje ideálne vozidlo").map((part, index) => 
-              part.toLowerCase() === "ideálne" ? (
+            {getHeadingParts(data.heroHeading || "Nájdite svoje ideálne vozidlo", data.heroHighlightedWord).map((part, index) => {
+              const highlightedWord = data.heroHighlightedWord || ""
+              const shouldHighlight = highlightedWord && part.toLowerCase() === highlightedWord.toLowerCase()
+              return shouldHighlight ? (
                 <AuroraText key={index} speed={2000} colors={["#ef4444", "#dc2626", "#b91c1c", "#991b1b"]}>
                   {part}
                 </AuroraText>
               ) : (
                 <span key={index}>{part}</span>
               )
-            )}
+            })}
           </h1>
 
           <p className="text-sm md:text-lg text-gray-300 max-w-3xl md:mb-2 mb-8">{data.heroDescription1 || "Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality."}</p>

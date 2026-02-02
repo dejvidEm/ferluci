@@ -286,6 +286,7 @@ export interface GalleryPageData {
 export interface HomePageData {
   heroSubheading?: string
   heroHeading?: string
+  heroHighlightedWord?: string
   heroDescription1?: string
   heroDescription2?: string
   servicesSection?: {

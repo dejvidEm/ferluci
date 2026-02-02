@@ -214,6 +214,7 @@ export const contactInfoQuery = groq`*[_type == "contactInfo"][0] {
 export const homePageQuery = groq`*[_type == "homePage"][0] {
   heroSubheading,
   heroHeading,
+  heroHighlightedWord,
   heroDescription1,
   heroDescription2,
   servicesSection {

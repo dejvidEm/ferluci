@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Fuel, Info, MapPin, Cog, Settings } from "lucide-react"
+import { Fuel, Info, MapPin, Cog, Settings, Calendar } from "lucide-react"
 import { formatCurrency, formatNumber, translateFuelType, translateTransmission } from "@/lib/utils"
 import type { Vehicle } from "@/lib/types"
 
@@ -63,7 +63,7 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
                     <span className="font-bold text-xl text-primary">{formatCurrency(vehicle.price)}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mt-4">
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>{formatNumber(vehicle.mileage)} km</span>
@@ -79,6 +79,10 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
                   <div className="flex items-center">
                     <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>{translateTransmission(vehicle.transmission)}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{vehicle.year}</span>
                   </div>
                 </div>
               </div>
@@ -137,7 +141,7 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
           <span className="font-bold text-lg text-primary">{formatCurrency(vehicle.price)}</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="grid grid-cols-3 gap-2 text-sm">
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
             <span>{formatNumber(vehicle.mileage)} km</span>
@@ -145,6 +149,10 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
           <div className="flex items-center">
             <Fuel className="h-4 w-4 mr-1 text-muted-foreground" />
             <span>{translateFuelType(vehicle.fuelType)}</span>
+          </div>
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+            <span>{vehicle.year}</span>
           </div>
         </div>
       </CardContent>
