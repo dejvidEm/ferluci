@@ -4,30 +4,39 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
-import { client, galleryImagesQuery } from "@/lib/sanity"
-import { transformSanityGalleryImage, type GalleryImage } from "@/lib/sanity/utils"
+import { client, galleryImagesQuery, galleryPageQuery } from "@/lib/sanity"
+import { transformSanityGalleryImage, type GalleryImage, getImageUrl, type GalleryPageData } from "@/lib/sanity/utils"
 
 export default function GalleryPage() {
   const [selectedMedia, setSelectedMedia] = useState<GalleryImage | null>(null)
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
+  const [pageData, setPageData] = useState<GalleryPageData | null>(null)
   const [loading, setLoading] = useState(true)
   const [videoErrors, setVideoErrors] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    async function fetchGalleryImages() {
+    async function fetchGalleryData() {
       try {
-        const data = await client.fetch(galleryImagesQuery)
-        if (data && data.length > 0) {
-          const transformedImages = data.map(transformSanityGalleryImage)
+        const [imagesData, pageDataResult] = await Promise.all([
+          client.fetch(galleryImagesQuery),
+          client.fetch(galleryPageQuery)
+        ])
+        
+        if (imagesData && imagesData.length > 0) {
+          const transformedImages = imagesData.map(transformSanityGalleryImage)
           setGalleryImages(transformedImages)
         }
+        
+        if (pageDataResult) {
+          setPageData(pageDataResult)
+        }
       } catch (error) {
-        console.error("Error fetching gallery images:", error)
+        console.error("Error fetching gallery data:", error)
       } finally {
         setLoading(false)
       }
     }
-    fetchGalleryImages()
+    fetchGalleryData()
   }, [])
 
   return (
@@ -36,8 +45,8 @@ export default function GalleryPage() {
       <section className="relative w-full py-24 overflow-hidden">
         {/* Background Image */}
         <Image
-          src="/banner.jpg"
-          alt="Gallery Background"
+          src={pageData?.heroImage ? getImageUrl(pageData.heroImage) : "/banner.jpg"}
+          alt={pageData?.heroImage?.alt || "Gallery Background"}
           fill
           className="object-cover z-0"
           priority
@@ -48,11 +57,13 @@ export default function GalleryPage() {
         <div className="container mx-auto px-4 relative z-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Galéria
+              {pageData?.heroTitle || "Galéria"}
             </h1>
-            <p className="text-xl text-gray-200">
-              Pozrite si náš showroom a vozidlá v našej ponuke
-            </p>
+            {pageData?.heroDescription && (
+              <p className="text-xl text-gray-200">
+                {pageData.heroDescription}
+              </p>
+            )}
           </div>
         </div>
       </section>

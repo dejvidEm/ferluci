@@ -194,10 +194,6 @@ export interface AboutPageData {
   heroTitle?: string
   heroDescription?: string
   heroImage?: SanityImage
-  storySection?: {
-    title: string
-    paragraphs?: string[]
-  }
   valuesSection?: {
     title: string
     values?: Array<{
@@ -278,6 +274,26 @@ export interface SanityContactInfo {
     mondayFriday: string
     saturday: string
     sunday: string
+  }
+}
+
+export interface GalleryPageData {
+  heroTitle?: string
+  heroDescription?: string
+  heroImage?: SanityImage
+}
+
+export interface HomePageData {
+  heroSubheading?: string
+  heroHeading?: string
+  heroDescription1?: string
+  heroDescription2?: string
+  servicesSection?: {
+    title?: string
+    serviceCards?: Array<{
+      title: string
+      description: string
+    }>
   }
 }
 

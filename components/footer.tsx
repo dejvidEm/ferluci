@@ -8,7 +8,7 @@ export default function Footer() {
   const { contactInfo } = useContactInfo()
   return (
     <footer className="bg-[#121212] text-gray-200 relative overflow-hidden">
-      <span className="text-center text-red-400 md:text-[160px] text-[45px] font-bold absolute left-2 md:left-10 -bottom-5 md:-bottom-20 opacity-5 pointer-events-none z-0">FERLUCICARS</span>
+      <span className="text-center text-red-400 md:text-[160px] text-[45px] font-bold absolute left-2 md:left-10 -bottom-5 md:-bottom-20 opacity-5 pointer-events-none z-0">FERLUCI CARS</span>
       <div className="container mx-auto px-4 pt-20 py-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>

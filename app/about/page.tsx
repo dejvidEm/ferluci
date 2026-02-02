@@ -38,14 +38,6 @@ export default function AboutPage() {
   const defaultData: AboutPageData = {
     heroTitle: "O Ferlucicars",
     heroDescription: "Váš dôveryhodný partner pri hľadaní ideálneho vozidla, ktoré zodpovedá vášmu životnému štýlu a prekračuje vaše očakávania.",
-    storySection: {
-      title: "Náš príbeh",
-      paragraphs: [
-        "Ferlucicars bol založený s jednoduchou misiou: zrevolucionizovať zážitok z nákupu auta poskytovaním výnimočných služieb, prémiových vozidiel a neporovnateľnej spokojnosti zákazníkov. Veríme, že hľadanie vášho ideálneho auta by malo byť vzrušujúca cesta, nie stresujúca skúška.",
-        "S ročnými skúsenosťami v automobilovom priemysle si náš tím vybudoval povesť integrity, transparentnosti a oddanosti našim zákazníkom. Starostlivo vyberáme našu ponuku, aby zahŕňala iba najlepšie vozidlá od popredných výrobcov, čím zabezpečujeme kvalitu a spoľahlivosť v každom aute, ktoré ponúkame.",
-        "V Ferlucicars nielenže predávame autá—budujeme vzťahy. Naša záväzok sa rozširuje za hranice predaja, poskytujeme pokračujúcu podporu, servisné služby a finančné možnosti prispôsobené vašim potrebám.",
-      ],
-    },
     valuesSection: {
       title: "Naše základné hodnoty",
       values: [

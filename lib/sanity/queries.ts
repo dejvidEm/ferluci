@@ -113,6 +113,12 @@ export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, 
   order
 }`
 
+export const galleryPageQuery = groq`*[_type == "galleryPage"][0] {
+  heroTitle,
+  heroDescription,
+  heroImage
+}`
+
 export const servicesPageQuery = groq`*[_type == "servicesPage"][0] {
   heroTitle,
   heroImage,
@@ -156,10 +162,6 @@ export const aboutPageQuery = groq`*[_type == "aboutPage"][0] {
   heroTitle,
   heroDescription,
   heroImage,
-  storySection {
-    title,
-    paragraphs
-  },
   valuesSection {
     title,
     values[] {
@@ -206,6 +208,20 @@ export const contactInfoQuery = groq`*[_type == "contactInfo"][0] {
     mondayFriday,
     saturday,
     sunday
+  }
+}`
+
+export const homePageQuery = groq`*[_type == "homePage"][0] {
+  heroSubheading,
+  heroHeading,
+  heroDescription1,
+  heroDescription2,
+  servicesSection {
+    title,
+    serviceCards[] {
+      title,
+      description
+    }
   }
 }`
 
