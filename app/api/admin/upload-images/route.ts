@@ -20,32 +20,66 @@ async function uploadImageToSanity(
   const buffer = Buffer.from(arrayBuffer)
   
   // Verify it's a valid image by checking magic bytes
-  const isJPEG = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF
+  // JPEG: FF D8 FF (standard) or FF D8 (some variants)
+  const isJPEG = (buffer[0] === 0xFF && buffer[1] === 0xD8) || 
+                 (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF)
+  // PNG: 89 50 4E 47
   const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47
-  const isGIF = buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46
-  const isWebP = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46
-  const isValidImage = isJPEG || isPNG || isGIF || isWebP
+  // GIF: 47 49 46 38 (GIF8)
+  const isGIF = (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) ||
+                (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46)
+  // WebP: RIFF...WEBP
+  const isWebP = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+                  buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+  // BMP: 42 4D
+  const isBMP = buffer[0] === 0x42 && buffer[1] === 0x4D
+  // TIFF: 49 49 2A 00 (little-endian) or 4D 4D 00 2A (big-endian)
+  const isTIFF = (buffer[0] === 0x49 && buffer[1] === 0x49 && buffer[2] === 0x2A && buffer[3] === 0x00) ||
+                 (buffer[0] === 0x4D && buffer[1] === 0x4D && buffer[2] === 0x00 && buffer[3] === 0x2A)
+  
+  const isValidImageByMagicBytes = isJPEG || isPNG || isGIF || isWebP || isBMP || isTIFF
+  
+  // Also check file.type as fallback (some browsers may not set magic bytes correctly)
+  const isValidImageByType = file.type && file.type.startsWith('image/')
+  
+  const isValidImage = isValidImageByMagicBytes || isValidImageByType
   
   console.log(`File ${file.name}:`, {
     type: file.type,
     size: buffer.length,
-    firstBytes: buffer.slice(0, 8).toString('hex'),
+    firstBytes: buffer.slice(0, 12).toString('hex'),
+    isValidImageByMagicBytes,
+    isValidImageByType,
     isValidImage,
     isJPEG,
     isPNG,
     isGIF,
     isWebP,
+    isBMP,
+    isTIFF,
   })
   
   if (!isValidImage) {
-    throw new Error(`File ${file.name} is not a valid image format. Expected JPEG, PNG, GIF, or WebP.`)
+    throw new Error(`File ${file.name} is not a valid image format. Expected JPEG, PNG, GIF, WebP, BMP, or TIFF.`)
+  }
+  
+  // Determine content type
+  let contentType = file.type
+  if (!contentType || contentType === 'application/octet-stream') {
+    if (isJPEG) contentType = 'image/jpeg'
+    else if (isPNG) contentType = 'image/png'
+    else if (isGIF) contentType = 'image/gif'
+    else if (isWebP) contentType = 'image/webp'
+    else if (isBMP) contentType = 'image/bmp'
+    else if (isTIFF) contentType = 'image/tiff'
+    else contentType = 'image/jpeg' // fallback
   }
   
   // Use Sanity client's assets.upload method which handles the format correctly
   try {
     const asset = await adminClient.assets.upload('image', buffer, {
       filename: file.name,
-      contentType: file.type || (isPNG ? 'image/png' : isJPEG ? 'image/jpeg' : 'image/jpeg'),
+      contentType: contentType,
     })
     
     return {
@@ -117,11 +151,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate all files are images
+    // Validate all files are images (more lenient check)
     for (const file of files) {
-      if (!file.type.startsWith('image/')) {
+      // Check file type, but also allow files without type if they're likely images
+      const hasImageExtension = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|tif|svg)$/i.test(file.name)
+      const hasImageType = file.type && file.type.startsWith('image/')
+      
+      if (!hasImageType && !hasImageExtension) {
         return NextResponse.json(
-          { error: `File ${file.name} is not an image` },
+          { error: `File ${file.name} does not appear to be an image file` },
           { status: 400 }
         )
       }
