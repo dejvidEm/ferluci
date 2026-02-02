@@ -65,7 +65,7 @@ async function uploadImageToSanity(
   
   // Determine content type
   let contentType = file.type
-  if (!contentType || contentType === 'application/octet-stream') {
+  if (!contentType || contentType === 'application/octet-stream' || contentType === '') {
     if (isJPEG) contentType = 'image/jpeg'
     else if (isPNG) contentType = 'image/png'
     else if (isGIF) contentType = 'image/gif'
@@ -75,10 +75,46 @@ async function uploadImageToSanity(
     else contentType = 'image/jpeg' // fallback
   }
   
+  // Sanitize filename - remove invalid characters and ensure proper extension
+  let filename = file.name
+  // Remove path separators and other invalid characters
+  filename = filename.replace(/[\/\\]/g, '_')
+  // Keep only alphanumeric, dots, dashes, and underscores
+  filename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  // Ensure filename doesn't start or end with dot or dash
+  filename = filename.replace(/^[._-]+|[._-]+$/g, '')
+  // Ensure we have a valid filename
+  if (!filename || filename.length === 0) {
+    filename = `image_${Date.now()}.jpg`
+  }
+  
+  // Ensure filename has proper extension matching content type
+  const extension = filename.toLowerCase().split('.').pop()
+  const contentTypeExt = contentType.split('/')[1]?.toLowerCase()
+  
+  // Map content types to file extensions
+  const extMap: Record<string, string> = {
+    'jpeg': 'jpg',
+    'jpg': 'jpg',
+    'png': 'png',
+    'gif': 'gif',
+    'webp': 'webp',
+    'bmp': 'bmp',
+    'tiff': 'tiff',
+  }
+  
+  const expectedExt = extMap[contentTypeExt || ''] || 'jpg'
+  
+  // If extension doesn't match or is missing, add correct one
+  if (!extension || !extMap[extension] || extMap[extension] !== expectedExt) {
+    const nameWithoutExt = filename.replace(/\.[^.]*$/, '') || filename
+    filename = `${nameWithoutExt}.${expectedExt}`
+  }
+  
   // Use Sanity client's assets.upload method which handles the format correctly
   try {
     const asset = await adminClient.assets.upload('image', buffer, {
-      filename: file.name,
+      filename: filename,
       contentType: contentType,
     })
     
@@ -88,7 +124,16 @@ async function uploadImageToSanity(
     }
   } catch (error) {
     console.error('Sanity client upload error:', error)
-    throw new Error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Upload error details:', {
+      originalFilename: file.name,
+      sanitizedFilename: filename,
+      contentType,
+      fileSize: buffer.length,
+      fileType: file.type,
+      error: errorMessage,
+    })
+    throw new Error(`Failed to upload ${file.name}: ${errorMessage}`)
   }
 }
 
