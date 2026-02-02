@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Facebook, Instagram } from "lucide-react"
+import { Facebook, Instagram, Lock } from "lucide-react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
 export default function Footer() {
@@ -114,7 +114,7 @@ export default function Footer() {
                   <p>851 01 Petržalka</p>
                 </>
               )}
-              <p className="mt-3">Telefón: {contactInfo.phone || "0905 326 292"}</p>
+              <p className="mt-3">Telefón: {contactInfo.phone}</p>
               <p>Email: {contactInfo.email || "info@ferlucicars.com"}</p>
             </address>
             <p className="mt-3">
@@ -146,6 +146,12 @@ export default function Footer() {
             |
             <Link href="#" className="hover:text-white ml-2">
               Obchodné podmienky
+            </Link>
+            {" "}
+            |
+            <Link href="/admin" className="hover:text-white ml-2 underline inline-flex items-center gap-1">
+              <Lock className="h-3 w-3" />
+              Admin
             </Link>
           </p>
         </div>

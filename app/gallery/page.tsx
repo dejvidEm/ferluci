@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
@@ -13,6 +13,62 @@ export default function GalleryPage() {
   const [pageData, setPageData] = useState<GalleryPageData | null>(null)
   const [loading, setLoading] = useState(true)
   const [videoErrors, setVideoErrors] = useState<Set<string>>(new Set())
+  const [videoThumbnails, setVideoThumbnails] = useState<Map<string, string>>(new Map())
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
+
+  // Function to capture first frame of video as thumbnail
+  const captureVideoThumbnail = (videoElement: HTMLVideoElement, videoId: string, videoUrl: string): Promise<void> => {
+    return new Promise((resolve) => {
+      // Set crossOrigin to allow canvas export (CORS)
+      videoElement.crossOrigin = 'anonymous'
+      
+      const handleLoadedData = () => {
+        try {
+          // Seek to a small time to get first frame
+          videoElement.currentTime = 0.1
+        } catch (error) {
+          console.error('Error seeking video:', error)
+          resolve()
+        }
+      }
+
+      const handleSeeked = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = videoElement.videoWidth || 800
+          canvas.height = videoElement.videoHeight || 600
+          const ctx = canvas.getContext('2d')
+          
+          if (ctx) {
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height)
+            try {
+              const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8)
+              setVideoThumbnails((prev) => new Map(prev).set(videoId, thumbnailUrl))
+            } catch (canvasError) {
+              // Canvas is tainted (CORS issue) - this is expected for cross-origin videos
+              console.warn('Cannot export canvas (CORS issue), using video poster instead')
+            }
+          }
+        } catch (error) {
+          console.error('Error capturing video thumbnail:', error)
+        } finally {
+          videoElement.removeEventListener('loadeddata', handleLoadedData)
+          videoElement.removeEventListener('seeked', handleSeeked)
+          resolve()
+        }
+      }
+
+      videoElement.addEventListener('loadeddata', handleLoadedData, { once: true })
+      videoElement.addEventListener('seeked', handleSeeked, { once: true })
+      
+      // Set a timeout to prevent hanging
+      setTimeout(() => {
+        videoElement.removeEventListener('loadeddata', handleLoadedData)
+        videoElement.removeEventListener('seeked', handleSeeked)
+        resolve()
+      }, 5000)
+    })
+  }
 
   useEffect(() => {
     async function fetchGalleryData() {
@@ -89,41 +145,91 @@ export default function GalleryPage() {
                 >
                   {item.type === 'video' && item.videoUrl ? (
                     <>
-                      {videoErrors.has(item.id) && item.thumbnail ? (
+                      {/* Always show thumbnail/poster first for better mobile performance */}
+                      {(item.thumbnail || videoThumbnails.has(item.id)) && (
                         <Image
-                          src={item.thumbnail}
+                          src={videoThumbnails.get(item.id) || item.thumbnail || ''}
                           alt={item.alt}
                           fill
                           className="object-cover transition-transform duration-300 group-hover:scale-110"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          priority={false}
                         />
-                      ) : (
-                        <video
-                          src={item.videoUrl}
-                          preload="auto"
-                          poster={item.thumbnail || undefined}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          muted
-                          playsInline
-                          onLoadedData={(e) => {
-                            // Seek to first frame to ensure it's visible
-                            const video = e.currentTarget
-                            if (video.readyState >= 2) {
-                              video.currentTime = 0.01
+                      )}
+                      {/* Hidden video element for thumbnail generation and fallback */}
+                      <video
+                        ref={(el) => {
+                          if (el) {
+                            videoRefs.current.set(item.id, el)
+                            // Set crossOrigin to allow canvas export (CORS)
+                            el.crossOrigin = 'anonymous'
+                            // Only try to capture thumbnail if we don't have one from Sanity
+                            if (!item.thumbnail && !videoThumbnails.has(item.id)) {
+                              captureVideoThumbnail(el, item.id, item.videoUrl)
                             }
-                          }}
-                          onLoadedMetadata={(e) => {
-                            // Ensure first frame is displayed
-                            const video = e.currentTarget
-                            if (video.duration > 0 && video.readyState >= 2) {
-                              video.currentTime = 0.01
+                          }
+                        }}
+                        src={item.videoUrl}
+                        preload="metadata"
+                        poster={item.thumbnail || videoThumbnails.get(item.id) || undefined}
+                        crossOrigin="anonymous"
+                        className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
+                        muted
+                        playsInline
+                        onLoadedMetadata={(e) => {
+                          const video = e.currentTarget
+                          // If no thumbnail exists, try to capture one
+                          if (!item.thumbnail && !videoThumbnails.has(item.id)) {
+                            try {
+                              video.currentTime = 0.1
+                            } catch (error) {
+                              console.error('Error seeking video for thumbnail:', error)
                             }
-                          }}
-                          onError={() => {
-                            console.error('Video load error for:', item.videoUrl)
-                            setVideoErrors((prev) => new Set(prev).add(item.id))
-                          }}
-                        />
+                          }
+                        }}
+                        onSeeked={(e) => {
+                          const video = e.currentTarget
+                          // Capture thumbnail if we don't have one
+                          if (!item.thumbnail && !videoThumbnails.has(item.id)) {
+                            try {
+                              const canvas = document.createElement('canvas')
+                              canvas.width = video.videoWidth || 800
+                              canvas.height = video.videoHeight || 600
+                              const ctx = canvas.getContext('2d')
+                              if (ctx) {
+                                ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+                                try {
+                                  const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8)
+                                  setVideoThumbnails((prev) => new Map(prev).set(item.id, thumbnailUrl))
+                                } catch (canvasError) {
+                                  // Canvas is tainted (CORS issue) - this is expected for cross-origin videos
+                                  // Fall back to using the video poster or showing a placeholder
+                                  console.warn('Cannot export canvas (CORS issue), video may need CORS headers')
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Error capturing video thumbnail:', error)
+                            }
+                          }
+                        }}
+                        onError={(e) => {
+                          const video = e.currentTarget
+                          // If CORS error, try without crossOrigin
+                          if (video.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED || 
+                              video.error?.code === MediaError.MEDIA_ERR_NETWORK) {
+                            console.warn('Video load error (possibly CORS), trying without crossOrigin')
+                            // Don't mark as error if it's just a CORS issue
+                            return
+                          }
+                          console.error('Video load error for:', item.videoUrl)
+                          setVideoErrors((prev) => new Set(prev).add(item.id))
+                        }}
+                      />
+                      {/* Fallback if video fails and no thumbnail */}
+                      {videoErrors.has(item.id) && !item.thumbnail && !videoThumbnails.has(item.id) && (
+                        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                          <p className="text-gray-400 text-sm">Video sa nepodarilo načítať</p>
+                        </div>
                       )}
                     </>
                   ) : (
