@@ -94,11 +94,16 @@ export function ImageUploader({
 
   // Keep ref in sync with images prop and ensure IDs
   useEffect(() => {
-    const imagesWithIds = ensureImageIds(images)
-    if (imagesWithIds.some((img, idx) => img.id !== images[idx]?.id)) {
+    // Check if any images need IDs
+    const needsIds = images.some(img => !img.id)
+    
+    if (needsIds) {
+      const imagesWithIds = ensureImageIds(images)
+      imagesRef.current = imagesWithIds
       onImagesChange(imagesWithIds)
+    } else {
+      imagesRef.current = images
     }
-    imagesRef.current = imagesWithIds
   }, [images, ensureImageIds, onImagesChange])
 
   // Persist to localStorage
@@ -352,15 +357,14 @@ export function ImageUploader({
     handleUploadBatches()
   }, [handleUploadBatches])
 
-  const hasUnuploadedImages = imagesWithIds.some((img) => !img.assetId)
-
   // Visible images (for performance with many images)
   const imagesWithIds = useMemo(() => ensureImageIds(images), [images, ensureImageIds])
   const visibleImages = useMemo(() => {
     return imagesWithIds.slice(0, visibleCount)
   }, [imagesWithIds, visibleCount])
 
-  const hasMoreImages = images.length > visibleCount
+  const hasUnuploadedImages = imagesWithIds.some((img) => !img.assetId)
+  const hasMoreImages = imagesWithIds.length > visibleCount
 
   // Cleanup object URLs on unmount
   useEffect(() => {
