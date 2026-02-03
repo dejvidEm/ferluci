@@ -24,12 +24,16 @@ interface ImageUploaderProps {
 const BATCH_SIZE = 3 // Upload 3 images at a time
 const MAX_PREVIEW_SIZE = 300 // Max dimension for preview thumbnails
 
-// Create optimized thumbnail from file
+// Create optimized thumbnail from file (client-side only)
 async function createThumbnail(file: File): Promise<string> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('createThumbnail can only be called on the client')
+  }
+  
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
-      const img = new window.Image()
+      const img = new Image()
       img.onload = () => {
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
@@ -80,6 +84,14 @@ export function ImageUploader({
   const [uploading, setUploading] = useState(false)
   const [visibleCount, setVisibleCount] = useState(12) // Show first 12 images initially
 
+  // Ensure all images have IDs - MUST be defined before useEffects that use it
+  const ensureImageIds = useCallback((imgs: ImageFile[]): ImageFile[] => {
+    return imgs.map(img => ({
+      ...img,
+      id: img.id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    }))
+  }, [])
+
   // Keep ref in sync with images prop and ensure IDs
   useEffect(() => {
     const imagesWithIds = ensureImageIds(images)
@@ -109,14 +121,6 @@ export function ImageUploader({
     }
   }, [images, storageKey])
 
-  // Ensure all images have IDs
-  const ensureImageIds = useCallback((imgs: ImageFile[]): ImageFile[] => {
-    return imgs.map(img => ({
-      ...img,
-      id: img.id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-    }))
-  }, [])
-
   const handleFileSelect = useCallback(
     async (files: FileList | null) => {
       if (!files || files.length === 0) return
@@ -127,9 +131,13 @@ export function ImageUploader({
       // First, add all files with temporary blob URLs for immediate UI feedback
       const tempImages: ImageFile[] = fileArray.map((file) => {
         const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+        // Use blob URL if available (client-side), otherwise use empty string
+        const preview = typeof URL !== 'undefined' && URL.createObjectURL 
+          ? URL.createObjectURL(file)
+          : ''
         return {
           file,
-          preview: URL.createObjectURL(file), // Temporary blob URL
+          preview,
           id,
         }
       })
@@ -146,8 +154,10 @@ export function ImageUploader({
         const thumbnailPromises = batch.map(async (tempImg) => {
           try {
             const thumbnail = await createThumbnail(tempImg.file)
-            // Revoke the temporary blob URL
-            URL.revokeObjectURL(tempImg.preview)
+            // Revoke the temporary blob URL if it exists
+            if (tempImg.preview && typeof URL !== 'undefined' && URL.revokeObjectURL) {
+              URL.revokeObjectURL(tempImg.preview)
+            }
             return { ...tempImg, preview: thumbnail }
           } catch (error) {
             console.warn('Failed to create thumbnail, keeping blob URL:', error)
@@ -191,7 +201,7 @@ export function ImageUploader({
       const newImages = imagesWithIds.filter((_, i) => i !== index)
       
       // Revoke object URL to prevent memory leak
-      if (imageToRemove.preview && imageToRemove.preview.startsWith('blob:')) {
+      if (imageToRemove.preview && imageToRemove.preview.startsWith('blob:') && typeof URL !== 'undefined' && URL.revokeObjectURL) {
         URL.revokeObjectURL(imageToRemove.preview)
       }
       
@@ -249,7 +259,7 @@ export function ImageUploader({
           }
           
           // Revoke blob URL after successful upload to free memory
-          if (currentImages[imageIndex].preview && currentImages[imageIndex].preview.startsWith('blob:')) {
+          if (currentImages[imageIndex].preview && currentImages[imageIndex].preview.startsWith('blob:') && typeof URL !== 'undefined' && URL.revokeObjectURL) {
             URL.revokeObjectURL(currentImages[imageIndex].preview)
             // Keep thumbnail for display
             currentImages[imageIndex].preview = currentImages[imageIndex].preview
@@ -355,11 +365,13 @@ export function ImageUploader({
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
-      imagesWithIds.forEach((img) => {
-        if (img.preview && img.preview.startsWith('blob:')) {
-          URL.revokeObjectURL(img.preview)
-        }
-      })
+      if (typeof URL !== 'undefined' && URL.revokeObjectURL) {
+        imagesWithIds.forEach((img) => {
+          if (img.preview && img.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(img.preview)
+          }
+        })
+      }
     }
   }, [imagesWithIds]) // Cleanup when images change
 
