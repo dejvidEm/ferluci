@@ -32,19 +32,124 @@ export function ImageUploader({
     imagesRef.current = images
   }, [images])
 
+  // Compress image before upload to reduce file size (target: under 4MB for Vercel limit)
+  const compressImage = useCallback(async (file: File, targetSizeMB = 3.5): Promise<File> => {
+    // If file is already small enough, return as-is
+    if (file.size <= targetSizeMB * 1024 * 1024) {
+      return file
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'))
+            return
+          }
+
+          // Calculate new dimensions - reduce size based on file size
+          let width = img.width
+          let height = img.height
+          
+          // More aggressive compression for larger files
+          const fileSizeMB = file.size / 1024 / 1024
+          let maxDimension = 2048
+          let quality = 0.85
+          
+          if (fileSizeMB > 10) {
+            maxDimension = 1600
+            quality = 0.75
+          } else if (fileSizeMB > 7) {
+            maxDimension = 1800
+            quality = 0.8
+          } else if (fileSizeMB > 5) {
+            maxDimension = 2000
+            quality = 0.82
+          }
+          
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = (height * maxDimension) / width
+              width = maxDimension
+            } else {
+              width = (width * maxDimension) / height
+              height = maxDimension
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // Try compression with quality
+          const tryCompress = (q: number): void => {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error('Failed to compress image'))
+                  return
+                }
+
+                // If still too large, reduce quality further
+                if (blob.size > targetSizeMB * 1024 * 1024 && q > 0.5) {
+                  tryCompress(q - 0.1)
+                } else {
+                  const compressedFile = new File([blob], file.name, {
+                    type: 'image/jpeg', // Always use JPEG for better compression
+                    lastModified: Date.now(),
+                  })
+                  resolve(compressedFile)
+                }
+              },
+              'image/jpeg', // Always use JPEG for better compression
+              q
+            )
+          }
+
+          tryCompress(quality)
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(file)
+    })
+  }, [])
+
   const handleFileSelect = useCallback(
-    (files: FileList | null) => {
+    async (files: FileList | null) => {
       if (!files || files.length === 0) return
 
-      // Don't create preview URLs to save memory - just use empty string
-      const newImages: ImageFile[] = Array.from(files).map((file) => ({
-        file,
-        preview: '', // No preview needed - we'll just show file names
-      }))
+      // Compress images before adding them (compress if larger than 2MB)
+      const compressionPromises = Array.from(files).map(async (file) => {
+        try {
+          // Compress if file is larger than 2MB to ensure it stays under Vercel's 4.5MB limit
+          const compressedFile = file.size > 2 * 1024 * 1024 
+            ? await compressImage(file, 3.5) // Compress to max 3.5MB (safe margin under 4.5MB limit)
+            : file
+          
+          return {
+            file: compressedFile,
+            preview: '', // No preview needed - we'll just show file names
+          }
+        } catch (error) {
+          console.warn(`Failed to compress ${file.name}, using original:`, error)
+          // If compression fails, use original file
+          return {
+            file,
+            preview: '',
+          }
+        }
+      })
 
+      const newImages = await Promise.all(compressionPromises)
       onImagesChange([...images, ...newImages])
     },
-    [images, onImagesChange]
+    [images, onImagesChange, compressImage]
   )
 
   const handleRemove = useCallback(
@@ -121,7 +226,7 @@ export function ImageUploader({
          if (!response.ok) {
            // Handle 413 (Content Too Large) error
            if (response.status === 413) {
-             throw new Error(`Súbor "${imageToUpload.file.name}" je príliš veľký (${(imageToUpload.file.size / 1024 / 1024).toFixed(2)}MB). Maximálna veľkosť je 20MB.`)
+             throw new Error(`Súbor "${imageToUpload.file.name}" je príliš veľký aj po kompresii (${(imageToUpload.file.size / 1024 / 1024).toFixed(2)}MB). Skúste použiť menší obrázok alebo ho zmenšiť pred nahrávaním.`)
            }
            
            // Handle non-JSON error responses
@@ -140,7 +245,7 @@ export function ImageUploader({
              try {
                const text = await response.text()
                if (text.includes('Request Entity Too Large') || text.includes('413') || text.includes('Content Too Large')) {
-                 errorMessage = `Súbor "${imageToUpload.file.name}" je príliš veľký (${(imageToUpload.file.size / 1024 / 1024).toFixed(2)}MB). Maximálna veľkosť je 20MB.`
+                 errorMessage = `Súbor "${imageToUpload.file.name}" je príliš veľký aj po kompresii (${(imageToUpload.file.size / 1024 / 1024).toFixed(2)}MB). Skúste použiť menší obrázok alebo ho zmenšiť pred nahrávaním.`
                } else {
                  errorMessage = `Chyba servera (${response.status})`
                }

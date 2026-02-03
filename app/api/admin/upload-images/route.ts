@@ -169,6 +169,10 @@ async function uploadSequentially(
   return results
 }
 
+// Increase body size limit for this route
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const projectId = process.env.SANITY_PROJECT_ID
