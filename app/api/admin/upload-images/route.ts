@@ -75,21 +75,39 @@ async function uploadImageToSanity(
     else contentType = 'image/jpeg' // fallback
   }
   
-  // Sanitize filename - remove invalid characters and ensure proper extension
+  // Sanitize filename - ensure it meets Sanity's requirements
   let filename = file.name
+  
+  // Extract extension first (before sanitization)
+  const originalExt = filename.toLowerCase().match(/\.([^.]+)$/)?.[1]
+  
   // Remove path separators and other invalid characters
   filename = filename.replace(/[\/\\]/g, '_')
-  // Keep only alphanumeric, dots, dashes, and underscores
+  
+  // Remove everything except alphanumeric, dots, dashes, and underscores
   filename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
-  // Ensure filename doesn't start or end with dot or dash
+  
+  // Remove leading/trailing dots, dashes, and underscores
   filename = filename.replace(/^[._-]+|[._-]+$/g, '')
-  // Ensure we have a valid filename
-  if (!filename || filename.length === 0) {
-    filename = `image_${Date.now()}.jpg`
+  
+  // Remove multiple consecutive underscores/dots
+  filename = filename.replace(/[._]{2,}/g, '_')
+  
+  // Convert to lowercase for consistency
+  filename = filename.toLowerCase()
+  
+  // Limit filename length (max 255 chars total, leave room for extension)
+  const maxNameLength = 200
+  if (filename.length > maxNameLength) {
+    filename = filename.substring(0, maxNameLength)
   }
   
-  // Ensure filename has proper extension matching content type
-  const extension = filename.toLowerCase().split('.').pop()
+  // Ensure we have a valid filename
+  if (!filename || filename.length === 0) {
+    filename = `image_${Date.now()}`
+  }
+  
+  // Determine content type extension
   const contentTypeExt = contentType.split('/')[1]?.toLowerCase()
   
   // Map content types to file extensions
@@ -105,14 +123,29 @@ async function uploadImageToSanity(
   
   const expectedExt = extMap[contentTypeExt || ''] || 'jpg'
   
-  // If extension doesn't match or is missing, add correct one
-  if (!extension || !extMap[extension] || extMap[extension] !== expectedExt) {
-    const nameWithoutExt = filename.replace(/\.[^.]*$/, '') || filename
-    filename = `${nameWithoutExt}.${expectedExt}`
+  // Remove existing extension and add correct one
+  const nameWithoutExt = filename.replace(/\.[^.]*$/, '') || filename
+  // Ensure name doesn't end with dot/dash/underscore after removing extension
+  const cleanName = nameWithoutExt.replace(/[._-]+$/, '') || `image_${Date.now()}`
+  filename = `${cleanName}.${expectedExt}`
+  
+  // Final validation: ensure filename matches pattern [a-z0-9._-]+\.(jpg|png|gif|webp|bmp|tiff)
+  if (!/^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename)) {
+    // Fallback to safe filename
+    filename = `image_${Date.now()}.${expectedExt}`
   }
   
   // Use Sanity client's assets.upload method which handles the format correctly
   try {
+    // Log filename details for debugging
+    console.log('Uploading with filename:', {
+      original: file.name,
+      sanitized: filename,
+      contentType,
+      filenameLength: filename.length,
+      filenamePattern: /^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename),
+    })
+    
     const asset = await adminClient.assets.upload('image', buffer, {
       filename: filename,
       contentType: contentType,
@@ -125,14 +158,22 @@ async function uploadImageToSanity(
   } catch (error) {
     console.error('Sanity client upload error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error('Upload error details:', {
+    const errorDetails = {
       originalFilename: file.name,
       sanitizedFilename: filename,
       contentType,
       fileSize: buffer.length,
       fileType: file.type,
       error: errorMessage,
-    })
+      filenamePattern: /^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename),
+    }
+    console.error('Upload error details:', errorDetails)
+    
+    // If it's a pattern validation error, provide more helpful message
+    if (errorMessage.includes('pattern') || errorMessage.includes('String did not match')) {
+      throw new Error(`Nesprávny formát názvu súboru "${file.name}". Skúste premenovať súbor na jednoduchší názov.`)
+    }
+    
     throw new Error(`Failed to upload ${file.name}: ${errorMessage}`)
   }
 }
