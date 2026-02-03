@@ -17,7 +17,18 @@ async function uploadImageToSanity(
 ): Promise<UploadResult> {
   // Read file as array buffer and convert to Buffer
   const arrayBuffer = await file.arrayBuffer()
+  
+  // Validate buffer is not empty
+  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+    throw new Error(`File ${file.name} is empty or could not be read`)
+  }
+  
   const buffer = Buffer.from(arrayBuffer)
+  
+  // Validate buffer was created successfully
+  if (!buffer || buffer.length === 0) {
+    throw new Error(`Failed to convert file ${file.name} to buffer`)
+  }
   
   // Verify it's a valid image by checking magic bytes
   // JPEG: FF D8 FF (standard) or FF D8 (some variants)
@@ -75,37 +86,9 @@ async function uploadImageToSanity(
     else contentType = 'image/jpeg' // fallback
   }
   
-  // Sanitize filename - ensure it meets Sanity's requirements
-  let filename = file.name
-  
-  // Extract extension first (before sanitization)
-  const originalExt = filename.toLowerCase().match(/\.([^.]+)$/)?.[1]
-  
-  // Remove path separators and other invalid characters
-  filename = filename.replace(/[\/\\]/g, '_')
-  
-  // Remove everything except alphanumeric, dots, dashes, and underscores
-  filename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
-  
-  // Remove leading/trailing dots, dashes, and underscores
-  filename = filename.replace(/^[._-]+|[._-]+$/g, '')
-  
-  // Remove multiple consecutive underscores/dots
-  filename = filename.replace(/[._]{2,}/g, '_')
-  
-  // Convert to lowercase for consistency
-  filename = filename.toLowerCase()
-  
-  // Limit filename length (max 255 chars total, leave room for extension)
-  const maxNameLength = 200
-  if (filename.length > maxNameLength) {
-    filename = filename.substring(0, maxNameLength)
-  }
-  
-  // Ensure we have a valid filename
-  if (!filename || filename.length === 0) {
-    filename = `image_${Date.now()}`
-  }
+  // Generate a safe filename that definitely matches Sanity's pattern
+  // Sanity requires: [a-z0-9._-]+\.[a-z]{2,4}
+  // Instead of sanitizing, we'll generate a guaranteed-safe filename
   
   // Determine content type extension
   const contentTypeExt = contentType.split('/')[1]?.toLowerCase()
@@ -123,29 +106,20 @@ async function uploadImageToSanity(
   
   const expectedExt = extMap[contentTypeExt || ''] || 'jpg'
   
-  // Remove existing extension and add correct one
-  const nameWithoutExt = filename.replace(/\.[^.]*$/, '') || filename
-  // Ensure name doesn't end with dot/dash/underscore after removing extension
-  const cleanName = nameWithoutExt.replace(/[._-]+$/, '') || `image_${Date.now()}`
-  filename = `${cleanName}.${expectedExt}`
+  // Generate a safe filename: image_timestamp_random.ext
+  // This format is guaranteed to match Sanity's pattern: [a-z0-9._-]+\.[a-z]{2,4}
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2, 8) // 6 random chars
+  const filename = `image_${timestamp}_${random}.${expectedExt}`
   
-  // Final validation: ensure filename matches pattern [a-z0-9._-]+\.(jpg|png|gif|webp|bmp|tiff)
+  // Verify it matches the pattern (should always pass)
   if (!/^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename)) {
-    // Fallback to safe filename
-    filename = `image_${Date.now()}.${expectedExt}`
+    // This should never happen, but just in case
+    throw new Error(`Generated filename "${filename}" does not match expected pattern`)
   }
   
-  // Use Sanity client's assets.upload method which handles the format correctly
+  // Use Sanity client's assets.upload method
   try {
-    // Log filename details for debugging
-    console.log('Uploading with filename:', {
-      original: file.name,
-      sanitized: filename,
-      contentType,
-      filenameLength: filename.length,
-      filenamePattern: /^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename),
-    })
-    
     const asset = await adminClient.assets.upload('image', buffer, {
       filename: filename,
       contentType: contentType,
@@ -155,26 +129,35 @@ async function uploadImageToSanity(
       _id: asset._id,
       url: asset.url,
     }
-  } catch (error) {
-    console.error('Sanity client upload error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const errorDetails = {
+  } catch (error: any) {
+    const errorMessage = error?.message || String(error) || 'Unknown error'
+    const errorBody = error?.body || error?.response?.body || {}
+    
+    console.error('Sanity upload error:', {
       originalFilename: file.name,
-      sanitizedFilename: filename,
+      generatedFilename: filename,
       contentType,
       fileSize: buffer.length,
-      fileType: file.type,
-      error: errorMessage,
-      filenamePattern: /^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename),
-    }
-    console.error('Upload error details:', errorDetails)
+      errorMessage,
+      errorBody,
+      errorType: error?.constructor?.name,
+      stack: error?.stack,
+    })
     
-    // If it's a pattern validation error, provide more helpful message
-    if (errorMessage.includes('pattern') || errorMessage.includes('String did not match')) {
-      throw new Error(`Nesprávny formát názvu súboru "${file.name}". Skúste premenovať súbor na jednoduchší názov.`)
+    // Check if it's a validation/pattern error
+    const isPatternError = 
+      errorMessage.includes('pattern') || 
+      errorMessage.includes('String did not match') ||
+      errorMessage.includes('validation') ||
+      errorBody?.error?.includes('pattern') ||
+      errorBody?.message?.includes('pattern')
+    
+    if (isPatternError) {
+      // This shouldn't happen with our generated filename, but if it does, provide helpful message
+      throw new Error(`Chyba validácie súboru "${file.name}". Skúste to znova alebo použite iný obrázok.`)
     }
     
-    throw new Error(`Failed to upload ${file.name}: ${errorMessage}`)
+    throw new Error(`Nepodarilo sa nahrať ${file.name}: ${errorMessage}`)
   }
 }
 
