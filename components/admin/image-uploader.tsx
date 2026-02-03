@@ -134,6 +134,83 @@ export function ImageUploader({
   )
 
   const uploadBatch = useCallback(async (batch: ImageFile[]): Promise<void> => {
+    // If batch has only one image, upload it directly
+    if (batch.length === 1) {
+      const formData = new FormData()
+      formData.append('files', batch[0].file)
+
+      const response = await fetch('/api/admin/upload-images', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        // Handle 413 (Content Too Large) - file is too big
+        if (response.status === 413) {
+          throw new Error(`Súbor "${batch[0].file.name}" je príliš veľký (${(batch[0].file.size / 1024 / 1024).toFixed(2)}MB). Maximálna veľkosť je 20MB.`)
+        }
+        
+        // Handle non-JSON error responses
+        let errorMessage = 'Upload failed'
+        const contentType = response.headers.get('content-type') || ''
+        
+        if (contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          } catch {
+            errorMessage = `Chyba servera (${response.status})`
+          }
+        } else {
+          // Response is HTML (like error page)
+          try {
+            const text = await response.text()
+            if (text.includes('Request Entity Too Large') || text.includes('413') || text.includes('Content Too Large')) {
+              errorMessage = `Súbor "${batch[0].file.name}" je príliš veľký (${(batch[0].file.size / 1024 / 1024).toFixed(2)}MB). Maximálna veľkosť je 20MB.`
+            } else {
+              errorMessage = `Chyba servera (${response.status})`
+            }
+          } catch {
+            errorMessage = `Chyba servera (${response.status})`
+          }
+        }
+        throw new Error(errorMessage)
+      }
+
+      let results
+      try {
+        const data = await response.json()
+        results = data.results
+        if (!results || !Array.isArray(results) || results.length === 0) {
+          throw new Error('Neplatná odpoveď zo servera')
+        }
+      } catch (error) {
+        throw new Error('Chyba pri komunikácii so serverom. Skúste to znova.')
+      }
+
+      // Update the single image
+      let currentImages = ensureImageIds([...imagesRef.current])
+      const result = results[0]
+      if (result && result._id && !result.error) {
+        const imageIndex = currentImages.findIndex((img) => img.id === batch[0].id)
+        if (imageIndex !== -1) {
+          currentImages[imageIndex] = {
+            ...currentImages[imageIndex],
+            assetId: result._id,
+            uploading: false,
+            uploadProgress: 100,
+          }
+        }
+      } else if (result && result.error) {
+        throw new Error(result.error)
+      }
+      
+      imagesRef.current = currentImages
+      onImagesChange([...currentImages])
+      return
+    }
+
+    // Try uploading batch of 3
     const formData = new FormData()
     batch.forEach(img => {
       formData.append('files', img.file)
@@ -144,12 +221,88 @@ export function ImageUploader({
       body: formData,
     })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Upload failed')
+    // Handle 413 (Content Too Large) - batch is too big, retry individually
+    if (response.status === 413) {
+      // Upload each image individually
+      for (const img of batch) {
+        try {
+          await uploadBatch([img])
+        } catch (error) {
+          // Mark as failed but continue with others
+          let currentImages = ensureImageIds([...imagesRef.current])
+          const failedIndex = currentImages.findIndex((i) => i.id === img.id)
+          if (failedIndex !== -1) {
+            currentImages[failedIndex] = {
+              ...currentImages[failedIndex],
+              uploading: false,
+              uploadProgress: undefined,
+            }
+            imagesRef.current = currentImages
+            onImagesChange([...currentImages])
+          }
+          // Don't throw - continue with other images
+        }
+      }
+      return
     }
 
-    const { results } = await response.json()
+    if (!response.ok) {
+      // Handle non-JSON error responses
+      let errorMessage = 'Upload failed'
+      const contentType = response.headers.get('content-type') || ''
+      
+      if (contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          errorMessage = `Chyba servera (${response.status})`
+        }
+      } else {
+        // Response is HTML (like error page) - retry individually
+        try {
+          const text = await response.text()
+          if (text.includes('Request Entity Too Large') || text.includes('413') || text.includes('Content Too Large')) {
+            // Retry each image individually
+            for (const img of batch) {
+              try {
+                await uploadBatch([img])
+              } catch (error) {
+                // Mark as failed but continue
+                let currentImages = ensureImageIds([...imagesRef.current])
+                const failedIndex = currentImages.findIndex((i) => i.id === img.id)
+                if (failedIndex !== -1) {
+                  currentImages[failedIndex] = {
+                    ...currentImages[failedIndex],
+                    uploading: false,
+                    uploadProgress: undefined,
+                  }
+                  imagesRef.current = currentImages
+                  onImagesChange([...currentImages])
+                }
+              }
+            }
+            return
+          } else {
+            errorMessage = `Chyba servera (${response.status})`
+          }
+        } catch {
+          errorMessage = `Chyba servera (${response.status})`
+        }
+      }
+      throw new Error(errorMessage)
+    }
+
+    let results
+    try {
+      const data = await response.json()
+      results = data.results
+      if (!results || !Array.isArray(results)) {
+        throw new Error('Neplatná odpoveď zo servera')
+      }
+    } catch (error) {
+      throw new Error('Chyba pri komunikácii so serverom. Skúste to znova.')
+    }
     
     // Update images with asset IDs
     let currentImages = ensureImageIds([...imagesRef.current])
