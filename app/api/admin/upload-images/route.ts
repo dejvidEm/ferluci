@@ -1,193 +1,255 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/sanity/adminClient'
 
-// Upload images sequentially (one by one) to show progress
-
 interface UploadResult {
   _id: string
   url: string
   error?: string
 }
 
+// Maximum file size: 20MB (Sanity's limit is usually 20MB)
+const MAX_FILE_SIZE = 20 * 1024 * 1024
+
+// Retry configuration
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second base delay
+
+// Sleep utility for retries
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+/**
+ * Detect image format from magic bytes (file signature)
+ */
+function detectImageFormat(buffer: Buffer): { format: string; contentType: string; extension: string } | null {
+  if (buffer.length < 4) return null
+
+  // JPEG: FF D8 FF or FF D8
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+    return { format: 'jpeg', contentType: 'image/jpeg', extension: 'jpg' }
+  }
+
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+    return { format: 'png', contentType: 'image/png', extension: 'png' }
+  }
+
+  // GIF: 47 49 46 38 (GIF8) or 47 49 46 39 (GIF9)
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && 
+      (buffer[3] === 0x38 || buffer[3] === 0x39)) {
+    return { format: 'gif', contentType: 'image/gif', extension: 'gif' }
+  }
+
+  // WebP: RIFF...WEBP (check at offset 8)
+  if (buffer.length >= 12 && 
+      buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+    return { format: 'webp', contentType: 'image/webp', extension: 'webp' }
+  }
+
+  // BMP: 42 4D
+  if (buffer[0] === 0x42 && buffer[1] === 0x4D) {
+    return { format: 'bmp', contentType: 'image/bmp', extension: 'bmp' }
+  }
+
+  // TIFF: 49 49 2A 00 (little-endian) or 4D 4D 00 2A (big-endian)
+  if ((buffer[0] === 0x49 && buffer[1] === 0x49 && buffer[2] === 0x2A && buffer[3] === 0x00) ||
+      (buffer[0] === 0x4D && buffer[1] === 0x4D && buffer[2] === 0x00 && buffer[3] === 0x2A)) {
+    return { format: 'tiff', contentType: 'image/tiff', extension: 'tiff' }
+  }
+
+  // HEIC/HEIF: ftyp box (more complex, check for ftyp)
+  if (buffer.length >= 12 && 
+      buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70) {
+    // Check for heic/heif brands
+    const brand = String.fromCharCode(buffer[8], buffer[9], buffer[10], buffer[11])
+    if (brand.includes('heic') || brand.includes('heif') || brand.includes('mif1')) {
+      return { format: 'heic', contentType: 'image/heic', extension: 'heic' }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Generate a safe filename that matches Sanity's pattern: [a-z0-9._-]+\.[a-z]{2,4}
+ */
+function generateSafeFilename(extension: string): string {
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2, 10) // 8 random chars
+  return `img_${timestamp}_${random}.${extension}`
+}
+
+/**
+ * Upload a single image to Sanity with retry logic
+ */
 async function uploadImageToSanity(
   file: File,
-  _projectId: string,
-  _dataset: string,
-  _token: string
+  retryCount = 0
 ): Promise<UploadResult> {
-  // Read file as array buffer and convert to Buffer
-  const arrayBuffer = await file.arrayBuffer()
-  
-  // Validate buffer is not empty
-  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-    throw new Error(`File ${file.name} is empty or could not be read`)
-  }
-  
-  const buffer = Buffer.from(arrayBuffer)
-  
-  // Validate buffer was created successfully
-  if (!buffer || buffer.length === 0) {
-    throw new Error(`Failed to convert file ${file.name} to buffer`)
-  }
-  
-  // Verify it's a valid image by checking magic bytes
-  // JPEG: FF D8 FF (standard) or FF D8 (some variants)
-  const isJPEG = (buffer[0] === 0xFF && buffer[1] === 0xD8) || 
-                 (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF)
-  // PNG: 89 50 4E 47
-  const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47
-  // GIF: 47 49 46 38 (GIF8)
-  const isGIF = (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) ||
-                (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46)
-  // WebP: RIFF...WEBP
-  const isWebP = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
-                  buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
-  // BMP: 42 4D
-  const isBMP = buffer[0] === 0x42 && buffer[1] === 0x4D
-  // TIFF: 49 49 2A 00 (little-endian) or 4D 4D 00 2A (big-endian)
-  const isTIFF = (buffer[0] === 0x49 && buffer[1] === 0x49 && buffer[2] === 0x2A && buffer[3] === 0x00) ||
-                 (buffer[0] === 0x4D && buffer[1] === 0x4D && buffer[2] === 0x00 && buffer[3] === 0x2A)
-  
-  const isValidImageByMagicBytes = isJPEG || isPNG || isGIF || isWebP || isBMP || isTIFF
-  
-  // Also check file.type as fallback (some browsers may not set magic bytes correctly)
-  const isValidImageByType = file.type && file.type.startsWith('image/')
-  
-  const isValidImage = isValidImageByMagicBytes || isValidImageByType
-  
-  console.log(`File ${file.name}:`, {
-    type: file.type,
-    size: buffer.length,
-    firstBytes: buffer.slice(0, 12).toString('hex'),
-    isValidImageByMagicBytes,
-    isValidImageByType,
-    isValidImage,
-    isJPEG,
-    isPNG,
-    isGIF,
-    isWebP,
-    isBMP,
-    isTIFF,
-  })
-  
-  if (!isValidImage) {
-    throw new Error(`File ${file.name} is not a valid image format. Expected JPEG, PNG, GIF, WebP, BMP, or TIFF.`)
-  }
-  
-  // Determine content type
-  let contentType = file.type
-  if (!contentType || contentType === 'application/octet-stream' || contentType === '') {
-    if (isJPEG) contentType = 'image/jpeg'
-    else if (isPNG) contentType = 'image/png'
-    else if (isGIF) contentType = 'image/gif'
-    else if (isWebP) contentType = 'image/webp'
-    else if (isBMP) contentType = 'image/bmp'
-    else if (isTIFF) contentType = 'image/tiff'
-    else contentType = 'image/jpeg' // fallback
-  }
-  
-  // Generate a safe filename that definitely matches Sanity's pattern
-  // Sanity requires: [a-z0-9._-]+\.[a-z]{2,4}
-  // Instead of sanitizing, we'll generate a guaranteed-safe filename
-  
-  // Determine content type extension
-  const contentTypeExt = contentType.split('/')[1]?.toLowerCase()
-  
-  // Map content types to file extensions
-  const extMap: Record<string, string> = {
-    'jpeg': 'jpg',
-    'jpg': 'jpg',
-    'png': 'png',
-    'gif': 'gif',
-    'webp': 'webp',
-    'bmp': 'bmp',
-    'tiff': 'tiff',
-  }
-  
-  const expectedExt = extMap[contentTypeExt || ''] || 'jpg'
-  
-  // Generate a safe filename: image_timestamp_random.ext
-  // This format is guaranteed to match Sanity's pattern: [a-z0-9._-]+\.[a-z]{2,4}
-  const timestamp = Date.now()
-  const random = Math.random().toString(36).substring(2, 8) // 6 random chars
-  const filename = `image_${timestamp}_${random}.${expectedExt}`
-  
-  // Verify it matches the pattern (should always pass)
-  if (!/^[a-z0-9._-]+\.[a-z]{2,4}$/.test(filename)) {
-    // This should never happen, but just in case
-    throw new Error(`Generated filename "${filename}" does not match expected pattern`)
-  }
-  
-  // Use Sanity client's assets.upload method
   try {
-    const asset = await adminClient.assets.upload('image', buffer, {
-      filename: filename,
-      contentType: contentType,
-    })
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`Súbor "${file.name}" je príliš veľký. Maximálna veľkosť je ${MAX_FILE_SIZE / 1024 / 1024}MB.`)
+    }
+
+    if (file.size === 0) {
+      throw new Error(`Súbor "${file.name}" je prázdny.`)
+    }
+
+    // Read file as array buffer
+    const arrayBuffer = await file.arrayBuffer()
     
-    return {
-      _id: asset._id,
-      url: asset.url,
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error(`Nepodarilo sa načítať súbor "${file.name}".`)
+    }
+
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Detect image format from magic bytes
+    const detectedFormat = detectImageFormat(buffer)
+    
+    // Fallback to file.type or extension if magic bytes don't match
+    let contentType = file.type || 'application/octet-stream'
+    let extension = 'jpg'
+
+    if (detectedFormat) {
+      contentType = detectedFormat.contentType
+      extension = detectedFormat.extension
+    } else {
+      // Try to determine from file.type
+      if (file.type && file.type.startsWith('image/')) {
+        const typeExt = file.type.split('/')[1]?.toLowerCase()
+        const extMap: Record<string, string> = {
+          'jpeg': 'jpg',
+          'jpg': 'jpg',
+          'png': 'png',
+          'gif': 'gif',
+          'webp': 'webp',
+          'bmp': 'bmp',
+          'tiff': 'tiff',
+          'tif': 'tiff',
+          'heic': 'heic',
+          'heif': 'heic',
+        }
+        extension = extMap[typeExt || ''] || 'jpg'
+        contentType = file.type
+      } else {
+        // Try to get from filename extension
+        const filenameExt = file.name.toLowerCase().match(/\.([^.]+)$/)?.[1]
+        if (filenameExt) {
+          const extMap: Record<string, { ext: string; contentType: string }> = {
+            'jpg': { ext: 'jpg', contentType: 'image/jpeg' },
+            'jpeg': { ext: 'jpg', contentType: 'image/jpeg' },
+            'png': { ext: 'png', contentType: 'image/png' },
+            'gif': { ext: 'gif', contentType: 'image/gif' },
+            'webp': { ext: 'webp', contentType: 'image/webp' },
+            'bmp': { ext: 'bmp', contentType: 'image/bmp' },
+            'tiff': { ext: 'tiff', contentType: 'image/tiff' },
+            'tif': { ext: 'tiff', contentType: 'image/tiff' },
+            'heic': { ext: 'heic', contentType: 'image/heic' },
+            'heif': { ext: 'heic', contentType: 'image/heic' },
+          }
+          const mapped = extMap[filenameExt]
+          if (mapped) {
+            extension = mapped.ext
+            contentType = mapped.contentType
+          }
+        }
+      }
+    }
+
+    // Generate safe filename
+    const filename = generateSafeFilename(extension)
+
+    // Upload to Sanity with retry logic
+    try {
+      const asset = await adminClient.assets.upload('image', buffer, {
+        filename: filename,
+        contentType: contentType,
+      })
+
+      return {
+        _id: asset._id,
+        url: asset.url,
+      }
+    } catch (uploadError: any) {
+      // Handle retryable errors
+      const isRetryable = 
+        uploadError?.statusCode === 429 || // Rate limit
+        uploadError?.statusCode === 503 || // Service unavailable
+        uploadError?.statusCode === 502 || // Bad gateway
+        uploadError?.statusCode === 504 || // Gateway timeout
+        (uploadError?.message && (
+          uploadError.message.includes('timeout') ||
+          uploadError.message.includes('network') ||
+          uploadError.message.includes('ECONNRESET') ||
+          uploadError.message.includes('ETIMEDOUT')
+        ))
+
+      if (isRetryable && retryCount < MAX_RETRIES) {
+        const delay = RETRY_DELAY * Math.pow(2, retryCount) // Exponential backoff
+        await sleep(delay)
+        return uploadImageToSanity(file, retryCount + 1)
+      }
+
+      // Extract error message safely
+      let errorMessage = 'Neznáma chyba'
+      
+      if (uploadError?.message) {
+        errorMessage = uploadError.message
+      } else if (uploadError?.body) {
+        // Try to parse error body if it's a string
+        if (typeof uploadError.body === 'string') {
+          try {
+            const parsed = JSON.parse(uploadError.body)
+            errorMessage = parsed.message || parsed.error || errorMessage
+          } catch {
+            // If it's not JSON, use the string directly (truncated)
+            errorMessage = uploadError.body.substring(0, 200)
+          }
+        } else if (typeof uploadError.body === 'object') {
+          errorMessage = uploadError.body.message || uploadError.body.error || errorMessage
+        }
+      } else if (typeof uploadError === 'string') {
+        errorMessage = uploadError
+      }
+
+      // Clean up error message
+      if (errorMessage.includes('Request Entity Too Large') || errorMessage.includes('413')) {
+        errorMessage = `Súbor "${file.name}" je príliš veľký.`
+      } else if (errorMessage.includes('pattern') || errorMessage.includes('validation')) {
+        errorMessage = `Neplatný formát súboru "${file.name}".`
+      } else if (errorMessage.includes('Unexpected token')) {
+        errorMessage = `Chyba pri komunikácii so serverom pre "${file.name}". Skúste to znova.`
+      }
+
+      throw new Error(errorMessage)
     }
   } catch (error: any) {
-    const errorMessage = error?.message || String(error) || 'Unknown error'
-    const errorBody = error?.body || error?.response?.body || {}
-    
-    console.error('Sanity upload error:', {
-      originalFilename: file.name,
-      generatedFilename: filename,
-      contentType,
-      fileSize: buffer.length,
-      errorMessage,
-      errorBody,
-      errorType: error?.constructor?.name,
-      stack: error?.stack,
-    })
-    
-    // Check if it's a validation/pattern error
-    const isPatternError = 
-      errorMessage.includes('pattern') || 
-      errorMessage.includes('String did not match') ||
-      errorMessage.includes('validation') ||
-      errorBody?.error?.includes('pattern') ||
-      errorBody?.message?.includes('pattern')
-    
-    if (isPatternError) {
-      // This shouldn't happen with our generated filename, but if it does, provide helpful message
-      throw new Error(`Chyba validácie súboru "${file.name}". Skúste to znova alebo použite iný obrázok.`)
-    }
-    
-    throw new Error(`Nepodarilo sa nahrať ${file.name}: ${errorMessage}`)
+    const errorMessage = error?.message || String(error) || 'Neznáma chyba'
+    throw new Error(errorMessage)
   }
 }
 
-async function uploadSequentially(
-  files: File[]
-): Promise<UploadResult[]> {
+/**
+ * Upload files sequentially with proper error handling
+ */
+async function uploadSequentially(files: File[]): Promise<UploadResult[]> {
   const results: UploadResult[] = []
 
-  // Upload files one by one
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     try {
-      console.log(`Uploading image ${i + 1}/${files.length}: ${file.name}`)
-      const result = await uploadImageToSanity(file, '', '', '')
+      const result = await uploadImageToSanity(file)
       results.push(result)
-      console.log(`Successfully uploaded ${i + 1}/${files.length}`)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error(`Failed to upload ${file.name}:`, errorMessage)
+    } catch (error: any) {
+      const errorMessage = error?.message || String(error) || 'Neznáma chyba'
       results.push({
         _id: '',
         url: '',
-        error: `Failed to upload ${file.name}: ${errorMessage}`,
+        error: errorMessage,
       })
     }
-  }
-
-  const errors = results.filter(r => r.error)
-  if (errors.length > 0 && results.filter(r => !r.error).length === 0) {
-    throw new Error(`All uploads failed: ${errors.map(e => e.error).join(', ')}`)
   }
 
   return results
@@ -195,6 +257,7 @@ async function uploadSequentially(
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate environment variables
     const projectId = process.env.SANITY_PROJECT_ID
     const dataset = process.env.SANITY_DATASET
     const token = process.env.SANITY_WRITE_TOKEN
@@ -205,44 +268,73 @@ export async function POST(request: NextRequest) {
       if (!dataset) missing.push('SANITY_DATASET')
       if (!token) missing.push('SANITY_WRITE_TOKEN')
       return NextResponse.json(
-        { error: `Server configuration error: Missing ${missing.join(', ')}. Please add these to your .env.local file.` },
+        { error: `Chyba konfigurácie: Chýbajú ${missing.join(', ')}.` },
         { status: 500 }
       )
     }
 
-    const formData = await request.formData()
-    const files = formData.getAll('files') as File[]
-
-    if (!files || files.length === 0) {
+    // Parse form data
+    let formData: FormData
+    try {
+      formData = await request.formData()
+    } catch (error) {
       return NextResponse.json(
-        { error: 'No files provided' },
+        { error: 'Nepodarilo sa načítať dáta z požiadavky.' },
         { status: 400 }
       )
     }
 
-    // Validate all files are images (more lenient check)
+    const files = formData.getAll('files') as File[]
+
+    if (!files || files.length === 0) {
+      return NextResponse.json(
+        { error: 'Neboli poskytnuté žiadne súbory.' },
+        { status: 400 }
+      )
+    }
+
+    // Validate files
     for (const file of files) {
-      // Check file type, but also allow files without type if they're likely images
-      const hasImageExtension = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|tif|svg)$/i.test(file.name)
+      if (!file || !(file instanceof File)) {
+        return NextResponse.json(
+          { error: 'Neplatný súbor.' },
+          { status: 400 }
+        )
+      }
+
+      // Basic validation - check if it looks like an image
+      const hasImageExtension = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|tif|heic|heif)$/i.test(file.name)
       const hasImageType = file.type && file.type.startsWith('image/')
       
       if (!hasImageType && !hasImageExtension) {
         return NextResponse.json(
-          { error: `File ${file.name} does not appear to be an image file` },
+          { error: `Súbor "${file.name}" nevyzerá ako obrázok.` },
           { status: 400 }
         )
       }
     }
 
+    // Upload files
     const results = await uploadSequentially(files)
 
+    // Check if all failed
+    const errors = results.filter(r => r.error)
+    if (errors.length === results.length) {
+      return NextResponse.json(
+        { 
+          error: 'Všetky nahrávania zlyhali.',
+          results 
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json({ results })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image upload error:', error)
+    const errorMessage = error?.message || String(error) || 'Interná chyba servera'
     return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
+      { error: errorMessage },
       { status: 500 }
     )
   }
