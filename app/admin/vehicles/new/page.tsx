@@ -540,6 +540,7 @@ export default function NewVehiclePage() {
             <ImageUploader
               images={images}
               onImagesChange={setImages}
+              storageKey="new-vehicle-images"
             />
           </section>
 
