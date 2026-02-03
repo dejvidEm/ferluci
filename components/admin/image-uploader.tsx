@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { X, ChevronUp, ChevronDown, Upload } from 'lucide-react'
 
@@ -37,9 +36,10 @@ export function ImageUploader({
     (files: FileList | null) => {
       if (!files || files.length === 0) return
 
+      // Don't create preview URLs to save memory - just use empty string
       const newImages: ImageFile[] = Array.from(files).map((file) => ({
         file,
-        preview: URL.createObjectURL(file),
+        preview: '', // No preview needed - we'll just show file names
       }))
 
       onImagesChange([...images, ...newImages])
@@ -50,8 +50,10 @@ export function ImageUploader({
   const handleRemove = useCallback(
     (index: number) => {
       const newImages = images.filter((_, i) => i !== index)
-      // Revoke object URL to prevent memory leak
-      URL.revokeObjectURL(images[index].preview)
+      // Revoke object URL if it exists
+      if (images[index].preview && images[index].preview.startsWith('blob:')) {
+        URL.revokeObjectURL(images[index].preview)
+      }
       onImagesChange(newImages)
     },
     [images, onImagesChange]
@@ -116,12 +118,50 @@ export function ImageUploader({
           body: formData,
         })
 
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || `Upload failed for ${imageToUpload.file.name}`)
-        }
+         if (!response.ok) {
+           // Handle 413 (Content Too Large) error
+           if (response.status === 413) {
+             throw new Error(`Súbor "${imageToUpload.file.name}" je príliš veľký (${(imageToUpload.file.size / 1024 / 1024).toFixed(2)}MB). Maximálna veľkosť je 20MB.`)
+           }
+           
+           // Handle non-JSON error responses
+           let errorMessage = 'Upload failed'
+           const contentType = response.headers.get('content-type') || ''
+           
+           if (contentType.includes('application/json')) {
+             try {
+               const errorData = await response.json()
+               errorMessage = errorData.error || errorMessage
+             } catch {
+               errorMessage = `Chyba servera (${response.status})`
+             }
+           } else {
+             // Response is HTML (like error page)
+             try {
+               const text = await response.text()
+               if (text.includes('Request Entity Too Large') || text.includes('413') || text.includes('Content Too Large')) {
+                 errorMessage = `Súbor "${imageToUpload.file.name}" je príliš veľký (${(imageToUpload.file.size / 1024 / 1024).toFixed(2)}MB). Maximálna veľkosť je 20MB.`
+               } else {
+                 errorMessage = `Chyba servera (${response.status})`
+               }
+             } catch {
+               errorMessage = `Chyba servera (${response.status})`
+             }
+           }
+           throw new Error(errorMessage)
+         }
 
-        const { results } = await response.json()
+         // Parse JSON response
+         let results
+         try {
+           const data = await response.json()
+           results = data.results
+           if (!results || !Array.isArray(results) || results.length === 0) {
+             throw new Error('Neplatná odpoveď zo servera')
+           }
+         } catch (error) {
+           throw new Error('Chyba pri komunikácii so serverom. Skúste to znova.')
+         }
         const result = results[0]
 
         if (result.error) {
@@ -205,71 +245,85 @@ export function ImageUploader({
 
       {images.length > 0 && (
         <div className="space-y-2">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+          {/* Simple list view - just file names */}
+          <div className="space-y-1 max-h-96 overflow-y-auto">
             {images.map((image, index) => (
               <div
                 key={index}
-                className="relative group bg-[#1a1a1a] rounded-lg overflow-hidden border border-white/10"
+                className="flex items-center justify-between gap-2 p-2 bg-[#1a1a1a] rounded border border-white/10 hover:border-white/20 transition-colors"
               >
-                <div className="aspect-square relative">
-                  <Image
-                    src={image.preview}
-                    alt={`Preview ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                  {image.uploading && (
-                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
-                      <div className="text-white text-sm mb-2">Nahrávam...</div>
-                      {image.uploadProgress !== undefined && (
-                        <div className="w-24 h-1 bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500 transition-all duration-300"
-                            style={{ width: `${image.uploadProgress}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {image.assetId && (
-                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                      ✓
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-1.5 sm:p-2 flex items-center justify-between gap-1">
-                  <div className="flex gap-0.5 sm:gap-1">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {/* Order number */}
+                  <div className="flex items-center justify-center w-6 h-6 rounded bg-white/10 text-white text-xs font-medium shrink-0">
+                    {index + 1}
+                  </div>
+                  
+                  {/* Move buttons */}
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 sm:h-8 sm:w-8"
+                      className="h-6 w-6"
                       onClick={() => handleMove(index, 'up')}
                       disabled={index === 0}
+                      title="Presunúť nahor"
                     >
-                      <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <ChevronUp className="h-3 w-3" />
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 sm:h-8 sm:w-8"
+                      className="h-6 w-6"
                       onClick={() => handleMove(index, 'down')}
                       disabled={index === images.length - 1}
+                      title="Presunúť nadol"
                     >
-                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <ChevronDown className="h-3 w-3" />
                     </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 sm:h-8 sm:w-8 text-red-400 hover:text-red-500"
-                    onClick={() => handleRemove(index)}
-                  >
-                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
+                  
+                  {/* File name and size */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white truncate" title={image.file.name}>
+                      {image.file.name}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {(image.file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  
+                  {/* Status */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {image.uploading && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-blue-500 transition-all duration-300"
+                            style={{ width: `${image.uploadProgress || 0}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-400">Nahrávam...</span>
+                      </div>
+                    )}
+                    {image.assetId && !image.uploading && (
+                      <div className="flex items-center gap-1 text-green-500">
+                        <span className="text-lg">✓</span>
+                        <span className="text-xs">Nahrané</span>
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-red-400 hover:text-red-500"
+                      onClick={() => handleRemove(index)}
+                      title="Odstrániť"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
