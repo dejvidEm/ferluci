@@ -51,6 +51,8 @@ export default function ContactPage() {
   const [contactMethod, setContactMethod] = useState("email")
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchVehicle() {
@@ -104,36 +106,62 @@ export default function ContactPage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you would send this data to your backend
-    const formData = {
-      name,
-      email,
-      phone,
-      message,
-      contactMethod,
-      date,
-      vehicleId,
-      vehicle: vehicle
-        ? {
-            id: vehicle.id,
-            year: vehicle.year,
-            make: vehicle.make,
-            model: vehicle.model,
-            price: vehicle.price,
-            fullName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-          }
-        : null,
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const formData = {
+        name,
+        email,
+        phone,
+        message,
+        contactMethod,
+        date: date ? date.toISOString() : undefined,
+        vehicleId,
+        vehicle: vehicle
+          ? {
+              id: vehicle.id,
+              year: vehicle.year,
+              make: vehicle.make,
+              model: vehicle.model,
+              price: vehicle.price,
+              fullName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+            }
+          : null,
+        loanData,
+      }
+
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Chyba pri odosielaní správy')
+      }
+
+      // Show success message
+      setSubmitted(true)
+      // Reset form
+      setName("")
+      setEmail("")
+      setPhone("")
+      setMessage("")
+      setContactMethod("email")
+      setDate(undefined)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Chyba pri odosielaní správy')
+      console.error('Form submission error:', err)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    console.log(formData)
-
-    // In a real app, you would send formData to your backend/email service
-    // Example: await fetch('/api/contact', { method: 'POST', body: JSON.stringify(formData) })
-
-    // Show success message
-    setSubmitted(true)
   }
 
   if (submitted) {
@@ -258,6 +286,11 @@ export default function ContactPage() {
               )}
 
               <form onSubmit={handleSubmit}>
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+                      {error}
+                    </div>
+                  )}
                   <div className="grid gap-6 mb-8">
                     <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -367,8 +400,13 @@ export default function ContactPage() {
                     type="submit" 
                     size="lg" 
                     className="w-full bg-white text-[#121212] hover:bg-gray-200 border-0"
+                    disabled={isSubmitting}
                   >
-                    {action === "test-drive" ? "Objednať skúšobnú jazdu" : "Odoslať správu"}
+                    {isSubmitting 
+                      ? "Odosielam..." 
+                      : action === "test-drive" 
+                        ? "Objednať skúšobnú jazdu" 
+                        : "Odoslať správu"}
                 </Button>
               </form>
             </div>

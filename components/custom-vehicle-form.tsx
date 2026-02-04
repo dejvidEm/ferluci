@@ -12,35 +12,55 @@ export default function CustomVehicleForm() {
   const [budget, setBudget] = useState("")
   const [contact, setContact] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    const formData = {
-      brand,
-      model,
-      budget,
-      contact,
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const formData = {
+        brand,
+        model,
+        budget,
+        contact,
+      }
+
+      const response = await fetch('/api/custom-vehicle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Chyba pri odosielaní dopytu')
+      }
+
+      // Show success message
+      setSubmitted(true)
+      
+      // Reset form
+      setBrand("")
+      setModel("")
+      setBudget("")
+      setContact("")
+      
+      // Reset success message after 5 seconds
+      setTimeout(() => {
+        setSubmitted(false)
+      }, 5000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Chyba pri odosielaní dopytu')
+      console.error('Form submission error:', err)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    console.log("Custom Vehicle Request:", formData)
-
-    // In a real app, you would send formData to your backend/email service
-    // Example: await fetch('/api/custom-vehicle', { method: 'POST', body: JSON.stringify(formData) })
-
-    // Show success message
-    setSubmitted(true)
-    
-    // Reset form
-    setBrand("")
-    setModel("")
-    setBudget("")
-    setContact("")
-    
-    // Reset success message after 5 seconds
-    setTimeout(() => {
-      setSubmitted(false)
-    }, 5000)
   }
 
   if (submitted) {
@@ -92,6 +112,11 @@ export default function CustomVehicleForm() {
       {/* Form */}
       <div className="bg-[#1a1a1a] rounded-lg p-6 md:p-8 border border-white/10 max-w-xl">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="brand" className="text-gray-300">Značka</Label>
@@ -150,8 +175,9 @@ export default function CustomVehicleForm() {
           type="submit" 
           size="lg" 
           className="w-full bg-white text-[#121212] hover:bg-gray-200 border-0 mt-6"
+          disabled={isSubmitting}
         >
-          Odoslať dopyt
+          {isSubmitting ? "Odosielam..." : "Odoslať dopyt"}
         </Button>
       </form>
       </div>

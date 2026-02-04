@@ -4,65 +4,73 @@ import { useState, useEffect } from "react"
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight } from "lucide-react"
+import Link from "next/link"
+
+// Function to truncate text to a consistent length
+const truncateText = (text: string, maxLength: number = 200): string => {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength).trim() + "..."
+}
 
 const testimonials = [
   {
     id: 1,
-    text: "Tím v tomto autosalóne urobil kúpu auta tak jednoduchou. Boli znalí, priateľskí a vôbec neboli dotieraví. Milujem svoje nové auto!",
-    author: "Sarah T.",
+    text: truncateText("Moderný koncept predaja kvalitných a hodnotných aut. Autá sú v interiéri, čisté, nachystané na obhliadku s možnosťou skúšobnej jazdy. Príjemný personál s ochotou so všetkým pomôcť a vysvetliť. Auto si môžete dať preveriť nezávislým technikom, sú otvorení a transparentní."),
+    author: "Roman Vaľo",
+    date: "pred 2 mesiacmi",
   },
   {
     id: 2,
-    text: "Vynikajúca služba od začiatku až do konca. Pomohli mi nájsť presne to, čo som hľadal, a za skvelú cenu. Určite sa vrátim!",
-    author: "Martin K.",
+    text: truncateText("Veľká spokojnosť pri kúpe auta od Ferluci Cars priamo z ich ponuky vozidiel. Od prvého telefonátu bol pán predajca veľmi milý, ústretový, a hlavne nápomocný pri výbere. Aj napriek odporúčaniam a recenziám som si dal auto preveriť nezávislým technikom, všetko bolo v naprostom poriadku presne tak ako bolo sľúbené, boli ochotní počkať s predajom po zaplatení malej zálohy aj napriek viacerým záujemcom. Dokonca som dostal k autu veci ktoré mi predajca vôbec dávať nemusel. Celý proces kúpy a prepisu prebehol veľmi rýchlo v podstate bez čakania. Rozhodne moja doteraz najlepšia skúsenosť pri kúpe auta, ak hľadáte seriózneho predajcu ktorý sa na vás nesnaží len zarobiť a urobí všetko k vašej spokojnosti, ste na správnom mieste 👍"),
+    author: "Noro",
+    date: "pred 2 mesiacmi",
   },
   {
     id: 3,
-    text: "Profesionálny prístup a transparentné podmienky. Finančné riešenie bolo rýchle a jednoduché. Odporúčam všetkým!",
-    author: "Jana M.",
+    text: truncateText("Výnimočný predajca s nadštandardným prístupom. Ak hľadáte predajcu áut, ktorý sa o vás postará od A po Z ešte aj po kúpe, Ferluci cars je tá správna voľba. Moja skúsenosť je absolútne nadštandardná a som z prístupu tohto tímu úprimne prekvapený. Kúpa auta, ktoré sa nachádzalo na druhej strane republiky, by bola pre mňa komplikovaná. Tím Ferluci cars však prebral celú réžiu na seba. Nielenže mi sprostredkovali a zmanažovali obhliadku, ale auto aj dôkladne skontrolovali, čo mi dodalo istotu. Celý proces od previerky, cez vybavenie prepisu až po pomoc s poistkou prebehol hladko a bez akýchkoľvek starostí z mojej strany. Oceňujem, že ich záujem nekončí podpisom zmluvy. Sú k dispozícii aj po kúpe a je vidieť, že im naozaj záleží na tom, aby ste boli s autom spokojní. Ich prístup je plný ochoty a profesionality, čo sa dnes len tak nevidí!!! Jednoznačne odporúčam Ferluci cars každému, kto hľadá nielen auto, ale aj spoľahlivého partnera, ktorý vám poskytne záruku po predaji. Služby tejto firmy sú skutočne na vysokej úrovni a chválim aj veľmi pekný show room v Petržalke. Oplatí sa ísť pozrieť!"),
+    author: "Vladimír Ziman",
+    date: "pred 4 mesiacmi",
   },
   {
     id: 4,
-    text: "Najlepšia skúsenosť s nákupom auta, akú som kedy mal. Tím bol veľmi nápomocný a auto je v perfektnom stave.",
-    author: "Peter D.",
-  },
-  {
-    id: 5,
-    text: "Rýchly a bezproblémový proces. Všetko bolo vysvetlené jasne a auto presahuje moje očakávania. Ďakujem!",
-    author: "Lucia S.",
-  },
-  {
-    id: 6,
-    text: "Skvelá komunikácia a flexibilita. Pomohli mi nájsť ideálne vozidlo pre moju rodinu. Veľmi spokojný zákazník!",
-    author: "Tomáš H.",
-  },
-  {
-    id: 7,
-    text: "Výborná kvalita vozidiel a profesionálna obsluha. Servis bol na najvyššej úrovni. Určite odporúčam!",
-    author: "Eva V.",
+    text: truncateText("Som naozaj rád že som narazil na túto firmu. V dnešnej dobe málokde stretnete predajcu aut s takýmto prístupom. Priestory aj autá naozaj na vysokej úrovni. Všetko čisté, upravené, profesionálne. Ponuknú vám nápoj, kávu, všetko vysvetlia. Fakt som bol z mojej návštevy ich showroomu milo prekvapený. Prajem vám veľa spokojných zákazníkov a nech sa darí."),
+    author: "Maroš Minárik",
+    date: "pred 2 mesiacmi",
   },
 ]
+
+const GOOGLE_REVIEWS_URL = "https://www.google.com/search?sca_esv=05b0eef4b2f0cf75&sxsrf=ANbL-n5fXeRwTnCQwZcdG8Zo-1aERTDLGg:1770221627352&q=Ferluci%20Cars%20Reviews&rflfq=1&num=20&stick=H4sIAAAAAAAAAONgkxIxNDU3Mzczs7C0NDQAEuYmhpbmGxgZXzGKuKUW5ZQmZyo4JxYVKwSllmWmlhcvYsUqDAAVl-_vSQAAAA&rldimm=15767668991089974197&tbm=lcl&hl=en-SK&sa=X&ved=0CBEQ5foLahcKEwiIo8S6ncCSAxUAAAAAHQAAAAAQBw&biw=1680&bih=1268&dpr=1&aic=0#arid=Ci9DQUlRQUNvZENodHljRjlvT2tzeE5EQkRWSEJpVGxZM05ESmFMWFpDWTNvNWJFRRAB&lkt=LocalPoiReviews&rlfi=hd:;si:15767668991089974197,l,ChRGZXJsdWNpIENhcnMgUmV2aWV3c0i7utjl5ryAgAhaHBACGAAYASIUZmVybHVjaSBjYXJzIHJldmlld3OSAQpjYXJfZGVhbGVymgFEQ2k5RFFVbFJRVU52WkVOb2RIbGpSamx2VDJwbmQxWXlkRkpPUlRsb1pXdEplRTFyTldwU1JYTTBaREowUlUwell4QUL6AQQIXxAd;mv:[[48.11028197731903,17.090181047648745],[48.10992202268097,17.089641952351254]]"
 
 export default function Testimonials() {
   const [api, setApi] = useState<CarouselApi>()
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
   const [current, setCurrent] = useState(0)
+  const [slidesCount, setSlidesCount] = useState(0)
 
   useEffect(() => {
     if (!api) {
       return
     }
 
-    setCanScrollPrev(api.canScrollPrev())
-    setCanScrollNext(api.canScrollNext())
-    setCurrent(api.selectedScrollSnap())
-
-    api.on("select", () => {
+    const updateState = () => {
       setCanScrollPrev(api.canScrollPrev())
       setCanScrollNext(api.canScrollNext())
       setCurrent(api.selectedScrollSnap())
-    })
+      // Get the number of slides from scroll snap list
+      const snapList = api.scrollSnapList()
+      setSlidesCount(snapList.length)
+    }
+
+    updateState()
+
+    api.on("select", updateState)
+    api.on("reInit", updateState)
+
+    return () => {
+      api.off("select", updateState)
+      api.off("reInit", updateState)
+    }
   }, [api])
 
   return (
@@ -88,27 +96,32 @@ export default function Testimonials() {
                       </svg>
                     ))}
                   </div>
-                  <p className="text-gray-300 mb-4">{testimonial.text}</p>
-                  <div className="font-semibold text-gray-100">{testimonial.author}</div>
+                  <p className="text-gray-300 mb-4 min-h-[120px]">{testimonial.text}</p>
+                  <div className="font-semibold text-gray-100 mb-1">{testimonial.author}</div>
+                  {testimonial.date && (
+                    <div className="text-sm text-gray-400">{testimonial.date}</div>
+                  )}
                 </div>
               </CarouselItem>
             ))}
           </CarouselContent>
           {/* Dots indicator */}
-          <div className="flex justify-center gap-2 mt-6">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => api?.scrollTo(index)}
-                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                  current === index
-                    ? "w-8 bg-primary"
-                    : "w-2 bg-gray-600 hover:bg-gray-500"
-                }`}
-                aria-label={`Prejsť na recenziu ${index + 1}`}
-              />
-            ))}
-          </div>
+          {slidesCount > 0 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: slidesCount }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => api?.scrollTo(index)}
+                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                    current === index
+                      ? "w-8 bg-primary"
+                      : "w-2 bg-gray-600 hover:bg-gray-500"
+                  }`}
+                  aria-label={`Prejsť na slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
           {/* Navigation arrows below the carousel */}
           <div className="flex justify-center gap-4 mt-4">
             <Button
@@ -133,6 +146,18 @@ export default function Testimonials() {
             </Button>
           </div>
         </Carousel>
+        {/* View All Reviews Button */}
+        <div className="flex justify-center mt-8">
+          <Button
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-white"
+            asChild
+          >
+            <Link href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer">
+              Zobraziť všetky recenzie
+            </Link>
+          </Button>
+        </div>
       </div>
     </section>
   )
