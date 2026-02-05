@@ -39,7 +39,7 @@ const testimonials = [
   },
 ]
 
-const GOOGLE_REVIEWS_URL = "https://www.google.com/search?sca_esv=05b0eef4b2f0cf75&sxsrf=ANbL-n5fXeRwTnCQwZcdG8Zo-1aERTDLGg:1770221627352&q=Ferluci%20Cars%20Reviews&rflfq=1&num=20&stick=H4sIAAAAAAAAAONgkxIxNDU3Mzczs7C0NDQAEuYmhpbmGxgZXzGKuKUW5ZQmZyo4JxYVKwSllmWmlhcvYsUqDAAVl-_vSQAAAA&rldimm=15767668991089974197&tbm=lcl&hl=en-SK&sa=X&ved=0CBEQ5foLahcKEwiIo8S6ncCSAxUAAAAAHQAAAAAQBw&biw=1680&bih=1268&dpr=1&aic=0#arid=Ci9DQUlRQUNvZENodHljRjlvT2tzeE5EQkRWSEJpVGxZM05ESmFMWFpDWTNvNWJFRRAB&lkt=LocalPoiReviews&rlfi=hd:;si:15767668991089974197,l,ChRGZXJsdWNpIENhcnMgUmV2aWV3c0i7utjl5ryAgAhaHBACGAAYASIUZmVybHVjaSBjYXJzIHJldmlld3OSAQpjYXJfZGVhbGVymgFEQ2k5RFFVbFJRVU52WkVOb2RIbGpSamx2VDJwbmQxWXlkRkpPUlRsb1pXdEplRTFyTldwU1JYTTBaREowUlUwell4QUL6AQQIXxAd;mv:[[48.11028197731903,17.090181047648745],[48.10992202268097,17.089641952351254]]"
+const GOOGLE_REVIEWS_URL = "https://www.google.com/search?sca_esv=13dc0417b6064a80&sxsrf=ANbL-n5wg5hYof6wywhwFBWA3jD2AKtAqA:1770318207216&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOQm-Dfahy1rOlhINpTMoLWO-Dd01cUdAC6yhBcTSBop-iFxkrQXzMD7ski6wQgB1nRhk0OOOxJ2qWyg5TCxvz0DxHYHG&q=Ferluci+Cars+Recenze&sa=X&ved=2ahUKEwjPmoWfhcOSAxUSTVUIHe2qCUgQ0bkNegQIJxAF&biw=1548&bih=1268&dpr=1"
 
 export default function Testimonials() {
   const [api, setApi] = useState<CarouselApi>()
