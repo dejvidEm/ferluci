@@ -5,7 +5,7 @@ import { Facebook, Instagram, Lock } from "lucide-react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
 export default function Footer() {
-  const { contactInfo } = useContactInfo()
+  const { contactInfo, loading } = useContactInfo()
   return (
     <footer className="bg-[#121212] text-gray-200 relative overflow-hidden">
       <span className="text-center text-red-400 md:text-[160px] text-[45px] font-bold absolute left-2 md:left-10 -bottom-5 md:-bottom-20 opacity-5 pointer-events-none z-0">FERLUCI CARS</span>
@@ -114,7 +114,9 @@ export default function Footer() {
                   <p>851 01 Petržalka</p>
                 </>
               )}
-              <p className="mt-3">Telefón: {contactInfo.phone}</p>
+              <p className="mt-3" suppressHydrationWarning>
+                Telefón: {contactInfo.phone}
+              </p>
               <p>Email: {contactInfo.email || "info@ferlucicars.com"}</p>
             </address>
             <p className="mt-3">

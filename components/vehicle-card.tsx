@@ -143,6 +143,7 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
         </div>
         <div className="grid grid-cols-3 gap-2 text-sm">
           <div className="flex items-center">
+            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
             <span>{formatNumber(vehicle.mileage)} km</span>
           </div>
           <div className="flex items-center">
