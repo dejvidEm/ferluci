@@ -9,7 +9,6 @@ import { Menu, Phone, X, Facebook, Instagram } from "lucide-react"
 import { useState } from "react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 import TranslateButton from "@/components/translate-button"
-import TranslateAwareLink from "@/components/translate-aware-link"
 
 const navigation = [
   { name: "Domov", href: "/" },
@@ -30,7 +29,7 @@ export default function Header() {
       <div className="container mx-auto px-4 h-full">
         <div className="flex h-full items-center justify-between">
           <div className="flex items-center">
-            <TranslateAwareLink href="/" className="flex items-center">
+            <Link href="/" className="flex items-center">
               <Image
                 src="/logo.png"
                 alt="Ferlucicars"
@@ -39,14 +38,14 @@ export default function Header() {
                 className="h-14 w-auto brightness-0 invert"
                 priority
               />
-            </TranslateAwareLink>
+            </Link>
           </div>
 
           <nav className="hidden md:flex space-x-8">
             {navigation.map((item) => {
               const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
               return (
-                <TranslateAwareLink 
+                <Link 
                   key={item.name} 
                   href={item.href}
                   className={`text-gray-200 hover:text-primary font-medium relative pb-1 ${
@@ -57,7 +56,7 @@ export default function Header() {
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                   )}
-              </TranslateAwareLink>
+              </Link>
               )
             })}
           </nav>
@@ -69,9 +68,7 @@ export default function Header() {
             </div>
             <TranslateButton />
             <Button asChild>
-              <TranslateAwareLink href="/contact">
-                Kontaktovať
-              </TranslateAwareLink>
+              <Link href="/contact">Kontaktovať</Link>
             </Button>
           </div>
 
@@ -86,7 +83,7 @@ export default function Header() {
               <SheetContent side="right" className="w-[300px] sm:w-[400px] border-0 rounded-tl-2xl rounded-bl-2xl [&>button]:hidden">
                 <SheetTitle className="sr-only">Navigačné menu</SheetTitle>
                 <div className="flex items-center justify-between">
-                  <TranslateAwareLink 
+                  <Link 
                     href="/" 
                     className="flex items-center" 
                     onClick={() => setIsOpen(false)}
@@ -98,7 +95,7 @@ export default function Header() {
                       height={48}
                       className="h-12 w-auto brightness-0 invert"
                     />
-                  </TranslateAwareLink>
+                  </Link>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                     <X className="h-6 w-6" />
                     <span className="sr-only">Close menu</span>
@@ -108,7 +105,7 @@ export default function Header() {
                   {navigation.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                     return (
-                    <TranslateAwareLink
+                    <Link
                       key={item.name}
                       href={item.href}
                         className={`text-gray-200 hover:text-primary font-medium text-lg relative pb-1 ${
@@ -120,7 +117,7 @@ export default function Header() {
                         {isActive && (
                           <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                         )}
-                    </TranslateAwareLink>
+                    </Link>
                     )
                   })}
                   <div className="pt-4">
@@ -130,12 +127,9 @@ export default function Header() {
                     </div>
                     <TranslateButton />
                     <Button className="w-full mb-6 mt-4" asChild>
-                      <TranslateAwareLink 
-                        href="/contact" 
-                        onClick={() => setIsOpen(false)}
-                      >
+                      <Link href="/contact" onClick={() => setIsOpen(false)}>
                         Kontaktovať
-                      </TranslateAwareLink>
+                      </Link>
                     </Button>
                     <div className="flex items-center justify-center space-x-4 pt-4 border-t border-white/10">
                       <Link 
