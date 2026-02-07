@@ -8,8 +8,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { Menu, Phone, X, Facebook, Instagram } from "lucide-react"
 import { useState } from "react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
-import TranslateButton from "@/components/translate-button"
-import SimpleLink from "@/components/simple-link"
 
 const navigation = [
   { name: "Domov", href: "/" },
@@ -30,7 +28,7 @@ export default function Header() {
       <div className="container mx-auto px-4 h-full">
         <div className="flex h-full items-center justify-between">
           <div className="flex items-center">
-            <SimpleLink href="/" className="flex items-center">
+            <Link href="/" className="flex items-center">
               <Image
                 src="/logo.png"
                 alt="Ferlucicars"
@@ -39,16 +37,16 @@ export default function Header() {
                 className="h-14 w-auto brightness-0 invert"
                 priority
               />
-            </SimpleLink>
+            </Link>
           </div>
 
           <nav className="hidden md:flex space-x-8">
             {navigation.map((item) => {
               const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
               return (
-                <SimpleLink 
+                <Link 
                   key={item.name} 
-                  href={item.href}
+                  href={item.href} 
                   className={`text-gray-200 hover:text-primary font-medium relative pb-1 ${
                     isActive ? "text-primary" : ""
                   }`}
@@ -57,7 +55,7 @@ export default function Header() {
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                   )}
-              </SimpleLink>
+              </Link>
               )
             })}
           </nav>
@@ -67,9 +65,8 @@ export default function Header() {
               <Phone className="h-5 w-5 text-primary mr-2" />
               <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
             </div>
-            <TranslateButton />
             <Button asChild>
-              <SimpleLink href="/contact">Kontaktovať</SimpleLink>
+              <Link href="/contact">Kontaktovať</Link>
             </Button>
           </div>
 
@@ -84,11 +81,7 @@ export default function Header() {
               <SheetContent side="right" className="w-[300px] sm:w-[400px] border-0 rounded-tl-2xl rounded-bl-2xl [&>button]:hidden">
                 <SheetTitle className="sr-only">Navigačné menu</SheetTitle>
                 <div className="flex items-center justify-between">
-                  <SimpleLink 
-                    href="/" 
-                    className="flex items-center" 
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Link href="/" className="flex items-center" onClick={() => setIsOpen(false)}>
                     <Image
                       src="/logo.png"
                       alt="Ferlucicars"
@@ -96,7 +89,7 @@ export default function Header() {
                       height={48}
                       className="h-12 w-auto brightness-0 invert"
                     />
-                  </SimpleLink>
+                  </Link>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                     <X className="h-6 w-6" />
                     <span className="sr-only">Close menu</span>
@@ -106,7 +99,7 @@ export default function Header() {
                   {navigation.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                     return (
-                    <SimpleLink
+                    <Link
                       key={item.name}
                       href={item.href}
                         className={`text-gray-200 hover:text-primary font-medium text-lg relative pb-1 ${
@@ -118,7 +111,7 @@ export default function Header() {
                         {isActive && (
                           <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                         )}
-                    </SimpleLink>
+                    </Link>
                     )
                   })}
                   <div className="pt-4">
@@ -126,11 +119,10 @@ export default function Header() {
                       <Phone className="h-5 w-5 text-primary mr-2" />
                       <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
                     </div>
-                    <TranslateButton />
-                    <Button className="w-full mb-6 mt-4" asChild>
-                      <SimpleLink href="/contact" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full mb-6" asChild>
+                      <Link href="/contact" onClick={() => setIsOpen(false)}>
                         Kontaktovať
-                      </SimpleLink>
+                      </Link>
                     </Button>
                     <div className="flex items-center justify-center space-x-4 pt-4 border-t border-white/10">
                       <Link 
