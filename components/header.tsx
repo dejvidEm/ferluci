@@ -9,6 +9,7 @@ import { Menu, Phone, X, Facebook, Instagram } from "lucide-react"
 import { useState } from "react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 import TranslateButton from "@/components/translate-button"
+import TranslatableLink from "@/components/translatable-link"
 
 const navigation = [
   { name: "Domov", href: "/" },
@@ -24,34 +25,12 @@ export default function Header() {
   const pathname = usePathname()
   const { contactInfo } = useContactInfo()
 
-  // Check if we're in a Google Translate iframe context
-  const isInTranslateContext = typeof window !== 'undefined' && window.top !== window.self
-
-  // Handle navigation links to work with Google Translate
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (isInTranslateContext && typeof window !== 'undefined') {
-      e.preventDefault()
-      const baseUrl = window.location.origin
-      const fullUrl = `${baseUrl}${href}`
-      const encodedUrl = encodeURIComponent(fullUrl)
-      const translateUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodedUrl}`
-      // Navigate in the parent window (Google Translate wrapper)
-      try {
-        window.top!.location.href = translateUrl
-      } catch (err) {
-        // Cross-origin error - open in new tab as fallback
-        window.open(translateUrl, '_blank', 'noopener,noreferrer')
-      }
-    }
-    // Otherwise, let Next.js Link handle it normally
-  }
-
   return (
     <header className="bg-[#121212]/80 backdrop-blur-xl h-24 sticky top-0 z-50 border-b-0">
       <div className="container mx-auto px-4 h-full">
         <div className="flex h-full items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
+            <TranslatableLink href="/" className="flex items-center">
               <Image
                 src="/logo.png"
                 alt="Ferlucicars"
@@ -60,17 +39,16 @@ export default function Header() {
                 className="h-14 w-auto brightness-0 invert"
                 priority
               />
-            </Link>
+            </TranslatableLink>
           </div>
 
           <nav className="hidden md:flex space-x-8">
             {navigation.map((item) => {
               const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
               return (
-                <Link 
+                <TranslatableLink 
                   key={item.name} 
                   href={item.href}
-                  onClick={(e) => handleNavClick(e, item.href)}
                   className={`text-gray-200 hover:text-primary font-medium relative pb-1 ${
                     isActive ? "text-primary" : ""
                   }`}
@@ -79,7 +57,7 @@ export default function Header() {
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                   )}
-              </Link>
+              </TranslatableLink>
               )
             })}
           </nav>
@@ -91,7 +69,9 @@ export default function Header() {
             </div>
             <TranslateButton />
             <Button asChild>
-              <Link href="/contact">Kontaktovať</Link>
+              <TranslatableLink href="/contact">
+                Kontaktovať
+              </TranslatableLink>
             </Button>
           </div>
 
@@ -106,7 +86,11 @@ export default function Header() {
               <SheetContent side="right" className="w-[300px] sm:w-[400px] border-0 rounded-tl-2xl rounded-bl-2xl [&>button]:hidden">
                 <SheetTitle className="sr-only">Navigačné menu</SheetTitle>
                 <div className="flex items-center justify-between">
-                  <Link href="/" className="flex items-center" onClick={() => setIsOpen(false)}>
+                  <TranslatableLink 
+                    href="/" 
+                    className="flex items-center" 
+                    onClick={() => setIsOpen(false)}
+                  >
                     <Image
                       src="/logo.png"
                       alt="Ferlucicars"
@@ -114,7 +98,7 @@ export default function Header() {
                       height={48}
                       className="h-12 w-auto brightness-0 invert"
                     />
-                  </Link>
+                  </TranslatableLink>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                     <X className="h-6 w-6" />
                     <span className="sr-only">Close menu</span>
@@ -124,22 +108,19 @@ export default function Header() {
                   {navigation.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                     return (
-                    <Link
+                    <TranslatableLink
                       key={item.name}
                       href={item.href}
                         className={`text-gray-200 hover:text-primary font-medium text-lg relative pb-1 ${
                           isActive ? "text-primary" : ""
                         }`}
-                      onClick={(e) => {
-                        setIsOpen(false)
-                        handleNavClick(e, item.href)
-                      }}
+                      onClick={() => setIsOpen(false)}
                     >
                       {item.name}
                         {isActive && (
                           <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></span>
                         )}
-                    </Link>
+                    </TranslatableLink>
                     )
                   })}
                   <div className="pt-4">
@@ -149,9 +130,12 @@ export default function Header() {
                     </div>
                     <TranslateButton />
                     <Button className="w-full mb-6 mt-4" asChild>
-                      <Link href="/contact" onClick={() => setIsOpen(false)}>
+                      <TranslatableLink 
+                        href="/contact" 
+                        onClick={() => setIsOpen(false)}
+                      >
                         Kontaktovať
-                      </Link>
+                      </TranslatableLink>
                     </Button>
                     <div className="flex items-center justify-center space-x-4 pt-4 border-t border-white/10">
                       <Link 
