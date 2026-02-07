@@ -3,24 +3,24 @@
 import { useEffect } from "react"
 
 /**
- * Global handler that intercepts ALL link clicks when in iframe (Google Translate)
- * and forces them to break out of iframe to prevent "Can't translate this page" errors
+ * Checks if we're on Google Translate subdomain (translate.goog)
+ */
+function isOnTranslateSubdomain(): boolean {
+  if (typeof window === "undefined") return false
+  return window.location.hostname.includes("translate.goog")
+}
+
+/**
+ * Global handler that intercepts ALL link clicks when on Google Translate subdomain
+ * and forces them to use Google Translate URLs to prevent "Can't translate this page" errors
  */
 export default function IframeLinkHandler() {
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    const isInIframe = () => {
-      try {
-        return window.top !== window.self
-      } catch (e) {
-        return true // Cross-origin error = iframe
-      }
-    }
-
     const handleClick = (e: MouseEvent) => {
-      // Check if we're in iframe
-      if (!isInIframe()) return
+      // Check if we're on translate subdomain
+      if (!isOnTranslateSubdomain()) return
 
       const target = e.target as HTMLElement
       const link = target.closest("a")
@@ -28,47 +28,44 @@ export default function IframeLinkHandler() {
       if (!link) return
 
       // Skip external links
-      if (link.hostname && link.hostname !== window.location.hostname && !link.hostname.includes(window.location.hostname)) {
+      if (link.hostname && !link.hostname.includes("translate.goog") && link.hostname !== window.location.hostname.replace(".translate.goog", "")) {
         return
       }
 
-      // Skip links that already have target="_blank" or target="_top"
-      if (link.target === "_blank" || link.target === "_top") {
+      // Skip links that already have target="_blank"
+      if (link.target === "_blank") {
         return
       }
 
       // Skip hash-only links
-      if (link.href && link.href.split("#")[0] === window.location.href.split("#")[0]) {
+      const linkHref = link.getAttribute("href") || link.href
+      if (!linkHref || linkHref.startsWith("#") || linkHref.startsWith("javascript:")) {
         return
       }
 
-      // Get href
-      const href = link.getAttribute("href")
-      if (!href || href.startsWith("#") || href.startsWith("javascript:")) {
+      // Skip if it's already a Google Translate URL
+      if (linkHref.includes("translate.google.com") || linkHref.includes("translate.goog")) {
         return
       }
 
       // Convert to absolute URL
-      let absoluteUrl = href
-      if (!href.startsWith("http://") && !href.startsWith("https://")) {
-        absoluteUrl = `${window.location.origin}${href.startsWith("/") ? href : "/" + href}`
+      let absoluteUrl = linkHref
+      if (!linkHref.startsWith("http://") && !linkHref.startsWith("https://")) {
+        // Remove translate.goog from current origin to get original domain
+        const originalOrigin = window.location.origin.replace(".translate.goog", "").replace("www-", "www.")
+        absoluteUrl = `${originalOrigin}${linkHref.startsWith("/") ? linkHref : "/" + linkHref}`
       }
 
-      // Prevent default and navigate top window
+      // Build Google Translate URL
+      const encodedUrl = encodeURIComponent(absoluteUrl)
+      const translateUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodedUrl}`
+
+      // Prevent default and navigate to translated version
       e.preventDefault()
       e.stopPropagation()
       e.stopImmediatePropagation()
 
-      try {
-        if (window.top && window.top !== window.self) {
-          window.top.location.href = absoluteUrl
-        } else {
-          window.location.href = absoluteUrl
-        }
-      } catch (err) {
-        // Fallback
-        window.location.href = absoluteUrl
-      }
+      window.location.href = translateUrl
     }
 
     // Use capture phase to catch before Next.js Link handlers

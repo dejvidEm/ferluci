@@ -12,28 +12,31 @@ interface SimpleLinkProps {
 }
 
 /**
- * Simple link component that ALWAYS uses regular anchor tag when in iframe (Google Translate)
+ * Checks if we're on Google Translate subdomain (translate.goog)
+ */
+function isOnTranslateSubdomain(): boolean {
+  if (typeof window === "undefined") return false
+  return window.location.hostname.includes("translate.goog")
+}
+
+/**
+ * Simple link component that ALWAYS uses regular anchor tag when on Google Translate subdomain
  * to prevent "Can't translate this page" errors
  */
 export default function SimpleLink({ href, children, className, onClick, ...props }: SimpleLinkProps) {
-  const [inIframe, setInIframe] = useState(true) // Default to true to be safe
+  const [onTranslateSubdomain, setOnTranslateSubdomain] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     if (typeof window !== "undefined") {
-      // Check if we're in an iframe (Google Translate loads pages in iframes)
-      const checkIframe = () => {
-        try {
-          setInIframe(window.top !== window.self)
-        } catch (e) {
-          // Cross-origin error means we're definitely in an iframe
-          setInIframe(true)
-        }
+      // Check if we're on Google Translate subdomain
+      const checkTranslate = () => {
+        setOnTranslateSubdomain(isOnTranslateSubdomain())
       }
-      checkIframe()
+      checkTranslate()
       // Re-check periodically
-      const interval = setInterval(checkIframe, 100)
+      const interval = setInterval(checkTranslate, 100)
       return () => clearInterval(interval)
     }
   }, [])
@@ -50,54 +53,44 @@ export default function SimpleLink({ href, children, className, onClick, ...prop
   }
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // ALWAYS check iframe status on click
-    let currentlyInIframe = false
-    if (typeof window !== "undefined") {
-      try {
-        currentlyInIframe = window.top !== window.self
-      } catch (e) {
-        currentlyInIframe = true // Cross-origin = iframe
-      }
-    }
+    // ALWAYS check translate subdomain on click
+    const onTranslate = isOnTranslateSubdomain()
 
-    // If in iframe, ALWAYS break out
-    if (currentlyInIframe) {
+    // If on translate subdomain, ALWAYS do full page reload
+    if (onTranslate) {
       e.preventDefault()
       e.stopPropagation()
       e.nativeEvent.stopImmediatePropagation()
       
       const absoluteUrl = getAbsoluteUrl(href)
       
-      // Navigate top window to break out of iframe
-      try {
-        if (window.top && window.top !== window.self) {
-          window.top.location.href = absoluteUrl
-        } else {
-          window.location.href = absoluteUrl
-        }
-      } catch (err) {
-        // Cross-origin error - fallback
-        window.location.href = absoluteUrl
-      }
+      // Build Google Translate URL for the destination
+      const encodedUrl = encodeURIComponent(absoluteUrl)
+      const translateUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodedUrl}`
+      
+      // Navigate to translated version of destination page
+      window.location.href = translateUrl
       return
     }
 
-    // Not in iframe, call original onClick
+    // Not on translate subdomain, call original onClick
     if (onClick) {
       onClick(e)
     }
   }
 
-  // If in iframe OR not mounted yet (to be safe), use regular anchor tag
+  // If on translate subdomain OR not mounted yet (to be safe), use regular anchor tag
   // This prevents Google Translate "Can't translate this page" error
-  if (!mounted || inIframe) {
+  if (!mounted || onTranslateSubdomain) {
     const absoluteUrl = getAbsoluteUrl(href)
+    
+    // Build Google Translate URL for the destination
+    const encodedUrl = encodeURIComponent(absoluteUrl)
+    const translateUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodedUrl}`
     
     return (
       <a
-        href={absoluteUrl}
-        target="_top"
-        rel="noopener noreferrer"
+        href={translateUrl}
         className={className}
         onClick={handleClick}
         {...props}
