@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { Menu, Phone, X, Facebook, Instagram } from "lucide-react"
 import { useState } from "react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
+import TranslateButton from "@/components/translate-button"
 
 const navigation = [
   { name: "Domov", href: "/" },
@@ -65,6 +66,7 @@ export default function Header() {
               <Phone className="h-5 w-5 text-primary mr-2" />
               <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
             </div>
+            <TranslateButton />
             <Button asChild>
               <Link href="/contact">Kontaktovať</Link>
             </Button>
@@ -119,7 +121,8 @@ export default function Header() {
                       <Phone className="h-5 w-5 text-primary mr-2" />
                       <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
                     </div>
-                    <Button className="w-full mb-6" asChild>
+                    <TranslateButton />
+                    <Button className="w-full mb-6 mt-4" asChild>
                       <Link href="/contact" onClick={() => setIsOpen(false)}>
                         Kontaktovať
                       </Link>
