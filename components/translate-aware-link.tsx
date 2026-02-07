@@ -33,48 +33,63 @@ export default function TranslateAwareLink({
 
   useEffect(() => {
     setMounted(true)
-    setInTranslate(isInGoogleTranslate())
+    // Check translate context on mount
+    const checkTranslate = () => {
+      if (typeof window !== "undefined") {
+        setInTranslate(isInGoogleTranslate())
+      }
+    }
+    checkTranslate()
+    
+    // Re-check periodically and on navigation
+    const interval = setInterval(checkTranslate, 300)
+    const handlePopState = () => checkTranslate()
+    window.addEventListener("popstate", handlePopState)
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("popstate", handlePopState)
+    }
   }, [])
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
-      if (!mounted) {
-        if (onClick) onClick(e)
-        return
-      }
-
-      // Check translate context dynamically
-      const isInTranslate = isInGoogleTranslate()
+      // Always check translate context on click (don't wait for mounted state)
+      const isInTranslate = typeof window !== "undefined" && isInGoogleTranslate()
 
       if (isInTranslate) {
+        // CRITICAL: Prevent default and stop propagation FIRST
         e.preventDefault()
         e.stopPropagation()
+        e.nativeEvent.stopImmediatePropagation()
 
         // Get original URL from Google Translate
         const originalUrl = getOriginalUrlFromTranslate()
 
+        let destUrl: string
         if (originalUrl) {
           try {
             // Resolve destination URL using original URL as base
             const baseUrl = new URL(originalUrl)
-            const destUrl = resolveAbsoluteUrl(href, baseUrl.toString())
-            
-            // Build translate URL and navigate
-            const translateUrl = buildTranslateUrl(destUrl, tl)
-            window.location.href = translateUrl
+            destUrl = resolveAbsoluteUrl(href, baseUrl.toString())
           } catch (error) {
-            console.error("Error handling translate-aware navigation:", error)
-            // Fallback: try with current origin
-            const destUrl = resolveAbsoluteUrl(href)
-            const translateUrl = buildTranslateUrl(destUrl, tl)
-            window.location.href = translateUrl
+            console.error("Error resolving URL with original base:", error)
+            // Fallback: use current origin
+            destUrl = resolveAbsoluteUrl(href)
           }
         } else {
           // Fallback: use current origin
-          const destUrl = resolveAbsoluteUrl(href)
-          const translateUrl = buildTranslateUrl(destUrl, tl)
-          window.location.href = translateUrl
+          destUrl = resolveAbsoluteUrl(href)
         }
+        
+        // Build translate URL and navigate
+        const translateUrl = buildTranslateUrl(destUrl, tl)
+        
+        // Use setTimeout to ensure navigation happens after event handling
+        setTimeout(() => {
+          window.location.href = translateUrl
+        }, 0)
+        
         return
       }
 
@@ -83,37 +98,42 @@ export default function TranslateAwareLink({
         onClick(e)
       }
     },
-    [href, tl, onClick, mounted]
+    [href, tl, onClick]
   )
 
-  // If in translate context, use regular anchor tag (Next.js Link won't work properly)
-  // Otherwise use Next.js Link for client-side navigation
-  if (mounted && inTranslate) {
-    // In translate context: use regular anchor with translate URL
+  // Compute translate URL if needed
+  const getTranslateHref = useCallback(() => {
     const originalUrl = getOriginalUrlFromTranslate()
-    let translateHref = href
+    let destUrl: string
 
     if (originalUrl) {
       try {
         const baseUrl = new URL(originalUrl)
-        const destUrl = resolveAbsoluteUrl(href, baseUrl.toString())
-        translateHref = buildTranslateUrl(destUrl, tl)
+        destUrl = resolveAbsoluteUrl(href, baseUrl.toString())
       } catch (error) {
-        const destUrl = resolveAbsoluteUrl(href)
-        translateHref = buildTranslateUrl(destUrl, tl)
+        destUrl = resolveAbsoluteUrl(href)
       }
     } else {
-      const destUrl = resolveAbsoluteUrl(href)
-      translateHref = buildTranslateUrl(destUrl, tl)
+      destUrl = resolveAbsoluteUrl(href)
     }
 
-    // For hash links, we still want to translate but preserve the hash behavior
-    // However, Google Translate doesn't handle hash links well, so we'll use the full URL
+    return buildTranslateUrl(destUrl, tl)
+  }, [href, tl])
+
+  // Always check translate context dynamically
+  const currentInTranslate = mounted && typeof window !== "undefined" && isInGoogleTranslate()
+  
+  // If in translate context OR potentially in translate (iframe), use anchor tag
+  // This ensures we don't use Next.js Link which would interfere
+  if (mounted && (currentInTranslate || inTranslate || (typeof window !== "undefined" && window.top !== window.self))) {
+    const translateHref = getTranslateHref()
+    
     return (
       <a
         href={translateHref}
         className={className}
         onClick={handleClick}
+        data-translate-link="true"
         {...props}
       >
         {children}
@@ -122,6 +142,7 @@ export default function TranslateAwareLink({
   }
 
   // Normal Next.js Link for non-translate context
+  // Still add click handler to catch translate context changes
   return (
     <Link
       href={href}

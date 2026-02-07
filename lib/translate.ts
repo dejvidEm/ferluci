@@ -20,11 +20,40 @@ export function buildTranslateUrl(targetUrl: string, tl: string = "en"): string 
 export function isInGoogleTranslate(): boolean {
   if (typeof window === "undefined") return false
   
+  // Check if we're in an iframe (Google Translate loads pages in iframes)
+  const inIframe = window.top !== window.self
+  
+  // Check current URL hostname
   const hostname = window.location.hostname
-  return (
+  const urlHasTranslate = 
     hostname.includes("translate.google.com") ||
     hostname.includes("translate.googleusercontent.com")
-  )
+  
+  // Check referrer
+  const referrerHasTranslate = 
+    typeof document !== "undefined" && 
+    document.referrer.includes("translate.google.com")
+  
+  // Check if parent window is Google Translate (if we can access it)
+  let parentHasTranslate = false
+  if (inIframe) {
+    try {
+      const parentHostname = window.top?.location.hostname || ""
+      parentHasTranslate = 
+        parentHostname.includes("translate.google.com") ||
+        parentHostname.includes("translate.googleusercontent.com")
+    } catch (e) {
+      // Cross-origin error - this is expected when in Google Translate iframe
+      // If we can't access parent, and we're in iframe, likely Google Translate
+      parentHasTranslate = true
+    }
+  }
+  
+  // Check URL parameters for translate indicators
+  const urlParams = new URLSearchParams(window.location.search)
+  const hasTranslateParam = urlParams.has("u") && (inIframe || referrerHasTranslate)
+  
+  return urlHasTranslate || (inIframe && parentHasTranslate) || referrerHasTranslate || hasTranslateParam
 }
 
 /**
@@ -37,14 +66,43 @@ export function getOriginalUrlFromTranslate(): string | null {
   if (!isInGoogleTranslate()) return null
   
   try {
+    // First try to get from current window URL params
     const urlParams = new URLSearchParams(window.location.search)
-    const originalUrl = urlParams.get("u")
+    let originalUrl = urlParams.get("u")
     
-    if (!originalUrl) return null
+    // If not found and we're in iframe, try parent window
+    if (!originalUrl && window.top !== window.self) {
+      try {
+        const parentParams = new URLSearchParams(window.top!.location.search)
+        originalUrl = parentParams.get("u")
+      } catch (e) {
+        // Cross-origin - can't access parent URL params directly
+        // Try to extract from parent URL string if accessible
+        try {
+          const parentUrl = window.top!.location.href
+          const parentUrlObj = new URL(parentUrl)
+          originalUrl = parentUrlObj.searchParams.get("u")
+        } catch (e2) {
+          // Can't access parent URL
+        }
+      }
+    }
+    
+    if (!originalUrl) {
+      // Fallback: construct from current location (if we're in iframe, current location IS the original)
+      if (window.top !== window.self) {
+        return `${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`
+      }
+      return null
+    }
     
     return decodeURIComponent(originalUrl)
   } catch (error) {
     console.error("Error extracting original URL from Google Translate:", error)
+    // Fallback: return current location if in iframe
+    if (window.top !== window.self) {
+      return `${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`
+    }
     return null
   }
 }
