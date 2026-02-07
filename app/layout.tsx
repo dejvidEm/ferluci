@@ -4,6 +4,7 @@ import { Urbanist, Montserrat } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import TranslateLinkHandler from "@/components/translate-link-handler"
 
 const urbanist = Urbanist({ 
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="sk" className="dark">
       <body className={`${urbanist.variable} ${montserrat.variable} font-montserrat bg-[#121212]`}>
+        <TranslateLinkHandler />
         <Header />
         <main className="bg-[#121212]">{children}</main>
         <Footer />
