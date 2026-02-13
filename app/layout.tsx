@@ -1,9 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Urbanist, Montserrat } from "next/font/google"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import IframeLinkHandler from "@/components/iframe-link-handler"
 
 const urbanist = Urbanist({ 
   subsets: ["latin"],
@@ -33,9 +35,11 @@ export default function RootLayout({
   return (
     <html lang="sk" className="dark">
       <body className={`${urbanist.variable} ${montserrat.variable} font-montserrat bg-[#121212]`}>
+        <IframeLinkHandler />
         <Header />
         <main className="bg-[#121212]">{children}</main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   )
