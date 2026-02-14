@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+
 const urbanist = Urbanist({ 
   subsets: ["latin"],
   variable: "--font-urbanist",
