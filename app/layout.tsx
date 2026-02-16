@@ -23,7 +23,27 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Ferluci Cars - Nájdite svoje ideálne vozidlo",
   description: "Prehľadajte našu rozsiahlu ponuku prémiových vozidiel a odíďte s istotou.",
-    generator: 'v0.app'
+  generator: 'v0.app',
+  openGraph: {
+    title: "Ferluci Cars - Nájdite svoje ideálne vozidlo",
+    description: "Prehľadajte našu rozsiahlu ponuku prémiových vozidiel a odíďte s istotou.",
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ferlucicars.eu'}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "Ferluci Cars Logo",
+      },
+    ],
+    type: "website",
+    siteName: "Ferluci Cars",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ferluci Cars - Nájdite svoje ideálne vozidlo",
+    description: "Prehľadajte našu rozsiahlu ponuku prémiových vozidiel a odíďte s istotou.",
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ferlucicars.eu'}/opengraph-image`],
+  },
 }
 
 export default function RootLayout({
