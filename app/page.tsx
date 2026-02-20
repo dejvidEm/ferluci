@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Car, ChevronRight } from "lucide-react"
+import { Car, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react"
 import FeaturedVehicles from "@/components/featured-vehicles"
 import FAQ from "@/components/faq"
 import Testimonials from "@/components/testimonials"
@@ -12,10 +12,14 @@ import HomeSearch from "@/components/home-search"
 import { AuroraText } from "@/components/ui/aurora-text"
 import { client, homePageQuery } from "@/lib/sanity"
 import type { HomePageData } from "@/lib/sanity/utils"
+import type { CarouselApi } from "@/components/ui/carousel"
 
 export default function Home() {
   const [pageData, setPageData] = useState<HomePageData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
+  const [canScrollPrev, setCanScrollPrev] = useState(false)
+  const [canScrollNext, setCanScrollNext] = useState(false)
 
   useEffect(() => {
     async function fetchHomePageData() {
@@ -132,16 +136,64 @@ export default function Home() {
 
       {/* Featured Vehicles */}
       <section className="py-16 bg-[#121212] relative z-30">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 overflow-visible">
           <div className="flex justify-between items-center mb-10 relative z-10">
             <h2 className="text-3xl font-bold">Odporúčané vozidlá</h2>
+            <div className="flex items-center gap-2">
+              {/* Navigation arrows - top right on desktop */}
+              <div className="hidden md:flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-full border border-white/40"
+                  disabled={!canScrollPrev}
+                  onClick={() => carouselApi?.scrollPrev()}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="sr-only">Predchádzajúce vozidlo</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-full border border-white/40"
+                  disabled={!canScrollNext}
+                  onClick={() => carouselApi?.scrollNext()}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  <span className="sr-only">Ďalšie vozidlo</span>
+                </Button>
+              </div>
+              <Button variant="ghost" asChild className="hidden md:flex">
+                <Link href="/ponuka" className="flex items-center">
+                  Zobraziť všetko <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <FeaturedVehicles 
+            onApiChange={(api) => {
+              setCarouselApi(api)
+              if (api) {
+                setCanScrollPrev(api.canScrollPrev())
+                setCanScrollNext(api.canScrollNext())
+                api.on("select", () => {
+                  setCanScrollPrev(api.canScrollPrev())
+                  setCanScrollNext(api.canScrollNext())
+                })
+                api.on("reInit", () => {
+                  setCanScrollPrev(api.canScrollPrev())
+                  setCanScrollNext(api.canScrollNext())
+                })
+              }
+            }}
+          />
+          <div className="flex justify-center mt-6 md:hidden">
             <Button variant="ghost" asChild>
               <Link href="/ponuka" className="flex items-center">
                 Zobraziť všetko <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </div>
-          <FeaturedVehicles />
         </div>
       </section>
 
