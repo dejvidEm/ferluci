@@ -54,6 +54,8 @@ export default function NewVehiclePage() {
   const [price, setPrice] = useState('')
   const [showOldPrice, setShowOldPrice] = useState(false)
   const [oldPrice, setOldPrice] = useState('')
+  const [odpocetDph, setOdpocetDph] = useState(false)
+  const [priceOdpocetDph, setPriceOdpocetDph] = useState('')
   const [mileage, setMileage] = useState('')
   const [exteriorColor, setExteriorColor] = useState('')
   const [interiorColor, setInteriorColor] = useState('')
@@ -113,11 +115,20 @@ export default function NewVehiclePage() {
         throw new Error('Je potrebné pridať aspoň jedno vybavenie')
       }
 
+      if (odpocetDph) {
+        const p = Number(priceOdpocetDph)
+        if (!priceOdpocetDph.trim() || Number.isNaN(p) || p <= 0) {
+          throw new Error('Pri zapnutom odpočte DPH zadajte platnú cenu')
+        }
+      }
+
       const vehicleData = {
         make: make.trim(),
         model: model.trim(),
         year: Number(year),
         price: Number(price),
+        odpocetDph,
+        ...(odpocetDph ? { priceOdpocetDph: Number(priceOdpocetDph) } : {}),
         showOldPrice,
         ...(showOldPrice && oldPrice ? { oldPrice: Number(oldPrice) } : {}),
         mileage: Number(mileage),
@@ -164,6 +175,8 @@ export default function NewVehiclePage() {
     setPrice('')
     setShowOldPrice(false)
     setOldPrice('')
+    setOdpocetDph(false)
+    setPriceOdpocetDph('')
     setMileage('')
     setExteriorColor('')
     setInteriorColor('')
@@ -319,7 +332,7 @@ export default function NewVehiclePage() {
                   className="bg-[#121212] text-white border-white/20"
                 />
               </div>
-              <div className="flex items-end gap-4">
+              <div className="flex flex-col justify-end gap-3">
                 <div className="flex items-center gap-2">
                   <Switch
                     id="showOldPrice"
@@ -331,7 +344,7 @@ export default function NewVehiclePage() {
                   </Label>
                 </div>
                 {showOldPrice && (
-                  <div className="flex-1">
+                  <div>
                     <Label htmlFor="oldPrice" className="text-white">
                       Pôvodná cena (EUR) *
                     </Label>
@@ -348,6 +361,38 @@ export default function NewVehiclePage() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="odpocetDph"
+                  checked={odpocetDph}
+                  onCheckedChange={(checked) => {
+                    setOdpocetDph(checked)
+                    if (!checked) setPriceOdpocetDph('')
+                  }}
+                />
+                <Label htmlFor="odpocetDph" className="text-white">
+                  Odpočet DPH
+                </Label>
+              </div>
+              {odpocetDph && (
+                <div className="max-w-md">
+                  <Label htmlFor="priceOdpocetDph" className="text-white">
+                    Cena (odpočet DPH) (EUR) *
+                  </Label>
+                  <Input
+                    id="priceOdpocetDph"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={priceOdpocetDph}
+                    onChange={(e) => setPriceOdpocetDph(e.target.value)}
+                    required={odpocetDph}
+                    className="bg-[#121212] text-white border-white/20 mt-1"
+                  />
+                </div>
+              )}
             </div>
           </section>
 

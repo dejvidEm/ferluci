@@ -38,11 +38,14 @@ export interface SanityGalleryImage {
 
 export interface SanityVehicle {
   _id: string
+  _createdAt?: string
   id?: string
   make: string
   model: string
   year: number
   price: number
+  odpocetDph?: boolean
+  priceOdpocetDph?: number
   showOldPrice?: boolean
   oldPrice?: number
   mileage: number
@@ -72,6 +75,8 @@ export function transformSanityVehicle(vehicle: SanityVehicle): Vehicle {
     model: vehicle.model,
     year: vehicle.year,
     price: vehicle.price,
+    odpocetDph: vehicle.odpocetDph || false,
+    priceOdpocetDph: vehicle.priceOdpocetDph,
     showOldPrice: vehicle.showOldPrice || false,
     oldPrice: vehicle.oldPrice,
     mileage: vehicle.mileage,
@@ -96,6 +101,7 @@ export function transformSanityVehicle(vehicle: SanityVehicle): Vehicle {
         })
       : ['/placeholder.svg'],
     featured: vehicle.featured || false,
+    listingCreatedAt: vehicle._createdAt,
   }
 }
 

@@ -1,11 +1,14 @@
 import { groq } from 'next-sanity'
 
-export const vehiclesQuery = groq`*[_type == "vehicle"] | order(year desc, _createdAt desc) {
+export const vehiclesQuery = groq`*[_type == "vehicle"] | order(_createdAt desc) {
   _id,
+  _createdAt,
   make,
   model,
   year,
   price,
+  odpocetDph,
+  priceOdpocetDph,
   showOldPrice,
   oldPrice,
   mileage,
@@ -30,6 +33,8 @@ export const vehicleBySlugQuery = groq`*[_type == "vehicle" && slug.current == $
   model,
   year,
   price,
+  odpocetDph,
+  priceOdpocetDph,
   showOldPrice,
   oldPrice,
   mileage,
@@ -54,6 +59,8 @@ export const vehicleByIdQuery = groq`*[_type == "vehicle" && _id == $id][0] {
   model,
   year,
   price,
+  odpocetDph,
+  priceOdpocetDph,
   showOldPrice,
   oldPrice,
   mileage,
@@ -78,6 +85,8 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
   model,
   year,
   price,
+  odpocetDph,
+  priceOdpocetDph,
   showOldPrice,
   oldPrice,
   mileage,

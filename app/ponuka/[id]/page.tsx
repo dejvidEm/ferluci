@@ -182,15 +182,20 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             <h1 className="text-2xl font-bold text-white flex-1 pr-4">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end gap-1">
               {vehicle.showOldPrice && vehicle.oldPrice && (
                 <Badge className="bg-gray-800/50 text-gray-400 border-gray-700/50 px-3 py-1 text-sm font-normal mb-1 line-through">
                   {formatCurrency(vehicle.oldPrice)}
                 </Badge>
               )}
-            <Badge className="bg-primary/20 text-primary border-primary/50 px-4 py-2 text-base font-semibold whitespace-nowrap">
-              {formatCurrency(vehicle.price)}
-            </Badge>
+              <Badge className="bg-primary/20 text-primary border-primary/50 px-4 py-2 text-base font-semibold whitespace-nowrap">
+                {formatCurrency(vehicle.price)}
+              </Badge>
+              {vehicle.odpocetDph && vehicle.priceOdpocetDph != null && (
+                <span className="text-xs text-gray-400 text-right max-w-[200px]">
+                  Odpočet DPH: {formatCurrency(vehicle.priceOdpocetDph)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -503,6 +508,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   )}
                   <div className="text-3xl font-bold text-primary">{formatCurrency(vehicle.price)}</div>
+                  {vehicle.odpocetDph && vehicle.priceOdpocetDph != null && (
+                    <p className="text-sm text-gray-400 mt-1">
+                      Odpočet DPH: {formatCurrency(vehicle.priceOdpocetDph)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">

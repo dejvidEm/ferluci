@@ -54,13 +54,18 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
                       {vehicle.make} {vehicle.model}
                     </h3>
                   </div>
-                  <div className="flex flex-col items-end ml-4">
+                  <div className="flex flex-col items-end ml-4 text-right">
                     {vehicle.showOldPrice && vehicle.oldPrice && (
                       <span className="text-sm text-muted-foreground line-through mb-1">
                         {formatCurrency(vehicle.oldPrice)}
                       </span>
                     )}
                     <span className="font-bold text-xl text-primary">{formatCurrency(vehicle.price)}</span>
+                    {vehicle.odpocetDph && vehicle.priceOdpocetDph != null && (
+                      <span className="text-xs text-muted-foreground mt-1">
+                        Odpočet DPH: {formatCurrency(vehicle.priceOdpocetDph)}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mt-4">
@@ -132,13 +137,18 @@ export default function VehicleCard({ vehicle, displayMode = "grid" }: VehicleCa
           <h3 className="font-semibold text-lg">
             {vehicle.make} {vehicle.model}
           </h3>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end text-right">
             {vehicle.showOldPrice && vehicle.oldPrice && (
               <span className="text-sm text-muted-foreground line-through mb-1">
                 {formatCurrency(vehicle.oldPrice)}
               </span>
             )}
-          <span className="font-bold text-lg text-primary">{formatCurrency(vehicle.price)}</span>
+            <span className="font-bold text-lg text-primary">{formatCurrency(vehicle.price)}</span>
+            {vehicle.odpocetDph && vehicle.priceOdpocetDph != null && (
+              <span className="text-xs text-muted-foreground mt-0.5">
+                Odpočet DPH: {formatCurrency(vehicle.priceOdpocetDph)}
+              </span>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-sm">

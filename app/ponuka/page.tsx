@@ -152,13 +152,16 @@ function InventoryPageContent() {
       results = results.filter((vehicle) => vehicle.pohon && selectedPohon.includes(vehicle.pohon))
     }
 
-    // Apply sorting
+    // Apply sorting (newest/oldest = listing date in CMS, not model year)
+    const listingTime = (v: Vehicle) =>
+      v.listingCreatedAt ? new Date(v.listingCreatedAt).getTime() : 0
+
     const sortedResults = [...results].sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return b.year - a.year
+          return listingTime(b) - listingTime(a)
         case "oldest":
-          return a.year - b.year
+          return listingTime(a) - listingTime(b)
         case "price-low":
           return a.price - b.price
         case "price-high":
@@ -270,12 +273,12 @@ function InventoryPageContent() {
             </Button>
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px] bg-[#121212] border border-white/30">
+            <SelectTrigger className="w-[200px] bg-[#121212] border border-white/30">
               <SelectValue placeholder="Zoradiť podľa" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Najnovšie prvé</SelectItem>
-              <SelectItem value="oldest">Najstaršie prvé</SelectItem>
+              <SelectItem value="newest">Najnovšie inzeráty</SelectItem>
+              <SelectItem value="oldest">Najstaršie inzeráty</SelectItem>
               <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
               <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
             </SelectContent>

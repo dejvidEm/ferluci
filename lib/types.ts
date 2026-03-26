@@ -4,6 +4,8 @@ export interface Vehicle {
   model: string
   year: number
   price: number
+  odpocetDph?: boolean
+  priceOdpocetDph?: number
   showOldPrice?: boolean
   oldPrice?: number
   mileage: number
@@ -19,6 +21,8 @@ export interface Vehicle {
   features: string[]
   images: string[]
   featured: boolean
+  /** ISO timestamp when the listing was created in CMS (for sort by listing age) */
+  listingCreatedAt?: string
 }
 
 export interface FilterOptions {

@@ -178,8 +178,13 @@ export default function HomeSearch() {
                             {vehicle.year}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs md:text-sm text-gray-300">
+                        <div className="flex flex-col items-end gap-0.5 text-xs md:text-sm text-gray-300">
                           <span className="font-semibold text-white">{formatCurrency(vehicle.price)}</span>
+                          {vehicle.odpocetDph && vehicle.priceOdpocetDph != null && (
+                            <span className="text-gray-400 text-[10px] md:text-xs">
+                              Odpočet DPH: {formatCurrency(vehicle.priceOdpocetDph)}
+                            </span>
+                          )}
                           <span>{formatNumber(vehicle.mileage)} km</span>
                         </div>
                       </div>

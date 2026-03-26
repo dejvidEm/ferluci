@@ -7,6 +7,8 @@ interface VehicleInput {
   model: string
   year: number
   price: number
+  odpocetDph: boolean
+  priceOdpocetDph?: number
   showOldPrice: boolean
   oldPrice?: number
   mileage: number
@@ -49,6 +51,17 @@ function validateVehicle(data: Partial<VehicleInput>): string[] {
 
   if (data.showOldPrice && (!data.oldPrice || typeof data.oldPrice !== 'number' || data.oldPrice <= 0)) {
     errors.push('oldPrice is required when showOldPrice is true')
+  }
+
+  if (typeof data.odpocetDph !== 'boolean') {
+    errors.push('odpocetDph must be a boolean')
+  }
+
+  if (
+    data.odpocetDph &&
+    (typeof data.priceOdpocetDph !== 'number' || data.priceOdpocetDph <= 0)
+  ) {
+    errors.push('priceOdpocetDph is required and must be positive when odpocetDph is true')
   }
 
   if (!data.mileage || typeof data.mileage !== 'number' || data.mileage < 0) {
@@ -120,6 +133,8 @@ export async function GET(
         model,
         year,
         price,
+        odpocetDph,
+        priceOdpocetDph,
         showOldPrice,
         oldPrice,
         mileage,
@@ -223,6 +238,8 @@ export async function PUT(
       model: body.model.trim(),
       year: body.year,
       price: body.price,
+      odpocetDph: body.odpocetDph,
+      ...(body.odpocetDph && body.priceOdpocetDph ? { priceOdpocetDph: body.priceOdpocetDph } : {}),
       showOldPrice: body.showOldPrice,
       ...(body.showOldPrice && body.oldPrice ? { oldPrice: body.oldPrice } : {}),
       mileage: body.mileage,
@@ -244,7 +261,11 @@ export async function PUT(
       },
     }
 
-    const result = await adminClient.patch(id).set(vehicleDoc).commit()
+    let patch = adminClient.patch(id).set(vehicleDoc)
+    if (!body.odpocetDph) {
+      patch = patch.unset(['priceOdpocetDph'])
+    }
+    const result = await patch.commit()
 
     return NextResponse.json({
       id: result._id,
