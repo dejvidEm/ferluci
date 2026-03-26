@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import VehicleCard from "@/components/vehicle-card"
 import { formatCurrency, translateFuelType, translateTransmission } from "@/lib/utils"
 import type { Vehicle } from "@/lib/types"
@@ -30,6 +31,8 @@ function InventoryPageContent() {
   const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([])
   const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([])
   const [selectedPohon, setSelectedPohon] = useState<string[]>([])
+  const [filterOdpocetDphOnly, setFilterOdpocetDphOnly] = useState(false)
+  const [filterFeaturedOnly, setFilterFeaturedOnly] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [loading, setLoading] = useState(true)
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid")
@@ -152,6 +155,16 @@ function InventoryPageContent() {
       results = results.filter((vehicle) => vehicle.pohon && selectedPohon.includes(vehicle.pohon))
     }
 
+    if (filterOdpocetDphOnly) {
+      results = results.filter(
+        (vehicle) => vehicle.odpocetDph === true && vehicle.priceOdpocetDph != null
+      )
+    }
+
+    if (filterFeaturedOnly) {
+      results = results.filter((vehicle) => vehicle.featured === true)
+    }
+
     // Apply sorting (newest/oldest = listing date in CMS, not model year)
     const listingTime = (v: Vehicle) =>
       v.listingCreatedAt ? new Date(v.listingCreatedAt).getTime() : 0
@@ -172,7 +185,19 @@ function InventoryPageContent() {
     })
 
     setFilteredVehicles(sortedResults)
-  }, [vehicles, searchQuery, priceRange, yearRange, selectedMakes, selectedFuelTypes, selectedTransmissions, selectedPohon, sortBy])
+  }, [
+    vehicles,
+    searchQuery,
+    priceRange,
+    yearRange,
+    selectedMakes,
+    selectedFuelTypes,
+    selectedTransmissions,
+    selectedPohon,
+    filterOdpocetDphOnly,
+    filterFeaturedOnly,
+    sortBy,
+  ])
 
   const handleSearch = () => {
     // Update URL with search query
@@ -200,6 +225,8 @@ function InventoryPageContent() {
     setSelectedFuelTypes([])
     setSelectedTransmissions([])
     setSelectedPohon([])
+    setFilterOdpocetDphOnly(false)
+    setFilterFeaturedOnly(false)
     setSortBy("newest")
     applyFiltersAndSort()
   }
@@ -296,6 +323,29 @@ function InventoryPageContent() {
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
                   Resetovať
                 </Button>
+              </div>
+
+              <div className="space-y-3 mb-4 pb-4 border-b border-white/10">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="filter-odpocet-dph" className="text-sm font-normal cursor-pointer leading-snug">
+                    Odpočet DPH
+                  </Label>
+                  <Switch
+                    id="filter-odpocet-dph"
+                    checked={filterOdpocetDphOnly}
+                    onCheckedChange={setFilterOdpocetDphOnly}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="filter-featured" className="text-sm font-normal cursor-pointer leading-snug">
+                    Odporúčané
+                  </Label>
+                  <Switch
+                    id="filter-featured"
+                    checked={filterFeaturedOnly}
+                    onCheckedChange={setFilterFeaturedOnly}
+                  />
+                </div>
               </div>
 
               <Accordion type="single" collapsible className="w-full">
@@ -447,7 +497,7 @@ function InventoryPageContent() {
         <div className="w-full lg:w-3/4">
           {filteredVehicles.length > 0 ? (
             displayMode === "grid" ? (
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 items-stretch gap-6 md:gap-x-4 xl:gap-x-3">
               {filteredVehicles.map((vehicle) => (
                 <VehicleCard key={vehicle.id} vehicle={vehicle} />
               ))}
