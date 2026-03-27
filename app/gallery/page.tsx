@@ -1,20 +1,41 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
 import { client, galleryImagesQuery, galleryPageQuery } from "@/lib/sanity"
-import { transformSanityGalleryImage, type GalleryImage, getImageUrl, type GalleryPageData } from "@/lib/sanity/utils"
+import {
+  transformSanityGalleryImage,
+  type GalleryImage,
+  getImageUrl,
+  type GalleryPageData,
+  type SanityGalleryImage,
+} from "@/lib/sanity/utils"
+import { useLocale } from "@/lib/i18n/context"
+import { localizeGalleryPage } from "@/lib/sanity/localize"
 
 export default function GalleryPage() {
+  const { locale, t } = useLocale()
   const [selectedMedia, setSelectedMedia] = useState<GalleryImage | null>(null)
-  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
-  const [pageData, setPageData] = useState<GalleryPageData | null>(null)
+  const [rawImages, setRawImages] = useState<SanityGalleryImage[]>([])
+  const [rawPageData, setRawPageData] = useState<
+    GalleryPageData & { heroTitleEn?: string; heroDescriptionEn?: string }
+  | null>(null)
   const [loading, setLoading] = useState(true)
   const [videoErrors, setVideoErrors] = useState<Set<string>>(new Set())
   const [videoThumbnails, setVideoThumbnails] = useState<Map<string, string>>(new Map())
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
+
+  const pageData = useMemo(
+    () => (rawPageData ? localizeGalleryPage(rawPageData, locale) : null),
+    [rawPageData, locale]
+  )
+
+  const galleryImages = useMemo(
+    () => rawImages.map((img) => transformSanityGalleryImage(img, locale)),
+    [rawImages, locale]
+  )
 
   // Function to capture first frame of video as thumbnail
   const captureVideoThumbnail = (videoElement: HTMLVideoElement, videoId: string, videoUrl: string): Promise<void> => {
@@ -79,12 +100,11 @@ export default function GalleryPage() {
         ])
         
         if (imagesData && imagesData.length > 0) {
-          const transformedImages = imagesData.map(transformSanityGalleryImage)
-          setGalleryImages(transformedImages)
+          setRawImages(imagesData)
         }
-        
+
         if (pageDataResult) {
-          setPageData(pageDataResult)
+          setRawPageData(pageDataResult)
         }
       } catch (error) {
         console.error("Error fetching gallery data:", error)
@@ -102,7 +122,7 @@ export default function GalleryPage() {
         {/* Background Image */}
         <Image
           src={pageData?.heroImage ? getImageUrl(pageData.heroImage) : "/banner.jpg"}
-          alt={pageData?.heroImage?.alt || "Gallery Background"}
+          alt={pageData?.heroImage?.alt || t("gallery.bgAlt")}
           fill
           className="object-cover z-0"
           priority
@@ -113,7 +133,7 @@ export default function GalleryPage() {
         <div className="container mx-auto px-4 relative z-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              {pageData?.heroTitle || "Galéria"}
+              {pageData?.heroTitle || t("gallery.heroFallback")}
             </h1>
             {pageData?.heroDescription && (
             <p className="text-xl text-gray-200">
@@ -129,11 +149,11 @@ export default function GalleryPage() {
         <div className="container mx-auto px-4">
           {loading ? (
             <div className="flex items-center justify-center py-24">
-              <p className="text-gray-400">Načítavanie galérie...</p>
+              <p className="text-gray-400">{t("gallery.loading")}</p>
             </div>
           ) : galleryImages.length === 0 ? (
             <div className="flex items-center justify-center py-24">
-              <p className="text-gray-400">V galérii zatiaľ nie sú žiadne obrázky.</p>
+              <p className="text-gray-400">{t("gallery.empty")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -164,7 +184,7 @@ export default function GalleryPage() {
                             // Set crossOrigin to allow canvas export (CORS)
                             el.crossOrigin = 'anonymous'
                             // Only try to capture thumbnail if we don't have one from Sanity
-                            if (!item.thumbnail && !videoThumbnails.has(item.id)) {
+                            if (!item.thumbnail && !videoThumbnails.has(item.id) && item.videoUrl) {
                               captureVideoThumbnail(el, item.id, item.videoUrl)
                             }
                           }
@@ -228,7 +248,7 @@ export default function GalleryPage() {
                       {/* Fallback if video fails and no thumbnail */}
                       {videoErrors.has(item.id) && !item.thumbnail && !videoThumbnails.has(item.id) && (
                         <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                          <p className="text-gray-400 text-sm">Video sa nepodarilo načítať</p>
+                          <p className="text-gray-400 text-sm">{t("gallery.videoError")}</p>
                         </div>
                       )}
                     </>
@@ -265,7 +285,7 @@ export default function GalleryPage() {
       <Dialog open={selectedMedia !== null} onOpenChange={() => setSelectedMedia(null)}>
         <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 bg-black/95 border-0">
           <DialogTitle className="sr-only">
-            {selectedMedia?.alt || "Gallery media"}
+            {selectedMedia?.alt || t("gallery.dialogMedia")}
           </DialogTitle>
           {selectedMedia && (
             <div className="relative w-full h-full flex items-center justify-center">
@@ -277,7 +297,7 @@ export default function GalleryPage() {
                   className="max-w-full max-h-full w-auto h-auto"
                   style={{ maxHeight: '95vh' }}
                 >
-                  Váš prehliadač nepodporuje prehrávanie videa.
+                  {t("gallery.videoUnsupported")}
                 </video>
               ) : (
               <Image

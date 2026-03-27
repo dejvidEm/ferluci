@@ -9,8 +9,10 @@ import { client, vehiclesQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
 import { formatCurrency, formatNumber } from "@/lib/utils"
+import { useLocale } from "@/lib/i18n/context"
 
 export default function HomeSearch() {
+  const { locale, t } = useLocale()
   const [searchQuery, setSearchQuery] = useState("")
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
@@ -143,7 +145,7 @@ export default function HomeSearch() {
               <Search className="absolute left-8 top-[14px] md:top-[20px] h-5 w-5 text-white z-10" />
               <Input
                 ref={inputRef}
-                placeholder="Hľadať podľa značky, modelu alebo kľúčových slov..."
+                placeholder={t("home.searchPlaceholderLong")}
                 className="pl-16 h-12 md:h-16 rounded-full md:bg-[#121212]/10 bg-[#121212] border border-white/30 text-sm md:text-base text-white placeholder:text-gray-400 focus:border-white/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -179,13 +181,17 @@ export default function HomeSearch() {
                           </span>
                         </div>
                         <div className="flex flex-col items-end gap-0.5 text-xs md:text-sm text-gray-300">
-                          <span className="font-semibold text-white">{formatCurrency(vehicle.price)}</span>
+                          <span className="font-semibold text-white">
+                            {formatCurrency(vehicle.price, locale)}
+                          </span>
                           {vehicle.odpocetDph && vehicle.priceOdpocetDph != null && (
                             <span className="text-gray-400 text-[10px] md:text-xs">
-                              Odpočet DPH: {formatCurrency(vehicle.priceOdpocetDph)}
+                              {t("common.vatDeduction")}: {formatCurrency(vehicle.priceOdpocetDph, locale)}
                             </span>
                           )}
-                          <span>{formatNumber(vehicle.mileage)} km</span>
+                          <span>
+                            {formatNumber(vehicle.mileage, locale)} km
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -198,14 +204,14 @@ export default function HomeSearch() {
                       }}
                       className="px-4 py-3 cursor-pointer hover:bg-white/5 transition-colors text-center border-t border-white/10"
                     >
-                      <span className="text-sm text-primary">Zobraziť všetky výsledky</span>
+                      <span className="text-sm text-primary">{t("common.showAllResults")}</span>
                     </div>
                   )}
                 </div>
               )}
             </div>
             <Button size="lg" className="h-12 md:h-16 text-base md:text-xl rounded-full" onClick={handleSearch}>
-              <Search className="mr-2 h-5 w-5 md:h-6 md:w-6" /> Hľadať
+              <Search className="mr-2 h-5 w-5 md:h-6 md:w-6" /> {t("common.search")}
             </Button>
           </div>
         </div>

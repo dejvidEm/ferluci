@@ -108,6 +108,7 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
 export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, _createdAt desc) {
   _id,
   title,
+  titleEn,
   mediaType,
   image,
   video {
@@ -124,79 +125,110 @@ export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, 
 
 export const galleryPageQuery = groq`*[_type == "galleryPage"][0] {
   heroTitle,
+  heroTitleEn,
   heroDescription,
+  heroDescriptionEn,
   heroImage
 }`
 
 export const servicesPageQuery = groq`*[_type == "servicesPage"][0] {
   heroTitle,
+  heroTitleEn,
   heroImage,
   serviceCards[] {
     title,
-    description
+    titleEn,
+    description,
+    descriptionEn
   },
   financingSection {
     title,
+    titleEn,
     description,
+    descriptionEn,
     image
   },
   warrantySection {
     title,
-    description
+    titleEn,
+    description,
+    descriptionEn
   },
   showroomSection {
     title,
+    titleEn,
     description,
+    descriptionEn,
     image
   },
   benefitsSection {
     title,
-    description
+    titleEn,
+    description,
+    descriptionEn
   },
   whyChooseSection {
     title,
+    titleEn,
     items[] {
       title,
-      description
+      titleEn,
+      description,
+      descriptionEn
     }
   },
   ctaSection {
     title,
+    titleEn,
     description,
+    descriptionEn,
     image
   }
 }`
 
 export const aboutPageQuery = groq`*[_type == "aboutPage"][0] {
   heroTitle,
+  heroTitleEn,
   heroDescription,
+  heroDescriptionEn,
   heroImage,
   valuesSection {
     title,
+    titleEn,
     values[] {
       title,
-      description
+      titleEn,
+      description,
+      descriptionEn
     }
   },
   whyChooseSection {
     title,
+    titleEn,
     items[] {
       title,
-      description
+      titleEn,
+      description,
+      descriptionEn
     }
   },
   ctaSection {
     title,
+    titleEn,
     description,
+    descriptionEn,
     image
   }
 }`
 
 export const faqQuery = groq`*[_type == "faq"][0] {
   title,
+  titleEn,
   items[] | order(order asc) {
     question,
+    questionEn,
     answer,
+    answerEn,
     order
   }
 }`
@@ -216,21 +248,32 @@ export const contactInfoQuery = groq`*[_type == "contactInfo"][0] {
   openingHours {
     mondayFriday,
     saturday,
-    sunday
+    sunday,
+    mondayFridayEn,
+    saturdayEn,
+    sundayEn
   }
 }`
 
 export const homePageQuery = groq`*[_type == "homePage"][0] {
   heroSubheading,
+  heroSubheadingEn,
   heroHeading,
+  heroHeadingEn,
   heroHighlightedWord,
+  heroHighlightedWordEn,
   heroDescription1,
+  heroDescription1En,
   heroDescription2,
+  heroDescription2En,
   servicesSection {
     title,
+    titleEn,
     serviceCards[] {
       title,
-      description
+      titleEn,
+      description,
+      descriptionEn
     }
   }
 }`

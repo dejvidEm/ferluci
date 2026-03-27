@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/utils"
+import { useLocale } from "@/lib/i18n/context"
 
 interface LoanCalculatorProps {
   vehiclePrice: number
@@ -13,6 +14,7 @@ interface LoanCalculatorProps {
 
 export default function LoanCalculator({ vehiclePrice, vehicleId }: LoanCalculatorProps) {
   const router = useRouter()
+  const { locale, t } = useLocale()
   const [downPaymentPercent, setDownPaymentPercent] = useState(20)
   const [financingYears, setFinancingYears] = useState(4)
 
@@ -59,15 +61,17 @@ export default function LoanCalculator({ vehiclePrice, vehicleId }: LoanCalculat
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 md:mb-6">
-          <h3 className="text-lg md:text-xl font-bold text-white">Vypočítajte si vaše splátky</h3>
+          <h3 className="text-lg md:text-xl font-bold text-white">{t("loanCalculator.title")}</h3>
         </div>
 
         {/* Down Payment Section */}
         <div className="mb-4 md:mb-6">
-          <label className="text-xs md:text-sm text-gray-300 mb-2 block">Výška akontácie</label>
+          <label className="text-xs md:text-sm text-gray-300 mb-2 block">
+            {t("loanCalculator.downPayment")}
+          </label>
           <div className="bg-[#121212]/50 rounded-lg p-3 md:p-4 mb-2 md:mb-3">
             <div className="text-xl md:text-2xl font-bold text-white">
-              {formatCurrency(calculations.downPaymentAmount)}
+              {formatCurrency(calculations.downPaymentAmount, locale)}
             </div>
           </div>
           <div className="flex gap-1.5 md:gap-2 flex-wrap">
@@ -91,10 +95,21 @@ export default function LoanCalculator({ vehiclePrice, vehicleId }: LoanCalculat
 
         {/* Financing Duration Section */}
         <div className="mb-4 md:mb-6">
-          <label className="text-xs md:text-sm text-gray-300 mb-2 block">Dĺžka financovania</label>
+          <label className="text-xs md:text-sm text-gray-300 mb-2 block">
+            {t("loanCalculator.financingLength")}
+          </label>
           <div className="bg-[#121212]/50 rounded-lg p-3 md:p-4 mb-2 md:mb-3">
             <div className="text-base md:text-lg font-semibold text-white">
-              {financingYears} {financingYears === 1 ? "rok" : financingYears < 5 ? "roky" : "rokov"}
+              {financingYears}{" "}
+              {locale === "en"
+                ? financingYears === 1
+                  ? t("loanCalculator.yearOne")
+                  : t("loanCalculator.years")
+                : financingYears === 1
+                  ? t("loanCalculator.yearOne")
+                  : financingYears >= 2 && financingYears <= 4
+                    ? t("loanCalculator.years234")
+                    : t("loanCalculator.years")}
             </div>
           </div>
           <div className="flex gap-1.5 md:gap-2 flex-wrap">
@@ -119,17 +134,21 @@ export default function LoanCalculator({ vehiclePrice, vehicleId }: LoanCalculat
         {/* Results Section */}
         <div className="space-y-3 md:space-y-4 mb-4 md:mb-6">
           <div className="flex justify-between items-center">
-            <span className="text-xs md:text-sm text-gray-300">Cena vozidla</span>
-            <span className="text-sm md:text-base text-white font-semibold">{formatCurrency(vehiclePrice)}</span>
+            <span className="text-xs md:text-sm text-gray-300">{t("loanCalculator.vehiclePrice")}</span>
+            <span className="text-sm md:text-base text-white font-semibold">
+              {formatCurrency(vehiclePrice, locale)}
+            </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs md:text-sm text-gray-300">Výška úveru</span>
-            <span className="text-sm md:text-base text-white font-semibold">{formatCurrency(calculations.loanAmount)}</span>
+            <span className="text-xs md:text-sm text-gray-300">{t("loanCalculator.loanAmount")}</span>
+            <span className="text-sm md:text-base text-white font-semibold">
+              {formatCurrency(calculations.loanAmount, locale)}
+            </span>
           </div>
           <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-white/10">
-            <span className="text-xs md:text-sm text-gray-300">Mesačná splátka</span>
+            <span className="text-xs md:text-sm text-gray-300">{t("loanCalculator.monthlyPayment")}</span>
             <span className="text-xl md:text-2xl font-bold text-white">
-              od {formatCurrency(calculations.monthlyPayment)}
+              {t("loanCalculator.from")} {formatCurrency(calculations.monthlyPayment, locale)}
             </span>
           </div>
         </div>
@@ -152,7 +171,7 @@ export default function LoanCalculator({ vehiclePrice, vehicleId }: LoanCalculat
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
         >
-          Mám záujem
+          {t("loanCalculator.ctaInterest")}
         </Button>
       </div>
     </Card>

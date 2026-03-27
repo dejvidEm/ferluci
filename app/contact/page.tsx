@@ -14,6 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { CalendarIcon, Check, MapPin, Phone, X, Facebook, Instagram } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
+import { useLocale } from "@/lib/i18n/context"
+import type { Locale } from "@/lib/i18n/config"
 import Link from "next/link"
 import FAQ from "@/components/faq"
 import CustomVehicleForm from "@/components/custom-vehicle-form"
@@ -24,7 +26,17 @@ import { Badge } from "@/components/ui/badge"
 import Map from "@/components/map"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 
+function financingYearsLabel(n: number, locale: Locale, t: (k: string) => string): string {
+  if (locale === "en") {
+    return n === 1 ? t("loanCalculator.yearOne") : t("loanCalculator.years")
+  }
+  if (n === 1) return t("loanCalculator.yearOne")
+  if (n >= 2 && n <= 4) return t("loanCalculator.years234")
+  return t("loanCalculator.years")
+}
+
 export default function ContactPage() {
+  const { locale, t } = useLocale()
   const searchParams = useSearchParams()
   const vehicleId = searchParams.get("vehicle")
   const action = searchParams.get("action")
@@ -64,11 +76,26 @@ export default function ContactPage() {
             const transformedVehicle = transformSanityVehicle(data)
             setVehicle(transformedVehicle)
             if (loanParam === "true") {
-              // Loan inquiry - include loan details in message
-              const loanMsg = `Zaujíma ma ${transformedVehicle.year} ${transformedVehicle.make} ${transformedVehicle.model}.\n\nMám záujem o financovanie:\n- Akontácia: ${downPayment}%\n- Dĺžka financovania: ${financingYears} rokov\n- Výška úveru: ${formatCurrency(parseFloat(loanAmount || "0"))}\n- Mesačná splátka: ${formatCurrency(parseFloat(monthlyPayment || "0"))}`
+              const interest = t("contact.interestLine", {
+                year: transformedVehicle.year,
+                make: transformedVehicle.make,
+                model: transformedVehicle.model,
+              })
+              const loanMsg = `${interest}\n\n${t("contact.loanIntro", {
+                down: downPayment ?? "",
+                years: financingYears ?? "",
+                loan: formatCurrency(parseFloat(loanAmount || "0"), locale),
+                monthly: formatCurrency(parseFloat(monthlyPayment || "0"), locale),
+              })}`
               setMessage(loanMsg)
             } else {
-              setMessage(`Zaujíma ma ${transformedVehicle.year} ${transformedVehicle.make} ${transformedVehicle.model}.`)
+              setMessage(
+                t("contact.interestLine", {
+                  year: transformedVehicle.year,
+                  make: transformedVehicle.make,
+                  model: transformedVehicle.model,
+                })
+              )
             }
           }
         } catch (error) {
@@ -90,7 +117,7 @@ export default function ContactPage() {
     }
     
     fetchVehicle()
-  }, [vehicleId, loanParam, downPayment, financingYears, loanAmount, monthlyPayment])
+  }, [vehicleId, loanParam, downPayment, financingYears, loanAmount, monthlyPayment, locale, t])
 
   const removeVehicle = () => {
     setVehicle(null)
@@ -100,7 +127,9 @@ export default function ContactPage() {
   const removeLoan = () => {
     setLoanData(null)
     if (vehicle) {
-      setMessage(`Zaujíma ma ${vehicle.year} ${vehicle.make} ${vehicle.model}.`)
+      setMessage(
+        t("contact.interestLine", { year: vehicle.year, make: vehicle.make, model: vehicle.model })
+      )
     } else {
       setMessage("")
     }
@@ -144,7 +173,7 @@ export default function ContactPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Chyba pri odosielaní správy')
+        throw new Error(data.error || t("contact.errorSend"))
       }
 
       // Show success message
@@ -157,7 +186,7 @@ export default function ContactPage() {
       setContactMethod("email")
       setDate(undefined)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Chyba pri odosielaní správy')
+      setError(err instanceof Error ? err.message : t("contact.errorSend"))
       console.error('Form submission error:', err)
     } finally {
       setIsSubmitting(false)
@@ -171,15 +200,13 @@ export default function ContactPage() {
           <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="h-8 w-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Ďakujeme!</h2>
-          <p className="text-gray-300 mb-6">
-            Vaša správa bola úspešne odoslaná. Jeden z našich zástupcov vás čoskoro kontaktuje.
-          </p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t("contact.thanks")}</h2>
+          <p className="text-gray-300 mb-6">{t("contact.thanksBody")}</p>
           <Button 
             onClick={() => setSubmitted(false)}
             className="bg-white text-[#121212] hover:bg-gray-200 border-0"
           >
-            Odoslať ďalšiu správu
+            {t("contact.sendAnother")}
           </Button>
         </div>
       </div>
@@ -190,9 +217,9 @@ export default function ContactPage() {
     <div className="bg-[#121212] min-h-screen">
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-4">Kontaktujte nás</h1>
+          <h1 className="text-3xl font-bold mb-4">{t("contact.title")}</h1>
           <div className="mb-6 pb-4">
-            <p className="text-muted-foreground mb-3">Naše sociálne siete:</p>
+            <p className="text-muted-foreground mb-3">{t("contact.socials")}</p>
             <div className="flex items-center gap-4">
               <Link 
                 href="https://www.facebook.com/p/Ferluci-Cars-61575683307429/" 
@@ -231,9 +258,7 @@ export default function ContactPage() {
             </div>
           </div>
         <p className="text-muted-foreground mb-8">
-          {action === "test-drive"
-              ? "Objednajte si skúšobnú jazdu alebo sa spojte s naším predajným tímom."
-              : "Máte otázky? Sme tu, aby sme vám pomohli! Vyplňte formulár nižšie a čoskoro sa vám ozveme."}
+          {action === "test-drive" ? t("contact.introTestDrive") : t("contact.introDefault")}
         </p>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -241,15 +266,15 @@ export default function ContactPage() {
               <div className="bg-[#1a1a1a] rounded-lg p-8 border border-white/10">
                 <h2 className="text-xl font-semibold mb-8 text-white">
                 {action === "test-drive"
-                    ? "Objednať skúšobnú jazdu"
+                    ? t("contact.formTestDrive")
                   : vehicle
-                      ? "Požiadať o informácie"
-                      : "Odoslať správu"}
+                      ? t("contact.formVehicle")
+                      : t("contact.formDefault")}
               </h2>
 
               {vehicle && (
                   <div className="mb-6">
-                    <Label className="mb-2 block text-gray-300">Vybrané vozidlo:</Label>
+                    <Label className="mb-2 block text-gray-300">{t("contact.selectedVehicle")}</Label>
                     <Badge variant="outline" className="text-sm px-3 py-1.5 h-auto flex items-center gap-2 w-fit bg-[#121212] border-white/20 text-gray-300">
                       <span>
                       {vehicle.year} {vehicle.make} {vehicle.model}
@@ -258,7 +283,7 @@ export default function ContactPage() {
                         type="button"
                         onClick={removeVehicle}
                         className="ml-2 hover:bg-white/10 rounded-full p-0.5 transition-colors"
-                        aria-label="Odstrániť vozidlo"
+                        aria-label={t("contact.removeVehicle")}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -268,16 +293,21 @@ export default function ContactPage() {
 
               {loanData && (
                 <div className="mb-6">
-                  <Label className="mb-2 block text-gray-300">Financovanie:</Label>
+                  <Label className="mb-2 block text-gray-300">{t("contact.financing")}</Label>
                   <Badge variant="outline" className="text-sm px-3 py-1.5 h-auto flex items-center gap-2 w-fit bg-[#121212] border-white/20 text-gray-300">
                     <span>
-                      Akontácia: {loanData.downPayment}% • {loanData.financingYears} {loanData.financingYears === 1 ? "rok" : loanData.financingYears < 5 ? "roky" : "rokov"} • {formatCurrency(loanData.monthlyPayment)}/mesiac
+                      {t("contact.financingSummary", {
+                        down: loanData.downPayment,
+                        years: loanData.financingYears,
+                        yearsLabel: financingYearsLabel(loanData.financingYears, locale, t),
+                        monthly: formatCurrency(loanData.monthlyPayment, locale),
+                      })}
                     </span>
                     <button
                       type="button"
                       onClick={removeLoan}
                       className="ml-2 hover:bg-white/10 rounded-full p-0.5 transition-colors"
-                      aria-label="Odstrániť financovanie"
+                      aria-label={t("contact.removeFinancing")}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -294,10 +324,10 @@ export default function ContactPage() {
                   <div className="grid gap-6 mb-8">
                     <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <Label htmlFor="name" className="text-gray-300">Celé meno</Label>
+                        <Label htmlFor="name" className="text-gray-300">{t("contact.fullName")}</Label>
                       <Input
                         id="name"
-                          placeholder="Ján Novák"
+                          placeholder={t("contact.namePlaceholder")}
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -305,7 +335,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-gray-300">Emailová adresa</Label>
+                        <Label htmlFor="email" className="text-gray-300">{t("contact.email")}</Label>
                       <Input
                         id="email"
                         type="email"
@@ -319,7 +349,7 @@ export default function ContactPage() {
                   </div>
 
                   <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-gray-300">Telefónne číslo</Label>
+                      <Label htmlFor="phone" className="text-gray-300">{t("contact.phone")}</Label>
                     <Input
                       id="phone"
                         placeholder="+421 912 345 678"
@@ -331,7 +361,7 @@ export default function ContactPage() {
 
                   {action === "test-drive" && (
                     <div className="space-y-2">
-                        <Label className="text-gray-300">Preferovaný dátum skúšobnej jazdy</Label>
+                        <Label className="text-gray-300">{t("contact.testDriveDate")}</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -342,7 +372,7 @@ export default function ContactPage() {
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                              {date ? format(date, "PPP") : "Vyberte dátum"}
+                              {date ? format(date, "PPP") : t("contact.pickDate")}
                           </Button>
                         </PopoverTrigger>
                           <PopoverContent className="w-auto p-0 bg-[#1a1a1a] border-white/10">
@@ -361,10 +391,10 @@ export default function ContactPage() {
                   )}
 
                   <div className="space-y-2">
-                      <Label htmlFor="message" className="text-gray-300">Správa</Label>
+                      <Label htmlFor="message" className="text-gray-300">{t("contact.message")}</Label>
                     <Textarea
                       id="message"
-                        placeholder="Ako vám môžeme pomôcť?"
+                        placeholder={t("contact.messagePlaceholder")}
                       rows={5}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
@@ -373,7 +403,7 @@ export default function ContactPage() {
                   </div>
 
                     <div className="space-y-3">
-                      <Label className="text-gray-300">Preferovaný spôsob kontaktu</Label>
+                      <Label className="text-gray-300">{t("contact.contactPreference")}</Label>
                     <RadioGroup
                       defaultValue="email"
                       value={contactMethod}
@@ -382,15 +412,15 @@ export default function ContactPage() {
                     >
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="email" id="contact-email" className="border-white/20" />
-                          <Label htmlFor="contact-email" className="text-gray-300 cursor-pointer">Email</Label>
+                          <Label htmlFor="contact-email" className="text-gray-300 cursor-pointer">{t("common.email")}</Label>
                       </div>
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="phone" id="contact-phone" className="border-white/20" />
-                          <Label htmlFor="contact-phone" className="text-gray-300 cursor-pointer">Telefón</Label>
+                          <Label htmlFor="contact-phone" className="text-gray-300 cursor-pointer">{t("common.phone")}</Label>
                       </div>
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="text" id="contact-text" className="border-white/20" />
-                          <Label htmlFor="contact-text" className="text-gray-300 cursor-pointer">SMS</Label>
+                          <Label htmlFor="contact-text" className="text-gray-300 cursor-pointer">{t("contact.labelSms")}</Label>
                       </div>
                     </RadioGroup>
                   </div>
@@ -403,10 +433,10 @@ export default function ContactPage() {
                     disabled={isSubmitting}
                   >
                     {isSubmitting 
-                      ? "Odosielam..." 
+                      ? t("contact.submitting") 
                       : action === "test-drive" 
-                        ? "Objednať skúšobnú jazdu" 
-                        : "Odoslať správu"}
+                        ? t("contact.formTestDrive") 
+                        : t("contact.formDefault")}
                 </Button>
               </form>
             </div>
@@ -414,11 +444,11 @@ export default function ContactPage() {
 
           <div>
               <div className="bg-[#1a1a1a] rounded-lg p-6 sticky top-24 border border-white/10">
-                <h2 className="text-xl font-semibold mb-6 text-white">Kontaktné informácie</h2>
+                <h2 className="text-xl font-semibold mb-6 text-white">{t("contact.infoAsideHeading")}</h2>
 
               <div className="space-y-6">
                 <div>
-                    <h3 className="font-medium mb-2 text-gray-300">Adresa showroomu</h3>
+                    <h3 className="font-medium mb-2 text-gray-300">{t("contact.showroomAddressHeading")}</h3>
                   <div className="flex items-start">
                       <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
                       <address className="not-italic text-gray-300">
@@ -440,7 +470,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                    <h3 className="font-medium mb-2 text-gray-300">Telefónne čísla</h3>
+                    <h3 className="font-medium mb-2 text-gray-300">{t("contact.phoneNumbersHeading")}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center">
                         <Phone className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
@@ -450,25 +480,25 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                    <h3 className="font-medium mb-2 text-gray-300">Otváracie hodiny</h3>
+                    <h3 className="font-medium mb-2 text-gray-300">{t("contact.hoursHeadingShort")}</h3>
                   <table className="w-full text-sm">
                     <tbody>
                       <tr>
-                          <td className="py-1 text-gray-300">Pondelok - Piatok:</td>
+                          <td className="py-1 text-gray-300">{t("contact.dayMonFri")}</td>
                           <td className="py-1 text-right text-gray-300">
                             {contactInfo.openingHours?.mondayFriday || "9:00 - 20:00"}
                           </td>
                       </tr>
                       <tr>
-                          <td className="py-1 text-gray-300">Sobota:</td>
+                          <td className="py-1 text-gray-300">{t("contact.daySat")}</td>
                           <td className="py-1 text-right text-gray-300">
                             {contactInfo.openingHours?.saturday || "9:00 - 18:00"}
                           </td>
                       </tr>
                       <tr>
-                          <td className="py-1 text-gray-300">Nedeľa:</td>
+                          <td className="py-1 text-gray-300">{t("contact.daySun")}</td>
                           <td className="py-1 text-right text-gray-300">
-                            {contactInfo.openingHours?.sunday || "Zatvorené"}
+                            {contactInfo.openingHours?.sunday || t("footer.closed")}
                           </td>
                       </tr>
                     </tbody>

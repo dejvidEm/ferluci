@@ -5,6 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/com
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { useLocale } from "@/lib/i18n/context"
 
 // Function to truncate text to a consistent length
 const truncateText = (text: string, maxLength: number = 200): string => {
@@ -42,6 +43,7 @@ const testimonials = [
 const GOOGLE_REVIEWS_URL = "https://www.google.com/search?sca_esv=13dc0417b6064a80&sxsrf=ANbL-n5wg5hYof6wywhwFBWA3jD2AKtAqA:1770318207216&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOQm-Dfahy1rOlhINpTMoLWO-Dd01cUdAC6yhBcTSBop-iFxkrQXzMD7ski6wQgB1nRhk0OOOxJ2qWyg5TCxvz0DxHYHG&q=Ferluci+Cars+Recenze&sa=X&ved=2ahUKEwjPmoWfhcOSAxUSTVUIHe2qCUgQ0bkNegQIJxAF&biw=1548&bih=1268&dpr=1"
 
 export default function Testimonials() {
+  const { t } = useLocale()
   const [api, setApi] = useState<CarouselApi>()
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -76,7 +78,7 @@ export default function Testimonials() {
   return (
     <section className="py-16 bg-[#121212]">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Čo hovoria naši zákazníci</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">{t("testimonials.title")}</h2>
         <Carousel
           setApi={setApi}
           opts={{
@@ -117,7 +119,7 @@ export default function Testimonials() {
                       ? "w-8 bg-primary"
                       : "w-2 bg-gray-600 hover:bg-gray-500"
                   }`}
-                  aria-label={`Prejsť na slide ${index + 1}`}
+                  aria-label={t("testimonials.goToSlide", { n: index + 1 })}
                 />
               ))}
             </div>
@@ -132,7 +134,7 @@ export default function Testimonials() {
               onClick={() => api?.scrollPrev()}
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Predchádzajúca recenzia</span>
+              <span className="sr-only">{t("testimonials.prevReview")}</span>
             </Button>
             <Button
               variant="outline"
@@ -142,7 +144,7 @@ export default function Testimonials() {
               onClick={() => api?.scrollNext()}
             >
               <ArrowRight className="h-4 w-4" />
-              <span className="sr-only">Ďalšia recenzia</span>
+              <span className="sr-only">{t("testimonials.nextReview")}</span>
             </Button>
           </div>
         </Carousel>
@@ -154,7 +156,7 @@ export default function Testimonials() {
             asChild
           >
             <Link href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer">
-              Zobraziť všetky recenzie
+              {t("testimonials.viewAll")}
             </Link>
           </Button>
         </div>

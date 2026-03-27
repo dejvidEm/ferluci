@@ -18,8 +18,10 @@ import FAQ from "@/components/faq"
 import CustomVehicleForm from "@/components/custom-vehicle-form"
 import { client, vehiclesQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
+import { useLocale } from "@/lib/i18n/context"
 
 function InventoryPageContent() {
+  const { locale, t } = useLocale()
   const searchParams = useSearchParams()
   const router = useRouter()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -241,9 +243,9 @@ function InventoryPageContent() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
+        <h1 className="text-3xl font-bold mb-8">{t("ponuka.title")}</h1>
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Načítavanie vozidiel...</p>
+          <p className="text-muted-foreground">{t("ponuka.loading")}</p>
         </div>
       </div>
     )
@@ -251,7 +253,7 @@ function InventoryPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-[#121212] min-h-screen">
-      <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("ponuka.title")}</h1>
 
       <div className="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center">
         {/* Search Bar - Always visible */}
@@ -260,7 +262,7 @@ function InventoryPageContent() {
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
               <Input
-                placeholder="Vyhľadať vozidlo (značka, model, rok...)"
+                placeholder={t("ponuka.searchPlaceholder")}
                 className="pl-10 h-12 bg-[#121212] border border-white/30 text-white placeholder:text-gray-400 focus:border-white/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -269,7 +271,7 @@ function InventoryPageContent() {
             </div>
             <Button className="h-12 min-w-[140px] md:min-w-[140px] min-w-[48px]" onClick={handleSearch}>
               <Search className="h-5 w-5 md:mr-2" />
-              <span className="hidden md:inline">Hľadať</span>
+              <span className="hidden md:inline">{t("common.search")}</span>
             </Button>
           </div>
         </div>
@@ -278,7 +280,7 @@ function InventoryPageContent() {
           {/* Filter button - Mobile only */}
           <Button variant="outline" className="h-10 bg-[#121212] lg:hidden border border-white/30" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-5 w-5 mr-2" />
-            Filtre
+            {t("ponuka.filters")}
           </Button>
           {/* Display Mode Toggle - Hidden on mobile */}
           <div className="hidden md:flex items-center gap-2 border rounded-lg p-1">
@@ -301,13 +303,13 @@ function InventoryPageContent() {
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[200px] bg-[#121212] border border-white/30">
-              <SelectValue placeholder="Zoradiť podľa" />
+              <SelectValue placeholder={t("ponuka.sortBy")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Najnovšie inzeráty</SelectItem>
-              <SelectItem value="oldest">Najstaršie inzeráty</SelectItem>
-              <SelectItem value="price-low">Cena: od najnižšej</SelectItem>
-              <SelectItem value="price-high">Cena: od najvyššej</SelectItem>
+              <SelectItem value="newest">{t("ponuka.sortNewest")}</SelectItem>
+              <SelectItem value="oldest">{t("ponuka.sortOldest")}</SelectItem>
+              <SelectItem value="price-low">{t("ponuka.sortPriceLow")}</SelectItem>
+              <SelectItem value="price-high">{t("ponuka.sortPriceHigh")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -319,16 +321,16 @@ function InventoryPageContent() {
           <div className="bg-[#121212] border border-white/20 rounded-lg">
             <div className="px-6 pb-6 pt-0">
               <div className="flex items-center justify-between mb-4 pt-6">
-                <h2 className="text-xl font-semibold">Filtre</h2>
+                <h2 className="text-xl font-semibold">{t("ponuka.filters")}</h2>
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
-                  Resetovať
+                  {t("ponuka.reset")}
                 </Button>
               </div>
 
               <div className="space-y-3 mb-4 pb-4 border-b border-white/10">
                 <div className="flex items-center justify-between gap-3">
                   <Label htmlFor="filter-odpocet-dph" className="text-sm font-normal cursor-pointer leading-snug">
-                    Odpočet DPH
+                    {t("common.vatDeduction")}
                   </Label>
                   <Switch
                     id="filter-odpocet-dph"
@@ -338,7 +340,7 @@ function InventoryPageContent() {
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <Label htmlFor="filter-featured" className="text-sm font-normal cursor-pointer leading-snug">
-                    Odporúčané
+                    {t("common.featured")}
                   </Label>
                   <Switch
                     id="filter-featured"
@@ -350,7 +352,7 @@ function InventoryPageContent() {
 
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="price">
-                  <AccordionTrigger>Rozsah cien</AccordionTrigger>
+                  <AccordionTrigger>{t("ponuka.priceRange")}</AccordionTrigger>
                   <AccordionContent className="pt-4 px-1">
                     <div className="space-y-4">
                       <div className="px-3">
@@ -364,15 +366,15 @@ function InventoryPageContent() {
                       />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span>{formatCurrency(priceRange[0])}</span>
-                        <span>{formatCurrency(priceRange[1])}</span>
+                        <span>{formatCurrency(priceRange[0], locale)}</span>
+                        <span>{formatCurrency(priceRange[1], locale)}</span>
                       </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="year">
-                  <AccordionTrigger>Rozsah rokov</AccordionTrigger>
+                  <AccordionTrigger>{t("ponuka.yearRange")}</AccordionTrigger>
                   <AccordionContent className="pt-4 px-1">
                     <div className="space-y-4">
                       <div className="px-3">
@@ -394,7 +396,7 @@ function InventoryPageContent() {
                 </AccordionItem>
 
                 <AccordionItem value="make">
-                  <AccordionTrigger>Značka</AccordionTrigger>
+                  <AccordionTrigger>{t("ponuka.make")}</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-2">
                       {makes.map((make) => (
@@ -418,7 +420,7 @@ function InventoryPageContent() {
                 </AccordionItem>
 
                 <AccordionItem value="fuelType">
-                  <AccordionTrigger>Typ paliva</AccordionTrigger>
+                  <AccordionTrigger>{t("ponuka.fuel")}</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-2">
                       {fuelTypes.map((fuelType) => (
@@ -434,7 +436,7 @@ function InventoryPageContent() {
                               }
                             }}
                           />
-                          <Label htmlFor={`fuel-${fuelType}`}>{translateFuelType(fuelType)}</Label>
+                          <Label htmlFor={`fuel-${fuelType}`}>{translateFuelType(fuelType, locale)}</Label>
                         </div>
                       ))}
                     </div>
@@ -442,7 +444,7 @@ function InventoryPageContent() {
                 </AccordionItem>
 
                 <AccordionItem value="transmission">
-                  <AccordionTrigger>Prevodovka</AccordionTrigger>
+                  <AccordionTrigger>{t("ponuka.transmission")}</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-2">
                       {transmissions.map((transmission) => (
@@ -458,7 +460,9 @@ function InventoryPageContent() {
                               }
                             }}
                           />
-                          <Label htmlFor={`transmission-${transmission}`}>{translateTransmission(transmission)}</Label>
+                          <Label htmlFor={`transmission-${transmission}`}>
+                            {translateTransmission(transmission, locale)}
+                          </Label>
                         </div>
                       ))}
                     </div>
@@ -466,7 +470,7 @@ function InventoryPageContent() {
                 </AccordionItem>
 
                 <AccordionItem value="pohon">
-                  <AccordionTrigger>Pohon</AccordionTrigger>
+                  <AccordionTrigger>{t("ponuka.drive")}</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-2">
                       {pohonTypes.map((pohon) => (
@@ -511,8 +515,8 @@ function InventoryPageContent() {
             )
           ) : (
             <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">Nenašli sa žiadne vozidlá</h3>
-              <p className="text-muted-foreground mb-4">Skúste upraviť kritériá vyhľadávania alebo filtre</p>
+              <h3 className="text-xl font-semibold mb-2">{t("ponuka.noResults")}</h3>
+              <p className="text-muted-foreground mb-4">{t("ponuka.noResultsHint")}</p>
               <Button onClick={resetFilters}>Resetovať filtre</Button>
             </div>
           )}
@@ -532,16 +536,21 @@ function InventoryPageContent() {
   )
 }
 
+function InventoryPageFallback() {
+  const { t } = useLocale()
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">{t("ponuka.title")}</h1>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">{t("common.loading")}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function InventoryPage() {
   return (
-    <Suspense fallback={
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Ponuka vozidiel</h1>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Načítavanie...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<InventoryPageFallback />}>
       <InventoryPageContent />
     </Suspense>
   )

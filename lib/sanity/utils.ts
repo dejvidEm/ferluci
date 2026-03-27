@@ -1,4 +1,5 @@
 import type { Vehicle } from '@/lib/types'
+import type { Locale } from '@/lib/i18n/config'
 import { urlFor } from './image'
 
 export interface GalleryImage {
@@ -14,6 +15,7 @@ export interface GalleryImage {
 export interface SanityGalleryImage {
   _id: string
   title: string
+  titleEn?: string
   mediaType?: 'image' | 'video'
   image?: {
     _type: 'image'
@@ -105,9 +107,16 @@ export function transformSanityVehicle(vehicle: SanityVehicle): Vehicle {
   }
 }
 
-export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): GalleryImage {
+export function transformSanityGalleryImage(
+  galleryImage: SanityGalleryImage,
+  locale?: Locale
+): GalleryImage {
+  const resolvedTitle =
+    locale === "en" && galleryImage.titleEn?.trim()
+      ? galleryImage.titleEn.trim()
+      : galleryImage.title
   const mediaType = galleryImage.mediaType || (galleryImage.image ? 'image' : 'video')
-  
+
   if (mediaType === 'video') {
     const videoUrl = galleryImage.video?.asset?.url || ''
     const thumbnail = galleryImage.videoThumbnail
@@ -123,9 +132,9 @@ export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): G
     
     return {
       id: galleryImage._id,
-      title: galleryImage.title,
+      title: resolvedTitle,
       src: thumbnail || videoUrl, // Use video URL as fallback if no thumbnail
-      alt: galleryImage.videoThumbnail?.alt || galleryImage.title || 'Gallery video',
+      alt: galleryImage.videoThumbnail?.alt || resolvedTitle || 'Gallery video',
       type: 'video',
       videoUrl,
       thumbnail,
@@ -135,7 +144,7 @@ export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): G
   // Image type
   return {
     id: galleryImage._id,
-    title: galleryImage.title,
+    title: resolvedTitle,
     src: galleryImage.image
       ? (() => {
           try {
@@ -146,7 +155,7 @@ export function transformSanityGalleryImage(galleryImage: SanityGalleryImage): G
           }
         })()
       : '/placeholder.svg',
-    alt: galleryImage.image?.alt || galleryImage.title || 'Gallery image',
+    alt: galleryImage.image?.alt || resolvedTitle || 'Gallery image',
     type: 'image',
   }
 }
@@ -265,6 +274,9 @@ export interface ContactInfo {
     mondayFriday: string
     saturday: string
     sunday: string
+    mondayFridayEn?: string
+    saturdayEn?: string
+    sundayEn?: string
   }
 }
 
@@ -280,6 +292,9 @@ export interface SanityContactInfo {
     mondayFriday: string
     saturday: string
     sunday: string
+    mondayFridayEn?: string
+    saturdayEn?: string
+    sundayEn?: string
   }
 }
 

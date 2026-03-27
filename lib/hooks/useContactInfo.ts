@@ -1,10 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { client, contactInfoQuery } from "@/lib/sanity"
-import { ContactInfo } from "@/lib/sanity/utils"
+import { useLocale } from "@/lib/i18n/context"
+import { localizeContactInfo } from "@/lib/sanity/localize"
+import type { ContactInfo } from "@/lib/sanity/utils"
 
-const defaultContactInfo: ContactInfo = {
+const defaultContactSk: ContactInfo = {
   address: {
     street: "Kopčianska 41",
     city: "Petržalka",
@@ -23,8 +25,18 @@ const defaultContactInfo: ContactInfo = {
   },
 }
 
+const defaultContactEn: ContactInfo = {
+  ...defaultContactSk,
+  openingHours: {
+    mondayFriday: "9:00 - 20:00",
+    saturday: "9:00 - 18:00",
+    sunday: "Closed",
+  },
+}
+
 export function useContactInfo() {
-  const [contactInfo, setContactInfo] = useState<ContactInfo>(defaultContactInfo)
+  const { locale } = useLocale()
+  const [raw, setRaw] = useState<ContactInfo | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -32,7 +44,7 @@ export function useContactInfo() {
       try {
         const data = await client.fetch(contactInfoQuery)
         if (data) {
-          setContactInfo(data)
+          setRaw(data)
         }
       } catch (error) {
         console.error("Error fetching contact info:", error)
@@ -42,6 +54,11 @@ export function useContactInfo() {
     }
     fetchContactInfo()
   }, [])
+
+  const contactInfo = useMemo(() => {
+    const base = raw ?? (locale === "en" ? defaultContactEn : defaultContactSk)
+    return localizeContactInfo(base, locale)
+  }, [raw, locale])
 
   return { contactInfo, loading }
 }

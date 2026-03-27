@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -13,13 +13,34 @@ import { AuroraText } from "@/components/ui/aurora-text"
 import { client, homePageQuery } from "@/lib/sanity"
 import type { HomePageData } from "@/lib/sanity/utils"
 import type { CarouselApi } from "@/components/ui/carousel"
+import { useLocale } from "@/lib/i18n/context"
+import { localizeHomePage } from "@/lib/sanity/localize"
 
 export default function Home() {
+  const { locale, t } = useLocale()
   const [pageData, setPageData] = useState<HomePageData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
+
+  const fallbackHome = useMemo(
+    (): HomePageData => ({
+      heroSubheading: t("home.heroSubheading"),
+      heroHeading: t("home.heroHeading"),
+      heroHighlightedWord: t("home.heroHighlightedWord"),
+      heroDescription1: t("home.heroDescription1"),
+      heroDescription2: t("home.heroDescription2"),
+      servicesSection: {
+        title: t("home.servicesTitle"),
+        serviceCards: [
+          { title: t("home.service1Title"), description: t("home.service1Desc") },
+          { title: t("home.service2Title"), description: t("home.service2Desc") },
+          { title: t("home.service3Title"), description: t("home.service3Desc") },
+        ],
+      },
+    }),
+    [t]
+  )
 
   useEffect(() => {
     async function fetchHomePageData() {
@@ -28,39 +49,15 @@ export default function Home() {
         setPageData(data)
       } catch (error) {
         console.error("Error fetching home page data:", error)
-      } finally {
-        setLoading(false)
       }
     }
     fetchHomePageData()
   }, [])
 
-  const defaultData: HomePageData = {
-    heroSubheading: "Vitajte vo Ferlucicars",
-    heroHeading: "Nájdite svoje ideálne vozidlo",
-    heroHighlightedWord: "ideálne",
-    heroDescription1: "Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality.",
-    heroDescription2: "Pomôžeme vám vybrať auto, ktoré presne zodpovedá vašim potrebám a očakávaniam.",
-    servicesSection: {
-      title: "Naše služby",
-      serviceCards: [
-        {
-          title: "Široký výber",
-          description: "Prehľadajte našu rozsiahlu ponuku nových a ojazdených vozidiel od popredných výrobcov."
-        },
-        {
-          title: "Finančné možnosti",
-          description: "Získajte konkurencieschopné úrokové sadzby a flexibilné podmienky prispôsobené vášmu rozpočtu a potrebám."
-        },
-        {
-          title: "Záručné krytie",
-          description: "Jazdite s istotou, vediac, že vaše vozidlo je chránené našimi komplexnými záručnými možnosťami."
-        }
-      ]
-    }
-  }
-
-  const data = pageData || defaultData
+  const data = useMemo(() => {
+    if (!pageData) return fallbackHome
+    return localizeHomePage(pageData, locale)
+  }, [pageData, locale, fallbackHome])
 
   // Extract the highlighted word from heading if present
   const getHeadingParts = (heading: string, highlightedWord?: string) => {
@@ -95,11 +92,11 @@ export default function Home() {
         {/* Content - Left side */}
         <div className="relative z-20 flex-1 flex flex-col justify-center px-4 md:pl-16 md:pr-4 py-24 md:py-32">
           {/* Subheading */}
-          <p className="text-base md:text-lg text-gray-300 mb-4">{data.heroSubheading || "Vitajte vo Ferlucicars"}</p>
+          <p className="text-base md:text-lg text-gray-300 mb-4">{data.heroSubheading}</p>
 
           {/* Heading */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-8">
-            {getHeadingParts(data.heroHeading || "Nájdite svoje ideálne vozidlo", data.heroHighlightedWord).map((part, index) => {
+            {getHeadingParts(data.heroHeading ?? "", data.heroHighlightedWord).map((part, index) => {
               const highlightedWord = data.heroHighlightedWord || ""
               const shouldHighlight = highlightedWord && part.toLowerCase() === highlightedWord.toLowerCase()
               return shouldHighlight ? (
@@ -112,17 +109,17 @@ export default function Home() {
             })}
           </h1>
 
-          <p className="text-sm md:text-lg text-gray-300 max-w-3xl md:mb-2 mb-8">{data.heroDescription1 || "Ponúkame starostlivo vybrané vozidlá s overeným pôvodom, kompletnou servisnou históriou a garanciou kvality."}</p>
+          <p className="text-sm md:text-lg text-gray-300 max-w-3xl md:mb-2 mb-8">{data.heroDescription1}</p>
           {data.heroDescription2 && (
             <p className="hidden md:flex text-sm md:text-lg text-gray-300 max-w-3xl mb-8">{data.heroDescription2}</p>
           )}
           {/* CTA Buttons */}
           <div className="mb-8 md:mb-24 flex gap-4">
             <Button size="lg" asChild>
-              <Link href="/ponuka">Prehľadať ponuku</Link>
+              <Link href="/ponuka">{t("common.browseOffer")}</Link>
             </Button>
             <Button size="lg" variant="outline" className="bg-transparent border border-white/30 text-white hover:bg-white/10" asChild>
-              <Link href="/contact">Kontaktovať</Link>
+              <Link href="/contact">{t("common.contactUs")}</Link>
             </Button>
           </div>
 
@@ -138,7 +135,7 @@ export default function Home() {
       <section className="py-16 bg-[#121212] relative z-30">
         <div className="container mx-auto px-4 overflow-visible">
           <div className="flex justify-between items-center mb-10 relative z-10">
-            <h2 className="text-3xl font-bold">Odporúčané vozidlá</h2>
+            <h2 className="text-3xl font-bold">{t("home.featuredTitle")}</h2>
             <div className="flex items-center gap-2">
               {/* Navigation arrows - top right on desktop */}
               <div className="hidden md:flex gap-2">
@@ -150,7 +147,7 @@ export default function Home() {
                   onClick={() => carouselApi?.scrollPrev()}
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="sr-only">Predchádzajúce vozidlo</span>
+                  <span className="sr-only">{t("common.prevVehicle")}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -160,12 +157,12 @@ export default function Home() {
                   onClick={() => carouselApi?.scrollNext()}
                 >
                   <ArrowRight className="h-4 w-4" />
-                  <span className="sr-only">Ďalšie vozidlo</span>
+                  <span className="sr-only">{t("common.nextVehicle")}</span>
                 </Button>
               </div>
               <Button variant="ghost" asChild className="hidden md:flex">
                 <Link href="/ponuka" className="flex items-center">
-                  Zobraziť všetko <ChevronRight className="ml-1 h-4 w-4" />
+                  {t("common.showAll")} <ChevronRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
             </div>
@@ -190,7 +187,7 @@ export default function Home() {
           <div className="flex justify-center mt-6 md:hidden">
             <Button variant="ghost" asChild>
               <Link href="/ponuka" className="flex items-center">
-                Zobraziť všetko <ChevronRight className="ml-1 h-4 w-4" />
+                {t("common.showAll")} <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -201,7 +198,7 @@ export default function Home() {
       {data.servicesSection && (
         <section className="pt-28 pb-48 bg-[#121212] relative overflow-hidden">
           <div className="container mx-auto px-4 relative z-10">
-            <h2 className="text-3xl font-bold text-center mb-12">{data.servicesSection.title || "Naše služby"}</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">{data.servicesSection.title || t("home.servicesTitle")}</h2>
             <div className="grid md:grid-cols-3 gap-8 relative">
               {/* Red gradient blobs behind cards */}
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-red-600/30 via-red-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
@@ -250,7 +247,7 @@ export default function Home() {
         {/* Background Image */}
         <Image
           src="/banner.jpg"
-          alt="CTA Background"
+          alt={t("home.ctaBackgroundAlt")}
           fill
           className="object-cover z-0"
           priority
@@ -259,16 +256,14 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/80 z-10"></div>
         {/* Content */}
         <div className="container mx-auto px-4 text-center relative z-20">
-          <h2 className="text-3xl font-bold mb-6">Ste pripravení nájsť svoje vysnívané auto?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Navštívte náš showroom ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.
-          </p>
+          <h2 className="text-3xl font-bold mb-6">{t("home.ctaTitle")}</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">{t("home.ctaSubtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="outline" className="border border-white/10 text-white hover:bg-white/20" asChild>
-              <Link href="/ponuka">Prehľadať ponuku</Link>
+              <Link href="/ponuka">{t("common.browseOffer")}</Link>
             </Button>
             <Button size="lg" variant="outline" className="border border-white/10 text-white hover:bg-white/20" asChild>
-              <Link href="/contact">Kontaktovať nás</Link>
+              <Link href="/contact">{t("common.contactUsLong")}</Link>
             </Button>
           </div>
         </div>
