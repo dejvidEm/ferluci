@@ -137,7 +137,7 @@ export default function HomeSearch() {
   }
 
   return (
-    <section className="pb-8 md:pb-8 md:pt-8 pt-4 -mt-36 md:-mt-[140px] z-[9999] md:bg-transparent bg-[#121212]">
+    <section className="relative z-30 pb-8 md:pb-8 md:pt-8 pt-4 -mt-36 md:-mt-[140px] md:bg-transparent bg-[#121212]">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row gap-4">

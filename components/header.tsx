@@ -144,7 +144,7 @@ export default function Header() {
                         </Link>
                       </Button>
                       <div className="flex justify-center mb-6">
-                        <LocaleSwitcher className="w-full justify-center" />
+                        <LocaleSwitcher />
                       </div>
                       <div className="flex items-center justify-center space-x-4 pt-4 border-t border-white/10">
                         <Link
