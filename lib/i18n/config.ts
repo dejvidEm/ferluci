@@ -1,4 +1,5 @@
-export const LOCALE_COOKIE = "ferluci-locale"
+/** Cookie for explicit language choice. Renamed so stale / wrong values do not override Slovak default. */
+export const LOCALE_COOKIE = "ferluci-locale-v2"
 
 export const locales = ["sk", "en"] as const
 export type Locale = (typeof locales)[number]
