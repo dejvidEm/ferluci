@@ -30,6 +30,8 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   const {
     description: displayDescription,
     features: displayFeatures,
+    exteriorColor: displayExteriorColor,
+    interiorColor: displayInteriorColor,
     translationLoading,
   } = useVehicleCmsTranslation(vehicle, locale)
 
@@ -260,11 +262,15 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="flex justify-between py-2 border-b border-gray-700/30">
                 <span className="text-gray-400 text-sm">{t("vehicleDetail.exterior")}</span>
-                <span className="text-white text-sm font-medium">{vehicle.exteriorColor}</span>
+                <span className="text-white text-sm font-medium">
+                  {locale === "en" && translationLoading ? t("common.loading") : displayExteriorColor}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-700/30">
                 <span className="text-gray-400 text-sm">{t("vehicleDetail.interior")}</span>
-                <span className="text-white text-sm font-medium">{vehicle.interiorColor}</span>
+                <span className="text-white text-sm font-medium">
+                  {locale === "en" && translationLoading ? t("common.loading") : displayInteriorColor}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-700/30">
                 <span className="text-gray-400 text-sm">{t("vehicleDetail.fuel")}</span>
@@ -476,9 +482,13 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="font-medium text-gray-200">{t("vehicleDetail.exterior")}:</div>
-                      <div className="text-gray-300">{vehicle.exteriorColor}</div>
+                      <div className="text-gray-300">
+                        {locale === "en" && translationLoading ? t("common.loading") : displayExteriorColor}
+                      </div>
                       <div className="font-medium text-gray-200">{t("vehicleDetail.interior")}:</div>
-                      <div className="text-gray-300">{vehicle.interiorColor}</div>
+                      <div className="text-gray-300">
+                        {locale === "en" && translationLoading ? t("common.loading") : displayInteriorColor}
+                      </div>
                       <div className="font-medium text-gray-200">{t("vehicleDetail.fuel")}:</div>
                       <div className="text-gray-300">{translateFuelType(vehicle.fuelType, locale)}</div>
                       <div className="font-medium text-gray-200">{t("vehicleDetail.transmission")}:</div>

@@ -6,13 +6,23 @@ import type { Vehicle } from "@/lib/types"
 
 const MEM = new Map<string, string[]>()
 
-/** Popis + každá položka výbavy (features) ako jeden rad segmentov pre jeden DeepL request. */
-function segmentsFromVehicle(description: string, features: string[]): string[] {
-  return [description, ...features]
+/** Popis, výbava, farba exteriéru, farba interiéru — jeden batch pre `/api/translate`. */
+function segmentsFromVehicle(
+  description: string,
+  features: string[],
+  exteriorColor: string,
+  interiorColor: string
+): string[] {
+  return [description, ...features, exteriorColor, interiorColor]
 }
 
-function fingerprint(description: string, features: string[]): string {
-  return `${description}\u001e${features.join("\u001f")}`
+function fingerprint(
+  description: string,
+  features: string[],
+  exteriorColor: string,
+  interiorColor: string
+): string {
+  return `${description}\u001e${features.join("\u001f")}\u001e${exteriorColor}\u001e${interiorColor}`
 }
 
 function hash32(s: string): string {
@@ -27,7 +37,6 @@ function cacheKey(vehicleId: string, fp: string): string {
   return `ferluci-tr:en:${vehicleId}:${hash32(fp)}`
 }
 
-/** Len neprázdne segmenty na API; prázdne necháme a zlúčime späť podľa indexu. */
 function buildTranslationPayload(segments: string[]): {
   toSend: string[]
   indexMap: number[]
@@ -57,13 +66,18 @@ function mergeTranslations(
 }
 
 /**
- * Preklad **popisu** aj **výbavy** (pole `features` zo Sanity) do EN jedným volaním `/api/translate`
- * a tým istým `DEEPL_AUTH_KEY` ako pri popise.
+ * Preklad popisu, výbavy a farieb exteriér/interiér (SK→EN) jedným volaním `/api/translate`.
  */
 export function useVehicleCmsTranslation(vehicle: Vehicle | null, locale: Locale) {
   const skDesc = vehicle?.description ?? ""
   const skFeatures = vehicle?.features ?? []
+  const skExterior = vehicle?.exteriorColor ?? ""
+  const skInterior = vehicle?.interiorColor ?? ""
   const skKey = useMemo(() => skFeatures.join("\u001f"), [skFeatures])
+  const skColorsKey = useMemo(
+    () => `${skExterior}\u001e${skInterior}`,
+    [skExterior, skInterior]
+  )
 
   const [enFlat, setEnFlat] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -75,8 +89,8 @@ export function useVehicleCmsTranslation(vehicle: Vehicle | null, locale: Locale
       return
     }
 
-    const segments = segmentsFromVehicle(skDesc, skFeatures)
-    const fp = fingerprint(skDesc, skFeatures)
+    const segments = segmentsFromVehicle(skDesc, skFeatures, skExterior, skInterior)
+    const fp = fingerprint(skDesc, skFeatures, skExterior, skInterior)
     const key = cacheKey(vehicle.id, fp)
 
     const fromMem = MEM.get(key)
@@ -148,23 +162,38 @@ export function useVehicleCmsTranslation(vehicle: Vehicle | null, locale: Locale
     return () => {
       cancelled = true
     }
-  }, [vehicle, locale, skDesc, skKey])
+  }, [vehicle, locale, skDesc, skKey, skColorsKey])
 
-  const segmentCount = 1 + skFeatures.length
+  const n = skFeatures.length
+  const segmentCount = 1 + n + 2
+
+  const hasFullEn =
+    enFlat !== null && enFlat.length === segmentCount
+
   const description =
-    locale === "sk"
-      ? skDesc
-      : enFlat && enFlat.length === segmentCount
-        ? enFlat[0] ?? skDesc
-        : skDesc
+    locale === "sk" ? skDesc : hasFullEn ? enFlat![0] ?? skDesc : skDesc
   const features =
+    locale === "sk" ? skFeatures : hasFullEn ? enFlat!.slice(1, 1 + n) : skFeatures
+  const exteriorColor =
     locale === "sk"
-      ? skFeatures
-      : enFlat && enFlat.length === segmentCount
-        ? enFlat.slice(1)
-        : skFeatures
+      ? skExterior
+      : hasFullEn
+        ? enFlat![1 + n] ?? skExterior
+        : skExterior
+  const interiorColor =
+    locale === "sk"
+      ? skInterior
+      : hasFullEn
+        ? enFlat![2 + n] ?? skInterior
+        : skInterior
 
   const translationLoading = locale === "en" && loading && !enFlat
 
-  return { description, features, translationLoading }
+  return {
+    description,
+    features,
+    exteriorColor,
+    interiorColor,
+    translationLoading,
+  }
 }
