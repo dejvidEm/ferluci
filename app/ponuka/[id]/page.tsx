@@ -16,6 +16,7 @@ import { client, vehicleByIdQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
 import { useLocale } from "@/lib/i18n/context"
+import { useVehicleCmsTranslation } from "@/lib/hooks/useVehicleCmsTranslation"
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { locale, t } = useLocale()
@@ -25,6 +26,12 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false)
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0)
+
+  const {
+    description: displayDescription,
+    features: displayFeatures,
+    translationLoading,
+  } = useVehicleCmsTranslation(vehicle, locale)
 
   useEffect(() => {
     async function fetchVehicle() {
@@ -224,9 +231,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
           {/* Overview Section */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-white mb-3">{t("vehicleDetail.description")}</h3>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              {vehicle.description}
-            </p>
+            {locale === "en" && translationLoading ? (
+              <p className="text-gray-500 text-sm">{t("common.loading")}</p>
+            ) : (
+              <p className="text-gray-300 text-sm leading-relaxed">{displayDescription}</p>
+            )}
           </div>
 
           {/* Specifications Section */}
@@ -279,14 +288,18 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
           {/* Features Section */}
           <div className="mb-6 border-t border-gray-700/50 pt-6">
             <h3 className="text-xl font-semibold text-white mb-4">{t("vehicleDetail.features")}</h3>
-            <ul className="space-y-3">
-              {vehicle.features.map((feature, index) => (
-                <li key={index} className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-300 text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
+            {locale === "en" && translationLoading ? (
+              <p className="text-gray-500 text-sm">{t("common.loading")}</p>
+            ) : (
+              <ul className="space-y-3">
+                {displayFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start">
+                    <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300 text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Loan Calculator */}
@@ -440,7 +453,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 {/* Overview Section */}
                 <section>
                   <h3 className="text-2xl font-semibold mb-4 text-gray-100">{t("vehicleDetail.description")}</h3>
-                  <p className="text-gray-300 leading-relaxed">{vehicle.description}</p>
+                  {locale === "en" && translationLoading ? (
+                    <p className="text-gray-500">{t("common.loading")}</p>
+                  ) : (
+                    <p className="text-gray-300 leading-relaxed">{displayDescription}</p>
+                  )}
                 </section>
 
                 {/* Specifications Section */}
@@ -477,14 +494,18 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 {/* Features Section */}
                 <section>
                   <h3 className="text-2xl font-semibold mb-4 text-gray-100">{t("vehicleDetail.features")}</h3>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {vehicle.features.map((feature, index) => (
-                      <li key={index} className="flex items-start">
-                        <Check className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-300">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {locale === "en" && translationLoading ? (
+                    <p className="text-gray-500">{t("common.loading")}</p>
+                  ) : (
+                    <ul className="grid md:grid-cols-2 gap-3">
+                      {displayFeatures.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <Check className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-300">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </section>
               </div>
             </div>
