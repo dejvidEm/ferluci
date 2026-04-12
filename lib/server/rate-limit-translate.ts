@@ -3,19 +3,31 @@ import { Redis } from "@upstash/redis"
 import { NextResponse } from "next/server"
 
 /** Max JSON body before parse (bytes) — stops huge payload DoS. */
-export const TRANSLATE_MAX_BODY_BYTES = 512 * 1024
+export const TRANSLATE_MAX_BODY_BYTES = 256 * 1024
 
-/** Redis (Upstash): requests per IP per rolling minute — default prísnejší. */
-const RPM = () => Math.max(3, parseInt(process.env.RATE_LIMIT_TRANSLATE_RPM || "6", 10))
-/** Redis: requests per IP per rolling hour. */
-const RPH = () => Math.max(12, parseInt(process.env.RATE_LIMIT_TRANSLATE_RPH || "48", 10))
-/** Pamäťový fallback: prísnejší ako Redis, aby zneužitie jednej inštancie bolo ťažšie. */
-const MEM_RPM = () => Math.max(2, parseInt(process.env.RATE_LIMIT_TRANSLATE_MEM_RPM || "4", 10))
-const MEM_RPH = () => Math.max(10, parseInt(process.env.RATE_LIMIT_TRANSLATE_MEM_RPH || "28", 10))
+/**
+ * Predvolené limity: maximálne prísne (dá sa zmierniť cez env).
+ * Známa IP: minúta + hodina + kalendárny deň (fixed window).
+ */
+const RPM = () => Math.max(2, parseInt(process.env.RATE_LIMIT_TRANSLATE_RPM || "2", 10))
+const RPH = () => Math.max(4, parseInt(process.env.RATE_LIMIT_TRANSLATE_RPH || "8", 10))
+/** Počet požiadaviek na IP za posledných 24 h (fixed window). */
+const RPD = () => Math.max(6, parseInt(process.env.RATE_LIMIT_TRANSLATE_RPD || "20", 10))
+/** Neznáma IP: okrem minútového limitu aj hodinový (bez denného — menej dát v kľúči). */
+const UNK_PER_MIN = () => Math.max(1, parseInt(process.env.RATE_LIMIT_TRANSLATE_UNK_RPM || "1", 10))
+const UNK_PER_HOUR = () => Math.max(2, parseInt(process.env.RATE_LIMIT_TRANSLATE_UNK_RPH || "4", 10))
+
+/** Pamäťový fallback (bez Upstash): ešte prísnejší. */
+const MEM_RPM = () => Math.max(1, parseInt(process.env.RATE_LIMIT_TRANSLATE_MEM_RPM || "2", 10))
+const MEM_RPH = () => Math.max(3, parseInt(process.env.RATE_LIMIT_TRANSLATE_MEM_RPH || "6", 10))
+/** Jednoduchý denný strop v pamäti (rolling 24 h). */
+const MEM_RPD = () => Math.max(8, parseInt(process.env.RATE_LIMIT_TRANSLATE_MEM_RPD || "16", 10))
 
 let redisMinute: Ratelimit | null | undefined
 let redisHour: Ratelimit | null | undefined
+let redisDay: Ratelimit | null | undefined
 let redisUnknown: Ratelimit | null | undefined
+let redisUnknownHour: Ratelimit | null | undefined
 
 function getRedis(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim()
@@ -26,15 +38,27 @@ function getRedis(): Redis | null {
 
 function getUpstashLimiters() {
   if (redisMinute !== undefined) {
-    return redisMinute && redisHour && redisUnknown
-      ? { minute: redisMinute, hour: redisHour, unknown: redisUnknown }
+    return redisMinute &&
+      redisHour &&
+      redisDay &&
+      redisUnknown &&
+      redisUnknownHour
+      ? {
+          minute: redisMinute,
+          hour: redisHour,
+          day: redisDay,
+          unknown: redisUnknown,
+          unknownHour: redisUnknownHour,
+        }
       : null
   }
   const redis = getRedis()
   if (!redis) {
     redisMinute = null
     redisHour = null
+    redisDay = null
     redisUnknown = null
+    redisUnknownHour = null
     return null
   }
   redisMinute = new Ratelimit({
@@ -49,13 +73,31 @@ function getUpstashLimiters() {
     prefix: "translate:rph",
     analytics: true,
   })
+  redisDay = new Ratelimit({
+    redis,
+    limiter: Ratelimit.fixedWindow(RPD(), "24 h"),
+    prefix: "translate:rpd",
+    analytics: true,
+  })
   redisUnknown = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(3, "60 s"),
+    limiter: Ratelimit.slidingWindow(UNK_PER_MIN(), "60 s"),
     prefix: "translate:unk",
     analytics: true,
   })
-  return { minute: redisMinute, hour: redisHour, unknown: redisUnknown }
+  redisUnknownHour = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(UNK_PER_HOUR(), "1 h"),
+    prefix: "translate:unkh",
+    analytics: true,
+  })
+  return {
+    minute: redisMinute,
+    hour: redisHour,
+    day: redisDay,
+    unknown: redisUnknown,
+    unknownHour: redisUnknownHour,
+  }
 }
 
 /**
@@ -93,15 +135,26 @@ let memPruneCounter = 0
 
 function memoryRateLimit(id: string): { ok: true } | { ok: false; retryAfterSec: number } {
   const now = Date.now()
+  const dayMs = 86400_000
   const hourMs = 3600_000
   const minuteMs = 60_000
 
   let ts = memTimestamps.get(id) ?? []
-  ts = ts.filter((t) => now - t < hourMs)
+  ts = ts.filter((t) => now - t < dayMs)
 
+  const inDay = ts.filter((t) => now - t < dayMs)
   const inHour = ts.filter((t) => now - t < hourMs)
   const inMinute = ts.filter((t) => now - t < minuteMs)
 
+  if (inDay.length >= MEM_RPD()) {
+    const sorted = [...inDay].sort((a, b) => a - b)
+    const oldest = sorted[0] ?? now
+    memTimestamps.set(id, ts)
+    return {
+      ok: false,
+      retryAfterSec: Math.max(1, Math.ceil((dayMs - (now - oldest)) / 1000)),
+    }
+  }
   if (inHour.length >= MEM_RPH()) {
     const oldest = Math.min(...inHour)
     memTimestamps.set(id, ts)
@@ -127,7 +180,7 @@ function memoryRateLimit(id: string): { ok: true } | { ok: false; retryAfterSec:
   if (memPruneCounter % 200 === 0 && memTimestamps.size > 15_000) {
     memPruneCounter = 0
     for (const [k, v] of memTimestamps) {
-      const pruned = v.filter((t) => now - t < hourMs)
+      const pruned = v.filter((t) => now - t < dayMs)
       if (pruned.length === 0) memTimestamps.delete(k)
       else memTimestamps.set(k, pruned)
     }
@@ -167,8 +220,8 @@ export async function enforceTranslateRateLimit(req: Request): Promise<Translate
   if (upstash) {
     const limiters =
       ip === "unknown"
-        ? [upstash.unknown.limit(id)]
-        : [upstash.minute.limit(id), upstash.hour.limit(id)]
+        ? [upstash.unknown.limit(id), upstash.unknownHour.limit(id)]
+        : [upstash.minute.limit(id), upstash.hour.limit(id), upstash.day.limit(id)]
 
     const results = await Promise.all(limiters)
     const failed = results.find((r) => !r.success)
