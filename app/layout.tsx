@@ -1,13 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { cookies } from "next/headers"
 import { Urbanist, Montserrat } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { Providers } from "@/components/providers"
-import { LOCALE_COOKIE, defaultLocale, isLocale, type Locale } from "@/lib/i18n/config"
+import { defaultLocale, type Locale } from "@/lib/i18n/config"
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -45,10 +44,7 @@ const metadataByLocale: Record<
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const cookieStore = await cookies()
-  const cookieVal = cookieStore.get(LOCALE_COOKIE)?.value
-  const locale: Locale = isLocale(cookieVal) ? cookieVal : defaultLocale
-  const m = metadataByLocale[locale]
+  const m = metadataByLocale[defaultLocale]
 
   return {
     title: m.title,
@@ -82,12 +78,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const cookieStore = await cookies()
-  const cookieVal = cookieStore.get(LOCALE_COOKIE)?.value
-  const initialLocale: Locale = isLocale(cookieVal) ? cookieVal : defaultLocale
+  const initialLocale: Locale = defaultLocale
 
   return (
-    <html lang={initialLocale} className="dark">
+    <html lang={initialLocale} suppressHydrationWarning className="dark">
       <body className={`${urbanist.variable} ${montserrat.variable} font-montserrat bg-[#121212]`}>
         <Providers initialLocale={initialLocale}>
           <Header />

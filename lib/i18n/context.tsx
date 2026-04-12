@@ -4,13 +4,18 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react"
-import { useRouter } from "next/navigation"
-import { LOCALE_COOKIE, type Locale, defaultLocale, isLocale } from "./config"
+import {
+  LOCALE_COOKIE,
+  SESSION_ENGLISH_KEY,
+  type Locale,
+  defaultLocale,
+  isLocale,
+} from "./config"
 import sk from "./messages/sk.json"
 import en from "./messages/en.json"
 
@@ -62,23 +67,39 @@ export function LocaleProvider({
   initialLocale,
 }: {
   children: ReactNode
+  /** Vždy `sk` z layoutu — angličtina len cez sessionStorage po prepnutí. */
   initialLocale: Locale
 }) {
-  const router = useRouter()
-  const [locale, setLocaleState] = useState<Locale>(initialLocale)
+  const [locale, setLocaleState] = useState<Locale>(defaultLocale)
 
-  useEffect(() => {
-    setLocaleState(initialLocale)
+  /** Po hydratácii: ak používateľ v tejto karte zvolil EN, obnoviť (bez zmeny SSR = sk). */
+  useLayoutEffect(() => {
+    try {
+      if (sessionStorage.getItem(SESSION_ENGLISH_KEY) === "1") {
+        setLocaleState("en")
+        document.documentElement.lang = "en"
+      } else {
+        document.documentElement.lang = "sk"
+      }
+    } catch {
+      document.documentElement.lang = initialLocale
+    }
   }, [initialLocale])
 
-  const setLocale = useCallback(
-    (next: Locale) => {
-      setLocaleState(next)
-      document.cookie = `${LOCALE_COOKIE}=${next};path=/;max-age=31536000;SameSite=Lax`
-      router.refresh()
-    },
-    [router]
-  )
+  const setLocale = useCallback((next: Locale) => {
+    setLocaleState(next)
+    try {
+      if (next === "en") {
+        sessionStorage.setItem(SESSION_ENGLISH_KEY, "1")
+      } else {
+        sessionStorage.removeItem(SESSION_ENGLISH_KEY)
+      }
+    } catch {
+      /* private mode */
+    }
+    document.documentElement.lang = next === "en" ? "en" : "sk"
+    document.cookie = `${LOCALE_COOKIE}=sk;path=/;max-age=31536000;SameSite=Lax`
+  }, [])
 
   const t = useMemo(() => makeT(locale), [locale])
 
