@@ -1,6 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit"
-import { Redis } from "@upstash/redis"
 import { NextResponse } from "next/server"
+import { getUpstashRedis } from "./upstash-redis"
 
 /** Max JSON body before parse (bytes) — stops huge payload DoS. */
 export const TRANSLATE_MAX_BODY_BYTES = 256 * 1024
@@ -29,13 +29,6 @@ let redisDay: Ratelimit | null | undefined
 let redisUnknown: Ratelimit | null | undefined
 let redisUnknownHour: Ratelimit | null | undefined
 
-function getRedis(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL?.trim()
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
-  if (!url || !token) return null
-  return new Redis({ url, token })
-}
-
 function getUpstashLimiters() {
   if (redisMinute !== undefined) {
     return redisMinute &&
@@ -52,7 +45,7 @@ function getUpstashLimiters() {
         }
       : null
   }
-  const redis = getRedis()
+  const redis = getUpstashRedis()
   if (!redis) {
     redisMinute = null
     redisHour = null
