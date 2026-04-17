@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import dynamic from "next/dynamic"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
@@ -15,10 +14,6 @@ import {
 } from "@/lib/sanity/utils"
 import { useLocale } from "@/lib/i18n/context"
 import { localizeGalleryPage } from "@/lib/sanity/localize"
-import { useGalleryMuxPlaybackMap } from "@/lib/hooks/useGalleryMuxPlaybackMap"
-import { galleryMuxPosterUrl } from "@/lib/gallery-mux"
-
-const GalleryMuxPlayer = dynamic(() => import("@/components/gallery-mux-player"), { ssr: false })
 
 export default function GalleryPage() {
   const { locale, t } = useLocale()
@@ -41,8 +36,6 @@ export default function GalleryPage() {
     () => rawImages.map((img) => transformSanityGalleryImage(img, locale)),
     [rawImages, locale]
   )
-
-  const muxMap = useGalleryMuxPlaybackMap(galleryImages)
 
   // Function to capture first frame of video as thumbnail
   const captureVideoThumbnail = (videoElement: HTMLVideoElement, videoId: string, videoUrl: string): Promise<void> => {
@@ -164,48 +157,13 @@ export default function GalleryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {galleryImages.map((item) => {
-                const muxEntry =
-                  item.type === "video" && item.videoUrl
-                    ? (muxMap[item.id] ?? { mode: "pending" as const })
-                    : null
-
-                return (
+              {galleryImages.map((item) => (
                 <div
                   key={item.id}
                   className="relative group cursor-pointer overflow-hidden rounded-lg bg-[#1a1a1a] aspect-square"
                   onClick={() => setSelectedMedia(item)}
                 >
                   {item.type === 'video' && item.videoUrl ? (
-                    muxEntry?.mode === "mux" ? (
-                      <>
-                        <Image
-                          src={item.thumbnail || galleryMuxPosterUrl(muxEntry.playbackId)}
-                          alt={item.alt}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          priority={false}
-                        />
-                      </>
-                    ) : muxEntry?.mode === "pending" ? (
-                      <>
-                        {item.thumbnail ? (
-                          <Image
-                            src={item.thumbnail}
-                            alt={item.alt}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-110"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            priority={false}
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
-                            <p className="text-gray-500 text-sm px-4 text-center">{t("gallery.loading")}</p>
-                          </div>
-                        )}
-                      </>
-                    ) : (
                     <>
                       {/* Always show thumbnail/poster first for better mobile performance */}
                       {(item.thumbnail || videoThumbnails.has(item.id)) && (
@@ -294,7 +252,6 @@ export default function GalleryPage() {
                         </div>
                       )}
                     </>
-                    )
                   ) : (
                   <Image
                       src={item.src}
@@ -318,8 +275,7 @@ export default function GalleryPage() {
                     <p className="text-white font-medium text-sm md:text-base">{item.title}</p>
                   </div>
                 </div>
-                )
-              })}
+              ))}
             </div>
           )}
         </div>
@@ -332,55 +288,17 @@ export default function GalleryPage() {
             {selectedMedia?.alt || t("gallery.dialogMedia")}
           </DialogTitle>
           {selectedMedia && (
-            <div className="relative w-full h-full flex items-center justify-center p-2">
+            <div className="relative w-full h-full flex items-center justify-center">
               {selectedMedia.type === 'video' && selectedMedia.videoUrl ? (
-                (() => {
-                  const selMux = muxMap[selectedMedia.id] ?? { mode: "pending" as const }
-                  if (selMux.mode === "mux") {
-                    return (
-                      <GalleryMuxPlayer
-                        playbackId={selMux.playbackId}
-                        poster={
-                          selectedMedia.thumbnail ||
-                          galleryMuxPosterUrl(selMux.playbackId)
-                        }
-                        autoPlay
-                        className="w-full max-w-full max-h-[95vh] bg-black"
-                      />
-                    )
-                  }
-                  if (selMux.mode === "pending") {
-                    return (
-                      <div className="relative flex min-h-[40vh] w-full max-w-4xl flex-col items-center justify-center gap-4 p-8">
-                        {selectedMedia.thumbnail ? (
-                          <div className="relative aspect-video w-full max-w-3xl overflow-hidden rounded-md">
-                            <Image
-                              src={selectedMedia.thumbnail}
-                              alt={selectedMedia.alt}
-                              fill
-                              className="object-contain"
-                              sizes="95vw"
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-48 w-full max-w-3xl rounded-md bg-neutral-900" />
-                        )}
-                        <p className="text-center text-sm text-neutral-400">{t("gallery.loading")}</p>
-                      </div>
-                    )
-                  }
-                  return (
-                    <video
-                      src={selectedMedia.videoUrl}
-                      controls
-                      autoPlay
-                      className="max-w-full max-h-full w-auto h-auto"
-                      style={{ maxHeight: "95vh" }}
-                    >
-                      {t("gallery.videoUnsupported")}
-                    </video>
-                  )
-                })()
+                <video
+                  src={selectedMedia.videoUrl}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-full w-auto h-auto"
+                  style={{ maxHeight: '95vh' }}
+                >
+                  {t("gallery.videoUnsupported")}
+                </video>
               ) : (
               <Image
                   src={selectedMedia.src}
