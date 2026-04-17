@@ -111,14 +111,7 @@ export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, 
   titleEn,
   mediaType,
   image,
-  video {
-    asset-> {
-      _id,
-      url,
-      mimeType,
-      size
-    }
-  },
+  "muxPlaybackId": muxVideo.asset->playbackId,
   videoThumbnail,
   order
 }`

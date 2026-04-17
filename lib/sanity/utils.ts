@@ -8,7 +8,7 @@ export interface GalleryImage {
   src: string
   alt: string
   type: 'image' | 'video'
-  videoUrl?: string
+  muxPlaybackId?: string
   thumbnail?: string
 }
 
@@ -22,14 +22,7 @@ export interface SanityGalleryImage {
     asset: any
     alt?: string
   }
-  video?: {
-    asset?: {
-      _id: string
-      url: string
-      mimeType?: string
-      size?: number
-    }
-  }
+  muxPlaybackId?: string
   videoThumbnail?: {
     _type: 'image'
     asset: any
@@ -118,7 +111,7 @@ export function transformSanityGalleryImage(
   const mediaType = galleryImage.mediaType || (galleryImage.image ? 'image' : 'video')
 
   if (mediaType === 'video') {
-    const videoUrl = galleryImage.video?.asset?.url || ''
+    const muxPlaybackId = galleryImage.muxPlaybackId || ''
     const thumbnail = galleryImage.videoThumbnail
       ? (() => {
           try {
@@ -130,14 +123,18 @@ export function transformSanityGalleryImage(
         })()
       : undefined
     
+    const muxThumbnail = muxPlaybackId
+      ? `https://image.mux.com/${encodeURIComponent(muxPlaybackId)}/thumbnail.jpg?time=1&width=800`
+      : undefined
+
     return {
       id: galleryImage._id,
       title: resolvedTitle,
-      src: thumbnail || videoUrl, // Use video URL as fallback if no thumbnail
+      src: thumbnail || muxThumbnail || '/placeholder.svg',
       alt: galleryImage.videoThumbnail?.alt || resolvedTitle || 'Gallery video',
       type: 'video',
-      videoUrl,
-      thumbnail,
+      muxPlaybackId,
+      thumbnail: thumbnail || muxThumbnail,
     }
   }
   
