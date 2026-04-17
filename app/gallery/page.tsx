@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
+import dynamic from "next/dynamic"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
@@ -14,7 +15,10 @@ import {
 } from "@/lib/sanity/utils"
 import { useLocale } from "@/lib/i18n/context"
 import { localizeGalleryPage } from "@/lib/sanity/localize"
-import GalleryOpenedVideo from "@/components/gallery-opened-video"
+import { useGalleryMuxPlaybackMap } from "@/lib/hooks/useGalleryMuxPlaybackMap"
+import { galleryMuxPosterUrl } from "@/lib/gallery-mux"
+
+const GalleryMuxPlayer = dynamic(() => import("@/components/gallery-mux-player"), { ssr: false })
 
 export default function GalleryPage() {
   const { locale, t } = useLocale()
@@ -24,6 +28,9 @@ export default function GalleryPage() {
     GalleryPageData & { heroTitleEn?: string; heroDescriptionEn?: string }
   | null>(null)
   const [loading, setLoading] = useState(true)
+  const [videoErrors, setVideoErrors] = useState<Set<string>>(new Set())
+  const [videoThumbnails, setVideoThumbnails] = useState<Map<string, string>>(new Map())
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
 
   const pageData = useMemo(
     () => (rawPageData ? localizeGalleryPage(rawPageData, locale) : null),
@@ -34,6 +41,62 @@ export default function GalleryPage() {
     () => rawImages.map((img) => transformSanityGalleryImage(img, locale)),
     [rawImages, locale]
   )
+
+  const muxMap = useGalleryMuxPlaybackMap(galleryImages)
+
+  // Function to capture first frame of video as thumbnail
+  const captureVideoThumbnail = (videoElement: HTMLVideoElement, videoId: string, videoUrl: string): Promise<void> => {
+    return new Promise((resolve) => {
+      // Set crossOrigin to allow canvas export (CORS)
+      videoElement.crossOrigin = 'anonymous'
+      
+      const handleLoadedData = () => {
+        try {
+          // Seek to a small time to get first frame
+          videoElement.currentTime = 0.1
+        } catch (error) {
+          console.error('Error seeking video:', error)
+          resolve()
+        }
+      }
+
+      const handleSeeked = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = videoElement.videoWidth || 800
+          canvas.height = videoElement.videoHeight || 600
+          const ctx = canvas.getContext('2d')
+          
+          if (ctx) {
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height)
+            try {
+              const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8)
+              setVideoThumbnails((prev) => new Map(prev).set(videoId, thumbnailUrl))
+            } catch (canvasError) {
+              // Canvas is tainted (CORS issue) - this is expected for cross-origin videos
+              console.warn('Cannot export canvas (CORS issue), using video poster instead')
+            }
+          }
+        } catch (error) {
+          console.error('Error capturing video thumbnail:', error)
+        } finally {
+          videoElement.removeEventListener('loadeddata', handleLoadedData)
+          videoElement.removeEventListener('seeked', handleSeeked)
+          resolve()
+        }
+      }
+
+      videoElement.addEventListener('loadeddata', handleLoadedData, { once: true })
+      videoElement.addEventListener('seeked', handleSeeked, { once: true })
+      
+      // Set a timeout to prevent hanging
+      setTimeout(() => {
+        videoElement.removeEventListener('loadeddata', handleLoadedData)
+        videoElement.removeEventListener('seeked', handleSeeked)
+        resolve()
+      }, 5000)
+    })
+  }
 
   useEffect(() => {
     async function fetchGalleryData() {
@@ -88,7 +151,7 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Gallery Grid — images / video posters only; no video files load until a tile is opened */}
+      {/* Gallery Grid */}
       <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">
           {loading ? (
@@ -101,27 +164,136 @@ export default function GalleryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {galleryImages.map((item) => (
+              {galleryImages.map((item) => {
+                const muxEntry =
+                  item.type === "video" && item.videoUrl
+                    ? (muxMap[item.id] ?? { mode: "pending" as const })
+                    : null
+
+                return (
                 <div
                   key={item.id}
                   className="relative group cursor-pointer overflow-hidden rounded-lg bg-[#1a1a1a] aspect-square"
                   onClick={() => setSelectedMedia(item)}
                 >
                   {item.type === 'video' && item.videoUrl ? (
-                    item.thumbnail ? (
-                      <Image
-                        src={item.thumbnail}
-                        alt={item.alt}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-110"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        priority={false}
-                      />
+                    muxEntry?.mode === "mux" ? (
+                      <>
+                        <Image
+                          src={item.thumbnail || galleryMuxPosterUrl(muxEntry.playbackId)}
+                          alt={item.alt}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          priority={false}
+                        />
+                      </>
+                    ) : muxEntry?.mode === "pending" ? (
+                      <>
+                        {item.thumbnail ? (
+                          <Image
+                            src={item.thumbnail}
+                            alt={item.alt}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            priority={false}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
+                            <p className="text-gray-500 text-sm px-4 text-center">{t("gallery.loading")}</p>
+                          </div>
+                        )}
+                      </>
                     ) : (
-                      <div
-                        className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-950"
-                        aria-hidden
+                    <>
+                      {/* Always show thumbnail/poster first for better mobile performance */}
+                      {(item.thumbnail || videoThumbnails.has(item.id)) && (
+                        <Image
+                          src={videoThumbnails.get(item.id) || item.thumbnail || ''}
+                          alt={item.alt}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          priority={false}
+                        />
+                      )}
+                      {/* Hidden video element for thumbnail generation and fallback */}
+                      <video
+                        ref={(el) => {
+                          if (el) {
+                            videoRefs.current.set(item.id, el)
+                            // Set crossOrigin to allow canvas export (CORS)
+                            el.crossOrigin = 'anonymous'
+                            // Only try to capture thumbnail if we don't have one from Sanity
+                            if (!item.thumbnail && !videoThumbnails.has(item.id) && item.videoUrl) {
+                              captureVideoThumbnail(el, item.id, item.videoUrl)
+                            }
+                          }
+                        }}
+                        src={item.videoUrl}
+                        preload="metadata"
+                        poster={item.thumbnail || videoThumbnails.get(item.id) || undefined}
+                        crossOrigin="anonymous"
+                        className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
+                        muted
+                        playsInline
+                        onLoadedMetadata={(e) => {
+                          const video = e.currentTarget
+                          // If no thumbnail exists, try to capture one
+                          if (!item.thumbnail && !videoThumbnails.has(item.id)) {
+                            try {
+                              video.currentTime = 0.1
+                            } catch (error) {
+                              console.error('Error seeking video for thumbnail:', error)
+                            }
+                          }
+                        }}
+                        onSeeked={(e) => {
+                          const video = e.currentTarget
+                          // Capture thumbnail if we don't have one
+                          if (!item.thumbnail && !videoThumbnails.has(item.id)) {
+                            try {
+                              const canvas = document.createElement('canvas')
+                              canvas.width = video.videoWidth || 800
+                              canvas.height = video.videoHeight || 600
+                              const ctx = canvas.getContext('2d')
+                              if (ctx) {
+                                ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+                                try {
+                                  const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8)
+                                  setVideoThumbnails((prev) => new Map(prev).set(item.id, thumbnailUrl))
+                                } catch (canvasError) {
+                                  // Canvas is tainted (CORS issue) - this is expected for cross-origin videos
+                                  // Fall back to using the video poster or showing a placeholder
+                                  console.warn('Cannot export canvas (CORS issue), video may need CORS headers')
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Error capturing video thumbnail:', error)
+                            }
+                          }
+                        }}
+                        onError={(e) => {
+                          const video = e.currentTarget
+                          // If CORS error, try without crossOrigin
+                          if (video.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED || 
+                              video.error?.code === MediaError.MEDIA_ERR_NETWORK) {
+                            console.warn('Video load error (possibly CORS), trying without crossOrigin')
+                            // Don't mark as error if it's just a CORS issue
+                            return
+                          }
+                          console.error('Video load error for:', item.videoUrl)
+                          setVideoErrors((prev) => new Set(prev).add(item.id))
+                        }}
                       />
+                      {/* Fallback if video fails and no thumbnail */}
+                      {videoErrors.has(item.id) && !item.thumbnail && !videoThumbnails.has(item.id) && (
+                        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                          <p className="text-gray-400 text-sm">{t("gallery.videoError")}</p>
+                        </div>
+                      )}
+                    </>
                     )
                   ) : (
                   <Image
@@ -133,6 +305,7 @@ export default function GalleryPage() {
                   />
                   )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                  {/* Play Icon for Videos */}
                   {item.type === 'video' && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="bg-black/60 rounded-full p-4 group-hover:bg-black/80 transition-colors duration-300">
@@ -140,16 +313,19 @@ export default function GalleryPage() {
                       </div>
                     </div>
                   )}
+                  {/* Title Overlay - Bottom */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                     <p className="text-white font-medium text-sm md:text-base">{item.title}</p>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       </section>
 
+      {/* Media Modal */}
       <Dialog open={selectedMedia !== null} onOpenChange={() => setSelectedMedia(null)}>
         <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 bg-black/95 border-0">
           <DialogTitle className="sr-only">
@@ -158,14 +334,53 @@ export default function GalleryPage() {
           {selectedMedia && (
             <div className="relative w-full h-full flex items-center justify-center p-2">
               {selectedMedia.type === 'video' && selectedMedia.videoUrl ? (
-                <GalleryOpenedVideo
-                  key={selectedMedia.id}
-                  videoUrl={selectedMedia.videoUrl}
-                  poster={selectedMedia.thumbnail}
-                  alt={selectedMedia.alt}
-                  loadingText={t("gallery.loading")}
-                  unsupportedText={t("gallery.videoUnsupported")}
-                />
+                (() => {
+                  const selMux = muxMap[selectedMedia.id] ?? { mode: "pending" as const }
+                  if (selMux.mode === "mux") {
+                    return (
+                      <GalleryMuxPlayer
+                        playbackId={selMux.playbackId}
+                        poster={
+                          selectedMedia.thumbnail ||
+                          galleryMuxPosterUrl(selMux.playbackId)
+                        }
+                        autoPlay
+                        className="w-full max-w-full max-h-[95vh] bg-black"
+                      />
+                    )
+                  }
+                  if (selMux.mode === "pending") {
+                    return (
+                      <div className="relative flex min-h-[40vh] w-full max-w-4xl flex-col items-center justify-center gap-4 p-8">
+                        {selectedMedia.thumbnail ? (
+                          <div className="relative aspect-video w-full max-w-3xl overflow-hidden rounded-md">
+                            <Image
+                              src={selectedMedia.thumbnail}
+                              alt={selectedMedia.alt}
+                              fill
+                              className="object-contain"
+                              sizes="95vw"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-48 w-full max-w-3xl rounded-md bg-neutral-900" />
+                        )}
+                        <p className="text-center text-sm text-neutral-400">{t("gallery.loading")}</p>
+                      </div>
+                    )
+                  }
+                  return (
+                    <video
+                      src={selectedMedia.videoUrl}
+                      controls
+                      autoPlay
+                      className="max-w-full max-h-full w-auto h-auto"
+                      style={{ maxHeight: "95vh" }}
+                    >
+                      {t("gallery.videoUnsupported")}
+                    </video>
+                  )
+                })()
               ) : (
               <Image
                   src={selectedMedia.src}
@@ -183,3 +398,4 @@ export default function GalleryPage() {
     </div>
   )
 }
+
