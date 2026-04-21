@@ -15,6 +15,7 @@ import {
 import { useLocale } from "@/lib/i18n/context"
 import { localizeGalleryPage } from "@/lib/sanity/localize"
 import GalleryVideoThumbnail from "@/components/gallery-video-thumbnail"
+import GalleryModalVideo from "@/components/gallery-modal-video"
 import { cn } from "@/lib/utils"
 
 export default function GalleryPage() {
@@ -153,6 +154,8 @@ export default function GalleryPage() {
             /* Full viewport — no translate centering (that clips the top / hides X on mobile). */
             "!fixed !inset-0 !left-0 !right-0 !top-0 !bottom-0 !translate-x-0 !translate-y-0",
             "h-[100dvh] max-h-[100dvh] w-full max-w-none rounded-none",
+            /* Shorter motion on phone — less contention with video decode while modal opens */
+            "max-md:!duration-100",
             /* Radix close button: fixed corner + safe area + touch-sized target */
             "[&>button]:!fixed [&>button]:z-[60] [&>button]:flex [&>button]:size-11 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full",
             "[&>button]:border [&>button]:border-white/20 [&>button]:bg-black/75 [&>button]:text-white [&>button]:shadow-lg",
@@ -172,18 +175,12 @@ export default function GalleryPage() {
               )}
             >
               {selectedMedia.type === 'video' && selectedMedia.videoUrl ? (
-                <video
+                <GalleryModalVideo
                   key={selectedMedia.id}
-                  src={selectedMedia.videoUrl}
+                  videoUrl={selectedMedia.videoUrl}
                   poster={selectedMedia.thumbnail}
-                  controls
-                  autoPlay
-                  playsInline
-                  preload="metadata"
-                  className="max-h-full max-w-full object-contain"
-                >
-                  {t("gallery.videoUnsupported")}
-                </video>
+                  posterAlt={selectedMedia.alt}
+                />
               ) : (
               <Image
                   src={selectedMedia.src}
