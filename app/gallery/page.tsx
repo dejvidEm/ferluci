@@ -15,6 +15,7 @@ import {
 import { useLocale } from "@/lib/i18n/context"
 import { localizeGalleryPage } from "@/lib/sanity/localize"
 import GalleryVideoThumbnail from "@/components/gallery-video-thumbnail"
+import { cn } from "@/lib/utils"
 
 export default function GalleryPage() {
   const { locale, t } = useLocale()
@@ -146,12 +147,30 @@ export default function GalleryPage() {
 
       {/* Media Modal */}
       <Dialog open={selectedMedia !== null} onOpenChange={() => setSelectedMedia(null)}>
-        <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 bg-black/95 border-0">
+        <DialogContent
+          className={cn(
+            "flex flex-col overflow-hidden border-0 bg-black/95 p-0",
+            /* Full viewport — no translate centering (that clips the top / hides X on mobile). */
+            "!fixed !inset-0 !left-0 !right-0 !top-0 !bottom-0 !translate-x-0 !translate-y-0",
+            "h-[100dvh] max-h-[100dvh] w-full max-w-none rounded-none",
+            /* Radix close button: fixed corner + safe area + touch-sized target */
+            "[&>button]:!fixed [&>button]:z-[60] [&>button]:flex [&>button]:size-11 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full",
+            "[&>button]:border [&>button]:border-white/20 [&>button]:bg-black/75 [&>button]:text-white [&>button]:shadow-lg",
+            "[&>button]:right-[max(0.75rem,env(safe-area-inset-right))] [&>button]:top-[max(0.75rem,env(safe-area-inset-top))]",
+            "[&>button]:opacity-100 hover:[&>button]:bg-black/90 [&>button]:active:scale-95",
+            "[&>button_svg]:!size-6"
+          )}
+        >
           <DialogTitle className="sr-only">
             {selectedMedia?.alt || t("gallery.dialogMedia")}
           </DialogTitle>
           {selectedMedia && (
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div
+              className={cn(
+                "relative flex min-h-0 flex-1 items-center justify-center px-2",
+                "pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(3.25rem,calc(env(safe-area-inset-top)+2.75rem))]"
+              )}
+            >
               {selectedMedia.type === 'video' && selectedMedia.videoUrl ? (
                 <video
                   key={selectedMedia.id}
@@ -161,8 +180,7 @@ export default function GalleryPage() {
                   autoPlay
                   playsInline
                   preload="metadata"
-                  className="max-w-full max-h-full w-auto h-auto"
-                  style={{ maxHeight: '95vh' }}
+                  className="max-h-full max-w-full object-contain"
                 >
                   {t("gallery.videoUnsupported")}
                 </video>
