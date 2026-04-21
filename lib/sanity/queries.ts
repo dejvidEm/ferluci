@@ -105,6 +105,33 @@ export const featuredVehiclesQuery = groq`*[_type == "vehicle" && featured == tr
   "slug": slug.current
 }`
 
+/** Homepage fallback when no vehicle is marked featured — newest listings first */
+export const recentVehiclesQuery = groq`*[_type == "vehicle"] | order(_createdAt desc) [0...6] {
+  _id,
+  make,
+  model,
+  year,
+  price,
+  odpocetDph,
+  priceOdpocetDph,
+  showOldPrice,
+  oldPrice,
+  mileage,
+  exteriorColor,
+  interiorColor,
+  fuelType,
+  transmission,
+  pohon,
+  engine,
+  vin,
+  stockNumber,
+  description,
+  features,
+  images,
+  featured,
+  "slug": slug.current
+}`
+
 export const galleryImagesQuery = groq`*[_type == "gallery"] | order(order asc, _createdAt desc) {
   _id,
   title,

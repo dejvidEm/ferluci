@@ -2,62 +2,74 @@
 
 import { useEffect, useState } from "react"
 import VehicleCard from "@/components/vehicle-card"
-import { client, featuredVehiclesQuery } from "@/lib/sanity"
+import { client, featuredVehiclesQuery, recentVehiclesQuery } from "@/lib/sanity"
 import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface FeaturedVehiclesProps {
-  onApiChange?: (api: CarouselApi) => void
+  onApiChange?: (api: CarouselApi | undefined) => void
 }
 
 export default function FeaturedVehicles({ onApiChange }: FeaturedVehiclesProps) {
-  const [featuredVehicles, setFeaturedVehicles] = useState<Vehicle[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [api, setApi] = useState<CarouselApi>()
-  const [canScrollPrev, setCanScrollPrev] = useState(false)
-  const [canScrollNext, setCanScrollNext] = useState(false)
 
   useEffect(() => {
-    async function fetchFeaturedVehicles() {
+    async function fetchVehicles() {
       try {
-        const data = await client.fetch(featuredVehiclesQuery)
-        const transformedVehicles = data.map(transformSanityVehicle)
-        setFeaturedVehicles(transformedVehicles)
+        const featured = await client.fetch(featuredVehiclesQuery)
+        if (featured && featured.length > 0) {
+          setVehicles(featured.map(transformSanityVehicle))
+          return
+        }
+        const recent = await client.fetch(recentVehiclesQuery)
+        setVehicles((recent ?? []).map(transformSanityVehicle))
       } catch (error) {
-        console.error("Error fetching featured vehicles:", error)
+        console.error("Error fetching featured / recent vehicles:", error)
       }
     }
-    fetchFeaturedVehicles()
+    fetchVehicles()
   }, [])
 
   useEffect(() => {
-    if (!api) {
-      return
-    }
-
-    if (onApiChange) {
+    if (!onApiChange) return
+    if (vehicles.length <= 2) {
+      onApiChange(undefined)
+    } else {
       onApiChange(api)
     }
+  }, [vehicles.length, api, onApiChange])
 
-    const updateState = () => {
-      setCanScrollPrev(api.canScrollPrev())
-      setCanScrollNext(api.canScrollNext())
-    }
-
-    updateState()
-    api.on("select", updateState)
-    api.on("reInit", updateState)
-
-    return () => {
-      api.off("select", updateState)
-      api.off("reInit", updateState)
-    }
-  }, [api, onApiChange])
-
-  if (featuredVehicles.length === 0) {
+  if (vehicles.length === 0) {
     return null
+  }
+
+  const fewCards = vehicles.length <= 2
+
+  if (fewCards) {
+    return (
+      <div className="flex justify-center px-1">
+        <div
+          className={cn(
+            "flex w-full max-w-5xl flex-col items-center gap-6 md:gap-8 sm:flex-row sm:flex-wrap sm:justify-center"
+          )}
+        >
+          {vehicles.map((vehicle) => (
+            <div
+              key={vehicle.id}
+              className={cn(
+                "w-full max-w-md shrink-0",
+                vehicles.length === 2 && "sm:w-[min(22rem,calc(50vw-2.5rem))]"
+              )}
+            >
+              <VehicleCard vehicle={vehicle} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -77,9 +89,9 @@ export default function FeaturedVehicles({ onApiChange }: FeaturedVehiclesProps)
         className="w-full overflow-visible"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {featuredVehicles.map((vehicle) => (
-            <CarouselItem 
-              key={vehicle.id} 
+          {vehicles.map((vehicle) => (
+            <CarouselItem
+              key={vehicle.id}
               className="pl-2 md:pl-4 basis-[90%] md:basis-1/2 lg:basis-1/3"
             >
               <VehicleCard vehicle={vehicle} />
