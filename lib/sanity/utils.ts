@@ -133,7 +133,8 @@ export function transformSanityGalleryImage(
     return {
       id: galleryImage._id,
       title: resolvedTitle,
-      src: thumbnail || videoUrl, // Use video URL as fallback if no thumbnail
+      // Never use video URL as image src — large files would still be requested indirectly; grid uses thumbnail or placeholder only.
+      src: thumbnail || '/placeholder.svg',
       alt: galleryImage.videoThumbnail?.alt || resolvedTitle || 'Gallery video',
       type: 'video',
       videoUrl,
