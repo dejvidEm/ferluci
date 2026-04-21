@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils"
 
 interface FeaturedVehiclesProps {
   onApiChange?: (api: CarouselApi | undefined) => void
+  /** Home page header: hide carousel arrows when ≤ 2 */
+  onCountChange?: (count: number) => void
 }
 
-export default function FeaturedVehicles({ onApiChange }: FeaturedVehiclesProps) {
+export default function FeaturedVehicles({ onApiChange, onCountChange }: FeaturedVehiclesProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [api, setApi] = useState<CarouselApi>()
 
@@ -32,6 +34,10 @@ export default function FeaturedVehicles({ onApiChange }: FeaturedVehiclesProps)
     }
     fetchVehicles()
   }, [])
+
+  useEffect(() => {
+    onCountChange?.(vehicles.length)
+  }, [vehicles.length, onCountChange])
 
   useEffect(() => {
     if (!onApiChange) return

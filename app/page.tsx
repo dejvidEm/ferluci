@@ -22,6 +22,8 @@ export default function Home() {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
+  const [featuredVehicleCount, setFeaturedVehicleCount] = useState(0)
+  const showFeaturedCarouselNav = featuredVehicleCount > 2
 
   const fallbackHome = useMemo(
     (): HomePageData => ({
@@ -137,29 +139,30 @@ export default function Home() {
           <div className="flex justify-between items-center mb-10 relative z-10">
             <h2 className="text-3xl font-bold">{t("home.featuredTitle")}</h2>
             <div className="flex items-center gap-2">
-              {/* Navigation arrows - top right on desktop */}
-              <div className="hidden md:flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-full border border-white/40"
-                  disabled={!canScrollPrev}
-                  onClick={() => carouselApi?.scrollPrev()}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="sr-only">{t("common.prevVehicle")}</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-full border border-white/40"
-                  disabled={!canScrollNext}
-                  onClick={() => carouselApi?.scrollNext()}
-                >
-                  <ArrowRight className="h-4 w-4" />
-                  <span className="sr-only">{t("common.nextVehicle")}</span>
-                </Button>
-              </div>
+              {showFeaturedCarouselNav && (
+                <div className="hidden md:flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 rounded-full border border-white/40"
+                    disabled={!canScrollPrev}
+                    onClick={() => carouselApi?.scrollPrev()}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="sr-only">{t("common.prevVehicle")}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 rounded-full border border-white/40"
+                    disabled={!canScrollNext}
+                    onClick={() => carouselApi?.scrollNext()}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                    <span className="sr-only">{t("common.nextVehicle")}</span>
+                  </Button>
+                </div>
+              )}
               <Button variant="ghost" asChild className="hidden md:flex">
                 <Link href="/ponuka" className="flex items-center">
                   {t("common.showAll")} <ChevronRight className="ml-1 h-4 w-4" />
@@ -167,7 +170,8 @@ export default function Home() {
               </Button>
             </div>
           </div>
-          <FeaturedVehicles 
+          <FeaturedVehicles
+            onCountChange={setFeaturedVehicleCount}
             onApiChange={(api) => {
               setCarouselApi(api)
               if (api) {
