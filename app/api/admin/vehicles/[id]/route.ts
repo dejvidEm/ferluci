@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/sanity/adminClient'
 import { generateVehicleSlug } from '@/lib/slug'
+import {
+  isPortableTextArray,
+  plainTextToPortableText,
+  portableTextToPlainText,
+} from '@/lib/sanity/portableText'
 
 interface VehicleInput {
   make: string
@@ -169,7 +174,19 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(vehicle)
+    // Description is stored as Portable Text but the admin form edits it as
+    // plain text — flatten it so the textarea can show the same paragraphs
+    // (single newlines between blocks, so blank blocks stay blank lines).
+    const normalizedDescription = isPortableTextArray(vehicle.description)
+      ? portableTextToPlainText(vehicle.description)
+      : typeof vehicle.description === 'string'
+        ? vehicle.description
+        : ''
+
+    return NextResponse.json({
+      ...vehicle,
+      description: normalizedDescription,
+    })
   } catch (error) {
     console.error('Error fetching vehicle:', error)
     return NextResponse.json(
@@ -251,7 +268,7 @@ export async function PUT(
       engine: body.engine.trim(),
       vin: body.vin.trim(),
       stockNumber: body.stockNumber.trim(),
-      description: body.description.trim(),
+      description: plainTextToPortableText(body.description),
       features: body.features.map((f) => f.trim()).filter((f) => f.length > 0),
       images,
       featured: body.featured,

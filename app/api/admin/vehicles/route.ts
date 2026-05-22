@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/sanity/adminClient'
 import { generateVehicleSlug } from '@/lib/slug'
+import { plainTextToPortableText } from '@/lib/sanity/portableText'
 
 interface VehicleInput {
   make: string
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
       engine: body.engine.trim(),
       vin: body.vin.trim(),
       stockNumber: body.stockNumber.trim(),
-      description: body.description.trim(),
+      description: plainTextToPortableText(body.description),
       features: body.features.map((f) => f.trim()).filter((f) => f.length > 0),
       images,
       featured: body.featured,

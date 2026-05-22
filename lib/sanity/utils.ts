@@ -1,6 +1,7 @@
 import type { Vehicle } from '@/lib/types'
 import type { Locale } from '@/lib/i18n/config'
 import { urlFor } from './image'
+import { normalizeDescription, type DescriptionValue } from './portableText'
 
 export interface GalleryImage {
   id: string
@@ -59,7 +60,7 @@ export interface SanityVehicle {
   engine: string
   vin: string
   stockNumber: string
-  description: string
+  description: DescriptionValue
   features: string[]
   images: Array<{
     _type: 'image'
@@ -90,7 +91,7 @@ export function transformSanityVehicle(vehicle: SanityVehicle): Vehicle {
     engine: vehicle.engine,
     vin: vehicle.vin,
     stockNumber: vehicle.stockNumber,
-    description: vehicle.description,
+    description: normalizeDescription(vehicle.description),
     features: vehicle.features || [],
     images: vehicle.images && vehicle.images.length > 0
       ? vehicle.images.map((img) => {

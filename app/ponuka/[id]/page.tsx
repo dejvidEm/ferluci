@@ -17,6 +17,7 @@ import { transformSanityVehicle } from "@/lib/sanity/utils"
 import type { Vehicle } from "@/lib/types"
 import { useLocale } from "@/lib/i18n/context"
 import { useVehicleCmsTranslation } from "@/lib/hooks/useVehicleCmsTranslation"
+import { VehicleDescription } from "@/components/vehicle-description"
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { locale, t } = useLocale()
@@ -236,7 +237,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             {locale === "en" && translationLoading ? (
               <p className="text-gray-500 text-sm">{t("common.loading")}</p>
             ) : (
-              <p className="text-gray-300 text-sm leading-relaxed">{displayDescription}</p>
+              <VehicleDescription
+                value={displayDescription}
+                className="text-gray-300 text-sm space-y-1"
+              />
             )}
           </div>
 
@@ -462,7 +466,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   {locale === "en" && translationLoading ? (
                     <p className="text-gray-500">{t("common.loading")}</p>
                   ) : (
-                    <p className="text-gray-300 leading-relaxed">{displayDescription}</p>
+                    <VehicleDescription
+                      value={displayDescription}
+                      className="text-gray-300 space-y-2"
+                    />
                   )}
                 </section>
 

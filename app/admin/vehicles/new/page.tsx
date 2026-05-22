@@ -537,6 +537,9 @@ export default function NewVehiclePage() {
                 rows={6}
                 className="bg-[#121212] text-white border-white/20 text-sm sm:text-base"
               />
+              <p className="text-xs text-white/50 mt-2">
+                Tip: Dvojitým Enterom oddelíte odsek — prázdny riadok sa zobrazí aj na webe. Pre formátovanie (tučné, kurzíva, zoznamy) môžete tento popis upraviť aj v Sanity Studio.
+              </p>
             </div>
           </section>
 

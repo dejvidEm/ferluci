@@ -1,3 +1,5 @@
+import type { PortableTextBlock } from '@/lib/sanity/portableText'
+
 export interface Vehicle {
   id: string
   make: string
@@ -17,7 +19,11 @@ export interface Vehicle {
   engine: string
   vin: string
   stockNumber: string
-  description: string
+  /**
+   * Stored in Sanity as Portable Text blocks. Older vehicles may still have a
+   * plain string here — `transformSanityVehicle` normalizes both shapes.
+   */
+  description: PortableTextBlock[]
   features: string[]
   images: string[]
   featured: boolean
