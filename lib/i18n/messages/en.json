@@ -71,7 +71,11 @@
     "ctaSubtitle": "Visit our showroom today or browse our online inventory and find the ideal vehicle for your lifestyle and budget.",
     "searchPlaceholder": "Search by make or model...",
     "searchPlaceholderLong": "Search by make, model or keywords...",
-    "searchHeading": "Quick vehicle search"
+    "searchHeading": "Quick vehicle search",
+    "socialTitle": "Follow us on social media",
+    "socialHandle": "ferluci.cars",
+    "openGallery": "Open gallery",
+    "followUs": "Follow"
   },
   "ponuka": {
     "back": "Back",

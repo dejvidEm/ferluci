@@ -4,17 +4,20 @@ import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Car, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react"
+import { Car, ChevronRight, ArrowLeft, ArrowRight, Instagram } from "lucide-react"
 import FeaturedVehicles from "@/components/featured-vehicles"
 import FAQ from "@/components/faq"
 import Testimonials from "@/components/testimonials"
 import HomeSearch from "@/components/home-search"
+import SocialReelsList from "@/components/social-reels-list"
 import { AuroraText } from "@/components/ui/aurora-text"
 import { client, homePageQuery } from "@/lib/sanity"
 import type { HomePageData } from "@/lib/sanity/utils"
 import type { CarouselApi } from "@/components/ui/carousel"
 import { useLocale } from "@/lib/i18n/context"
 import { localizeHomePage } from "@/lib/sanity/localize"
+
+const DEFAULT_INSTAGRAM_URL = "https://www.instagram.com/ferluci.cars"
 
 export default function Home() {
   const { locale, t } = useLocale()
@@ -238,6 +241,63 @@ export default function Home() {
                   <p className="text-gray-300">{card.description}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Social Media / Instagram Reels (CMS-driven) */}
+      {data.socialSection?.reels && data.socialSection.reels.length > 0 && (
+        <section className="py-20 bg-[#121212] relative overflow-hidden">
+          {/* Subtle red gradient blobs */}
+          <div className="absolute top-1/4 -left-32 w-80 h-80 bg-gradient-to-br from-red-600/20 via-red-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-gradient-to-tl from-red-700/20 via-red-600/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                {data.socialSection.title || t("home.socialTitle")}
+              </h2>
+              <a
+                href={data.socialSection.instagramUrl || DEFAULT_INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 text-gray-300 hover:text-white transition-colors group"
+              >
+                <Instagram className="h-6 w-6 md:h-7 md:w-7 group-hover:text-primary transition-colors" />
+                <span className="text-lg md:text-xl font-medium">
+                  @{data.socialSection.instagramHandle || t("home.socialHandle")}
+                </span>
+              </a>
+            </div>
+
+            <div className="mb-10">
+              <SocialReelsList
+                reels={data.socialSection.reels}
+                fallbackHref={data.socialSection.instagramUrl || DEFAULT_INSTAGRAM_URL}
+              />
+            </div>
+
+            <div className="flex flex-row flex-wrap items-center justify-center gap-3 sm:gap-4">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border border-white/30 bg-transparent text-white hover:bg-white/10"
+                asChild
+              >
+                <Link href="/gallery">{t("home.openGallery")}</Link>
+              </Button>
+              <Button size="lg" asChild>
+                <a
+                  href={data.socialSection.instagramUrl || DEFAULT_INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <Instagram className="h-5 w-5" />
+                  {t("home.followUs")}
+                </a>
+              </Button>
             </div>
           </div>
         </section>

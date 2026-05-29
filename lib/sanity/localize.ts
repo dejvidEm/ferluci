@@ -1,11 +1,13 @@
 import type { Locale } from "@/lib/i18n/config"
-import type {
-  AboutPageData,
-  ContactInfo,
-  FAQData,
-  GalleryPageData,
-  HomePageData,
-  ServicesPageData,
+import {
+  transformSanitySocialReel,
+  type AboutPageData,
+  type ContactInfo,
+  type FAQData,
+  type GalleryPageData,
+  type HomePageData,
+  type SanitySocialSection,
+  type ServicesPageData,
 } from "@/lib/sanity/utils"
 
 function str(sk: string | undefined, en: string | undefined, locale: Locale): string | undefined {
@@ -13,16 +15,37 @@ function str(sk: string | undefined, en: string | undefined, locale: Locale): st
   return sk
 }
 
+function localizeSocialSection(
+  raw: SanitySocialSection | undefined,
+  locale: Locale
+): HomePageData["socialSection"] {
+  if (!raw) return undefined
+  return {
+    title: str(raw.title, raw.titleEn, locale) ?? raw.title,
+    instagramHandle: raw.instagramHandle,
+    instagramUrl: raw.instagramUrl,
+    reels: raw.reels?.map((r) => transformSanitySocialReel(r, locale)),
+  }
+}
+
 /** Raw CMS shapes include optional *En fields (see GROQ queries). */
 export function localizeHomePage(raw: HomePageData, locale: Locale): HomePageData {
-  if (locale === "sk") return raw as HomePageData
-
   const r = raw as HomePageData & {
     heroSubheadingEn?: string
     heroHeadingEn?: string
     heroHighlightedWordEn?: string
     heroDescription1En?: string
     heroDescription2En?: string
+    socialSection?: SanitySocialSection
+  }
+
+  const social = localizeSocialSection(r.socialSection, locale)
+
+  if (locale === "sk") {
+    return {
+      ...(raw as HomePageData),
+      socialSection: social ?? raw.socialSection,
+    }
   }
 
   const serviceCards = r.servicesSection?.serviceCards?.map((c) => {
@@ -50,6 +73,7 @@ export function localizeHomePage(raw: HomePageData, locale: Locale): HomePageDat
           serviceCards: serviceCards ?? ss.serviceCards,
         }
       : r.servicesSection,
+    socialSection: social,
   }
 }
 

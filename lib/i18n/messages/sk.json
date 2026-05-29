@@ -71,7 +71,11 @@
     "ctaSubtitle": "Navštívte náš showroom ešte dnes alebo prehľadajte našu online ponuku a nájdite ideálne vozidlo pre váš životný štýl a rozpočet.",
     "searchPlaceholder": "Vyhľadajte vozidlo podľa značky alebo modelu...",
     "searchPlaceholderLong": "Hľadať podľa značky, modelu alebo kľúčových slov...",
-    "searchHeading": "Rýchle vyhľadávanie vozidiel"
+    "searchHeading": "Rýchle vyhľadávanie vozidiel",
+    "socialTitle": "Sleduj nás na sociálnych sieťach",
+    "socialHandle": "ferluci.cars",
+    "openGallery": "Otvoriť galériu",
+    "followUs": "Sledovať"
   },
   "ponuka": {
     "back": "Späť",

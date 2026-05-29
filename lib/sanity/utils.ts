@@ -306,6 +306,22 @@ export interface GalleryPageData {
   heroImage?: SanityImage
 }
 
+export interface SocialReel {
+  title: string
+  /** Optional. If absent, a frame from the video is used as the preview (gallery-style). */
+  thumbnail?: string
+  thumbnailAlt: string
+  videoUrl?: string
+  instagramUrl?: string
+}
+
+export interface SocialSection {
+  title?: string
+  instagramHandle?: string
+  instagramUrl?: string
+  reels?: SocialReel[]
+}
+
 export interface HomePageData {
   heroSubheading?: string
   heroHeading?: string
@@ -318,6 +334,57 @@ export interface HomePageData {
       title: string
       description: string
     }>
+  }
+  socialSection?: SocialSection
+}
+
+/** Raw shape returned from GROQ (before locale/URL resolution) */
+export interface SanitySocialReel {
+  title?: string
+  titleEn?: string
+  thumbnail?: SanityImage
+  video?: {
+    asset?: {
+      _id: string
+      url: string
+      mimeType?: string
+      size?: number
+    }
+  }
+  instagramUrl?: string
+}
+
+export interface SanitySocialSection {
+  title?: string
+  titleEn?: string
+  instagramHandle?: string
+  instagramUrl?: string
+  reels?: SanitySocialReel[]
+}
+
+/** Resolves Sanity image/video assets into usable URLs for one reel. */
+export function transformSanitySocialReel(raw: SanitySocialReel, locale?: Locale): SocialReel {
+  const title =
+    locale === "en" && raw.titleEn?.trim() ? raw.titleEn.trim() : raw.title ?? ""
+
+  let thumbnail: string | undefined
+  let thumbnailAlt = title
+  if (raw.thumbnail) {
+    try {
+      // Slightly higher than display size so we get a crisp 9:16 image on retina.
+      thumbnail = urlFor(raw.thumbnail).width(720).height(1280).url()
+      thumbnailAlt = raw.thumbnail.alt || title
+    } catch (error) {
+      console.error("Error generating reel thumbnail URL:", error)
+    }
+  }
+
+  return {
+    title,
+    thumbnail,
+    thumbnailAlt,
+    videoUrl: raw.video?.asset?.url,
+    instagramUrl: raw.instagramUrl,
   }
 }
 
