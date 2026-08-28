@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import InstagramReelCard from "@/components/instagram-reel-card"
 import type { SocialReel } from "@/lib/sanity/utils"
+import { cn } from "@/lib/utils"
 
 type Props = {
   reels: SocialReel[]
@@ -143,11 +144,21 @@ export default function SocialReelsList({ reels, fallbackHref }: Props) {
         )}
       </div>
 
-      {/* Desktop: regular 4-up grid (hover to play) */}
-      <div className="hidden md:grid md:grid-cols-4 gap-6">
-        {reels.map((reel, index) => (
-          <InstagramReelCard key={index} reel={reel} fallbackHref={fallbackHref} />
-        ))}
+      {/* Desktop: centered when fewer than 4 reels, full 4-col grid otherwise */}
+      <div className="hidden md:flex md:justify-center">
+        <div
+          className={cn(
+            "grid w-full gap-6",
+            reels.length === 1 && "max-w-[280px] grid-cols-1",
+            reels.length === 2 && "max-w-[580px] grid-cols-2",
+            reels.length === 3 && "max-w-[880px] grid-cols-3",
+            reels.length >= 4 && "max-w-none grid-cols-4"
+          )}
+        >
+          {reels.map((reel, index) => (
+            <InstagramReelCard key={index} reel={reel} fallbackHref={fallbackHref} />
+          ))}
+        </div>
       </div>
     </>
   )
