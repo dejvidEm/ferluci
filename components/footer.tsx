@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Facebook, Instagram, Lock } from "lucide-react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 import { useLocale } from "@/lib/i18n/context"
+import { phoneHref, trackPhoneClick } from "@/lib/analytics-events"
 
 export default function Footer() {
   const { contactInfo } = useContactInfo()
@@ -115,7 +116,14 @@ export default function Footer() {
                 </>
               )}
               <p className="mt-3" suppressHydrationWarning>
-                {t("footer.phoneLabel")}: {contactInfo.phone}
+                {t("footer.phoneLabel")}:{" "}
+                <a
+                  href={phoneHref(contactInfo.phone || "0905 326 292")}
+                  onClick={trackPhoneClick}
+                  className="hover:text-primary transition-colors"
+                >
+                  {contactInfo.phone || "0905 326 292"}
+                </a>
               </p>
               <p>
                 {t("footer.emailLabel")}: {contactInfo.email || "info@ferlucicars.com"}

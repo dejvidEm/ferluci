@@ -17,6 +17,7 @@ import { cn, formatCurrency } from "@/lib/utils"
 import { useLocale } from "@/lib/i18n/context"
 import type { Locale } from "@/lib/i18n/config"
 import Link from "next/link"
+import { trackContactSubmit } from "@/lib/analytics-events"
 import FAQ from "@/components/faq"
 import CustomVehicleForm from "@/components/custom-vehicle-form"
 import { client, vehicleByIdQuery } from "@/lib/sanity"
@@ -178,6 +179,9 @@ export default function ContactPage() {
 
       // Show success message
       setSubmitted(true)
+      trackContactSubmit(
+        vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : undefined
+      )
       // Reset form
       setName("")
       setEmail("")

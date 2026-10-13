@@ -10,6 +10,7 @@ import { useState, useLayoutEffect, useMemo } from "react"
 import { useContactInfo } from "@/lib/hooks/useContactInfo"
 import { useLocale } from "@/lib/i18n/context"
 import { LocaleSwitcher } from "@/components/locale-switcher"
+import { phoneHref, trackPhoneClick } from "@/lib/analytics-events"
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -74,10 +75,14 @@ export default function Header() {
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
-            <div className="flex items-center">
+            <a
+              href={phoneHref(contactInfo.phone || "0905 326 292")}
+              onClick={trackPhoneClick}
+              className="flex items-center hover:text-primary transition-colors"
+            >
               <Phone className="h-5 w-5 text-primary mr-2" />
               <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
-            </div>
+            </a>
             <Button asChild>
               <Link href="/contact">{t("nav.contactCta")}</Link>
             </Button>
@@ -134,10 +139,17 @@ export default function Header() {
                       )
                     })}
                     <div className="pt-4">
-                      <div className="flex items-center mb-4">
+                      <a
+                        href={phoneHref(contactInfo.phone || "0905 326 292")}
+                        onClick={() => {
+                          trackPhoneClick()
+                          setIsOpen(false)
+                        }}
+                        className="flex items-center mb-4 hover:text-primary transition-colors"
+                      >
                         <Phone className="h-5 w-5 text-primary mr-2" />
                         <span className="font-medium">{contactInfo.phone || "0905 326 292"}</span>
-                      </div>
+                      </a>
                       <Button className="w-full mb-3" asChild>
                         <Link href="/contact" onClick={() => setIsOpen(false)}>
                           {t("nav.contactCta")}

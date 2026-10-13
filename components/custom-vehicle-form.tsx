@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Car } from "lucide-react"
 import { useLocale } from "@/lib/i18n/context"
+import { trackCustomVehicleSubmit } from "@/lib/analytics-events"
 
 export default function CustomVehicleForm() {
   const { t } = useLocale()
@@ -45,6 +46,7 @@ export default function CustomVehicleForm() {
       }
 
       setSubmitted(true)
+      trackCustomVehicleSubmit()
 
       setBrand("")
       setModel("")

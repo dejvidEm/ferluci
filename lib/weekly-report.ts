@@ -14,6 +14,17 @@ export type VehicleStat = {
   visitors: number
 }
 
+export type ShareStat = {
+  name: string
+  visitors: number
+  share: number
+}
+
+export type InquiryStat = {
+  name: string
+  count: number
+}
+
 export type WeeklyReport = {
   sample: boolean
   siteUrl: string
@@ -25,6 +36,17 @@ export type WeeklyReport = {
   pageviewsChange: string
   previousPageviews: number
   previousVisitors: number
+  contactSubmits: number
+  previousContactSubmits: number
+  customVehicleSubmits: number
+  previousCustomVehicleSubmits: number
+  inquiries: number
+  inquiriesChange: string
+  phoneClicks: number
+  phoneClicksChange: string
+  sources: ShareStat[]
+  devices: ShareStat[]
+  vehicleInquiries: InquiryStat[]
   topRoutes: RouteStat[]
   topVehicles: VehicleStat[]
   note?: string
@@ -106,26 +128,77 @@ function readTotals(data: unknown): VisitTotals {
   return { pageviews: 0, visitors: 0 }
 }
 
-function readRoutes(data: unknown): RouteStat[] {
+function readLabeledRows(data: unknown, limit = 20): RouteStat[] {
   const rows = Array.isArray(data)
     ? data
     : data && typeof data === "object" && Array.isArray((data as { rows?: unknown }).rows)
-      ? ((data as { rows: unknown[] }).rows)
+      ? (data as { rows: unknown[] }).rows
       : []
 
   return rows
     .map((row) => {
       if (!row || typeof row !== "object") return null
       const item = row as Record<string, unknown>
-      const route = String(item.route ?? item.key ?? item.requestPath ?? "—")
+      const route = String(
+        item.route ?? item.requestPath ?? item.referrerHostname ?? item.deviceType ?? item.key ?? "—"
+      )
+      if (!route || route === "null" || route === "Others") return null
       return {
         route,
-        pageviews: Number(item.pageviews ?? item.total ?? 0),
-        visitors: Number(item.visitors ?? 0),
+        pageviews: Number(item.pageviews ?? item.count ?? item.total ?? 0),
+        visitors: Number(item.visitors ?? item.count ?? 0),
       }
     })
     .filter((row): row is RouteStat => row !== null)
-    .slice(0, 5)
+    .slice(0, limit)
+}
+
+function readRoutes(data: unknown): RouteStat[] {
+  return readLabeledRows(data, 8)
+}
+
+function readEventCount(data: unknown): number {
+  if (data && typeof data === "object" && "count" in data) {
+    return Number((data as { count?: number }).count ?? 0)
+  }
+  return 0
+}
+
+function withShare(rows: Array<{ name: string; visitors: number }>): ShareStat[] {
+  const total = rows.reduce((sum, row) => sum + row.visitors, 0)
+  return rows
+    .filter((row) => row.visitors > 0)
+    .sort((a, b) => b.visitors - a.visitors)
+    .map((row) => ({
+      ...row,
+      share: total > 0 ? Math.round((row.visitors / total) * 100) : 0,
+    }))
+}
+
+function bucketSource(host: string): string {
+  const value = host.toLowerCase()
+  if (!value || value === "—" || value === "direct" || value === "(direct)") return "Priama návšteva"
+  if (value.includes("instagram")) return "Instagram"
+  if (value.includes("google")) return "Google"
+  if (value.includes("facebook") || value.includes("fb.")) return "Facebook"
+  return "Ostatné"
+}
+
+function bucketDevice(device: string): string {
+  const value = device.toLowerCase()
+  if (value.includes("mobile") || value.includes("phone")) return "Mobil"
+  if (value.includes("desktop")) return "Počítač"
+  if (value.includes("tablet")) return "Tablet"
+  return "Ostatné"
+}
+
+function groupBuckets(rows: RouteStat[], bucket: (label: string) => string): ShareStat[] {
+  const totals = new Map<string, number>()
+  for (const row of rows) {
+    const name = bucket(row.route)
+    totals.set(name, (totals.get(name) ?? 0) + (row.visitors || row.pageviews))
+  }
+  return withShare([...totals.entries()].map(([name, visitors]) => ({ name, visitors })))
 }
 
 function sampleReport(since: string, until: string, previousSince: string): WeeklyReport {
@@ -144,6 +217,32 @@ function sampleReport(since: string, until: string, previousSince: string): Week
     pageviewsChange: percentChange(pageviews, previousPageviews),
     previousPageviews,
     previousVisitors,
+    contactSubmits: 18,
+    previousContactSubmits: 14,
+    customVehicleSubmits: 6,
+    previousCustomVehicleSubmits: 4,
+    inquiries: 24,
+    inquiriesChange: percentChange(24, 18),
+    phoneClicks: 41,
+    phoneClicksChange: percentChange(41, 33),
+    sources: [
+      { name: "Google", visitors: 280, share: 44 },
+      { name: "Instagram", visitors: 160, share: 25 },
+      { name: "Priama návšteva", visitors: 120, share: 19 },
+      { name: "Facebook", visitors: 48, share: 7 },
+      { name: "Ostatné", visitors: 32, share: 5 },
+    ],
+    devices: [
+      { name: "Mobil", visitors: 460, share: 72 },
+      { name: "Počítač", visitors: 154, share: 24 },
+      { name: "Tablet", visitors: 26, share: 4 },
+    ],
+    vehicleInquiries: [
+      { name: "2022 BMW M4 Competition", count: 5 },
+      { name: "2021 Audi RS6 Avant", count: 4 },
+      { name: "2023 BMW X5", count: 3 },
+      { name: "Bez konkrétneho vozidla", count: 6 },
+    ],
     topRoutes: [
       { route: "/", pageviews: 540, visitors: 310 },
       { route: "/ponuka", pageviews: 410, visitors: 220 },
@@ -204,18 +303,49 @@ export async function buildWeeklyReport(options?: { sample?: boolean }): Promise
     return sampleReport(since, until, previousSince)
   }
 
-  const [current, previous, routes, paths] = await Promise.all([
-    analyticsQuery("visits/count", { since, until }),
-    analyticsQuery("visits/count", { since: previousSince, until: since }),
-    analyticsQuery("visits/aggregate", { since, until, by: "route", limit: "8" }),
-    analyticsQuery("visits/aggregate", { since, until, by: "requestPath", limit: "50" }),
-  ])
+  const event = (name: string, from: string, to: string) =>
+    analyticsQuery("events/count", {
+      since: from,
+      until: to,
+      filter: `eventName eq '${name}'`,
+    }).catch(() => ({ data: undefined }))
+
+  const [current, previous, routes, paths, referrers, devices, contactNow, contactPrev, customNow, customPrev, phoneNow, phonePrev, inquiryVehicles] =
+    await Promise.all([
+      analyticsQuery("visits/count", { since, until }),
+      analyticsQuery("visits/count", { since: previousSince, until: since }),
+      analyticsQuery("visits/aggregate", { since, until, by: "route", limit: "8" }),
+      analyticsQuery("visits/aggregate", { since, until, by: "requestPath", limit: "50" }),
+      analyticsQuery("visits/aggregate", { since, until, by: "referrerHostname", limit: "20" }).catch(() => ({ data: undefined })),
+      analyticsQuery("visits/aggregate", { since, until, by: "deviceType", limit: "10" }).catch(() => ({ data: undefined })),
+      event("contact_submit", since, until),
+      event("contact_submit", previousSince, since),
+      event("custom_vehicle_submit", since, until),
+      event("custom_vehicle_submit", previousSince, since),
+      event("phone_click", since, until),
+      event("phone_click", previousSince, since),
+      analyticsQuery("events/aggregate", {
+        since,
+        until,
+        by: "eventData/vehicle",
+        limit: "8",
+        filter: "eventName eq 'contact_submit'",
+      }).catch(() => ({ data: undefined })),
+    ])
 
   const currentTotals = readTotals(current.data)
   const previousTotals = readTotals(previous.data)
   const topRoutes = readRoutes(routes.data)
     .filter((row) => !isVehiclePath(row.route))
     .slice(0, 5)
+  const contactSubmits = readEventCount(contactNow.data)
+  const previousContactSubmits = readEventCount(contactPrev.data)
+  const customVehicleSubmits = readEventCount(customNow.data)
+  const previousCustomVehicleSubmits = readEventCount(customPrev.data)
+  const inquiries = contactSubmits + customVehicleSubmits
+  const previousInquiries = previousContactSubmits + previousCustomVehicleSubmits
+  const phoneClicks = readEventCount(phoneNow.data)
+  const previousPhoneClicks = readEventCount(phonePrev.data)
 
   return {
     sample: false,
@@ -228,8 +358,22 @@ export async function buildWeeklyReport(options?: { sample?: boolean }): Promise
     pageviewsChange: percentChange(currentTotals.pageviews, previousTotals.pageviews),
     previousPageviews: previousTotals.pageviews,
     previousVisitors: previousTotals.visitors,
+    contactSubmits,
+    previousContactSubmits,
+    customVehicleSubmits,
+    previousCustomVehicleSubmits,
+    inquiries,
+    inquiriesChange: percentChange(inquiries, previousInquiries),
+    phoneClicks,
+    phoneClicksChange: percentChange(phoneClicks, previousPhoneClicks),
+    sources: groupBuckets(readLabeledRows(referrers.data, 20), bucketSource),
+    devices: groupBuckets(readLabeledRows(devices.data, 10), bucketDevice),
+    vehicleInquiries: readLabeledRows(inquiryVehicles.data, 8).map((row) => ({
+      name: row.route === "—" || row.route === "" ? "Bez konkrétneho vozidla" : row.route,
+      count: row.pageviews || row.visitors,
+    })),
     topRoutes,
-    topVehicles: await resolveVehicleNames(readRoutes(paths.data)),
+    topVehicles: await resolveVehicleNames(readLabeledRows(paths.data, 50)),
   }
 }
 
@@ -280,6 +424,24 @@ export function renderWeeklyReportHtml(report: WeeklyReport): string {
                         <p style="margin:0; color:#B8B3A3; font-size:12px;">Zobrazenia stránok</p>
                         <p style="margin:6px 0 0; color:#ffffff; font-size:28px; font-weight:700;">${report.pageviews}</p>
                         <p style="margin:6px 0 0; color:#E85D5D; font-size:13px;">${escapeHtml(report.pageviewsChange)} oproti predošlému týždňu</p>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+                  <tr>
+                    <td style="width:50%; padding: 8px 8px 8px 0;">
+                      <div style="background:#1f1f1f; border-radius:12px; padding:16px;">
+                        <p style="margin:0; color:#B8B3A3; font-size:12px;">Dopyty</p>
+                        <p style="margin:6px 0 0; color:#ffffff; font-size:28px; font-weight:700;">${report.inquiries}</p>
+                        <p style="margin:6px 0 0; color:#E85D5D; font-size:13px;">${escapeHtml(report.inquiriesChange)} oproti predošlému týždňu</p>
+                      </div>
+                    </td>
+                    <td style="width:50%; padding: 8px 0 8px 8px;">
+                      <div style="background:#1f1f1f; border-radius:12px; padding:16px;">
+                        <p style="margin:0; color:#B8B3A3; font-size:12px;">Kliknutia na telefón</p>
+                        <p style="margin:6px 0 0; color:#ffffff; font-size:28px; font-weight:700;">${report.phoneClicks}</p>
+                        <p style="margin:6px 0 0; color:#E85D5D; font-size:13px;">${escapeHtml(report.phoneClicksChange)} oproti predošlému týždňu</p>
                       </div>
                     </td>
                   </tr>
