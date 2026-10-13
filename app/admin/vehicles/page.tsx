@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LogOut, Plus, Edit, Trash2, Search } from 'lucide-react'
+import AdminTabs from '@/components/admin/admin-tabs'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,6 +139,8 @@ export default function VehiclesListPage() {
             </Button>
           </div>
         </div>
+
+        <AdminTabs />
 
         {/* Search Bar */}
         {vehicles.length > 0 && (
