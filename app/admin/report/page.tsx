@@ -10,10 +10,9 @@ import type { ShareStat, WeeklyReport } from "@/lib/weekly-report"
 
 const sections = [
   { id: "prehľad", label: "Prehľad" },
-  { id: "dopyty", label: "Dopyty" },
-  { id: "zdroje", label: "Zdroje" },
-  { id: "zariadenia", label: "Zariadenia" },
   { id: "obsah", label: "Stránky a vozidlá" },
+  { id: "dopyty", label: "Dopyty" },
+  { id: "navstevnost", label: "Zdroje a zariadenia" },
 ] as const
 
 type SectionId = (typeof sections)[number]["id"]
@@ -117,14 +116,14 @@ export default function AdminReportPage() {
           </div>
         ) : report ? (
           <>
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-2">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
               {sections.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setSection(item.id)}
                   className={cn(
-                    "shrink-0 rounded-full px-4 py-2 text-sm transition-colors",
+                    "rounded-full px-3 py-2 text-sm transition-colors",
                     section === item.id
                       ? "bg-white text-[#121212]"
                       : "bg-white/5 text-gray-300 hover:bg-white/10"
@@ -148,75 +147,99 @@ export default function AdminReportPage() {
               </div>
 
               {visible("prehľad") && (
-                <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                  <Kpi label="Návštevy" value={report.visitors} change={report.visitorsChange} hint={report.previousPeriodLabel} />
-                  <Kpi label="Zobrazenia" value={report.pageviews} change={report.pageviewsChange} hint="oproti predošlému týždňu" />
-                  <Kpi label="Dopyty" value={report.inquiries} change={report.inquiriesChange} hint="formuláre spolu" />
-                  <Kpi label="Telefón" value={report.phoneClicks} change={report.phoneClicksChange} hint="kliknutia na číslo" />
+                <div>
+                  <SectionHeading
+                    title="Súhrn za tento týždeň"
+                    text="Návštevy, zobrazenia stránok, odoslané dopyty a kliknutia na telefón."
+                  />
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <Kpi label="Návštevy" value={report.visitors} change={report.visitorsChange} hint={report.previousPeriodLabel} />
+                    <Kpi label="Zobrazenia" value={report.pageviews} change={report.pageviewsChange} hint="oproti predošlému týždňu" />
+                    <Kpi label="Dopyty" value={report.inquiries} change={report.inquiriesChange} hint="formuláre spolu" />
+                    <Kpi label="Telefón" value={report.phoneClicks} change={report.phoneClicksChange} hint="kliknutia na číslo" />
+                  </div>
+                </div>
+              )}
+
+              {visible("obsah") && (
+                <div>
+                  <SectionHeading
+                    title="Stránky a vozidlá"
+                    text="Ktoré stránky a ktoré autá si ľudia tento týždeň pozerali najviac."
+                  />
+                  <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
+                    <StatTable
+                      title="Najnavštevovanejšie stránky"
+                      nameLabel="Stránka"
+                      valueLabel="Zobrazenia"
+                      secondaryLabel="Návštevy"
+                      className="mt-0"
+                      rows={report.topRoutes.map((row) => ({
+                        name: row.route,
+                        value: row.pageviews,
+                        secondary: row.visitors,
+                      }))}
+                      empty="Žiadne dáta za toto obdobie."
+                    />
+                    <StatTable
+                      title="Najnavštevovanejšie vozidlá"
+                      nameLabel="Vozidlo"
+                      valueLabel="Zobrazenia"
+                      secondaryLabel="Návštevy"
+                      rows={report.topVehicles.map((row) => ({
+                        name: row.name,
+                        value: row.pageviews,
+                        secondary: row.visitors,
+                      }))}
+                      empty="Za toto obdobie nie sú dáta o vozidlách."
+                    />
+                  </section>
                 </div>
               )}
 
               {visible("dopyty") && (
-                <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
-                  <h3 className="text-white text-lg font-semibold">Dopyty</h3>
-                  <p className="text-sm text-gray-400 mt-1">Odoslané formuláre za {report.periodLabel}</p>
-                  <div className="grid sm:grid-cols-2 gap-4 mt-6">
-                    <Kpi label="Kontaktný formulár" value={report.contactSubmits} change={`${report.previousContactSubmits} predošlý týždeň`} hint="vrátane dopytu na konkrétne auto" />
-                    <Kpi label="Auto na mieru" value={report.customVehicleSubmits} change={`${report.previousCustomVehicleSubmits} predošlý týždeň`} hint="formulár pod ponukou" />
+                <div>
+                  <SectionHeading
+                    title="Dopyty"
+                    text={`Odoslané formuláre za ${report.periodLabel} a autá, o ktoré ľudia písali.`}
+                  />
+                  <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <Kpi label="Kontaktný formulár" value={report.contactSubmits} change={`${report.previousContactSubmits} predošlý týždeň`} hint="vrátane dopytu na konkrétne auto" />
+                      <Kpi label="Auto na mieru" value={report.customVehicleSubmits} change={`${report.previousCustomVehicleSubmits} predošlý týždeň`} hint="formulár pod ponukou" />
+                    </div>
+                    <StatTable
+                      title="O ktoré vozidlá ľudia písali"
+                      nameLabel="Vozidlo"
+                      valueLabel="Dopyty"
+                      rows={report.vehicleInquiries.map((item) => ({ name: item.name, value: item.count }))}
+                      empty="Zatiaľ nie je dopyt viazaný na konkrétne vozidlo."
+                    />
+                  </section>
+                </div>
+              )}
+
+              {visible("navstevnost") && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <div>
+                    <SectionHeading
+                      title="Odkiaľ ľudia prišli"
+                      text="Podiel návštev z Google, Instagramu, Facebooku a priamych návštev."
+                    />
+                    <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
+                      <ShareBars rows={report.sources} empty="Zatiaľ nie sú dáta o zdrojoch návštev." />
+                    </section>
                   </div>
-                  <StatTable
-                    title="O ktoré vozidlá ľudia písali"
-                    nameLabel="Vozidlo"
-                    valueLabel="Dopyty"
-                    rows={report.vehicleInquiries.map((item) => ({ name: item.name, value: item.count }))}
-                    empty="Zatiaľ nie je dopyt viazaný na konkrétne vozidlo."
-                  />
-                </section>
-              )}
-
-              {visible("zdroje") && (
-                <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
-                  <h3 className="text-white text-lg font-semibold">Odkiaľ ľudia prišli</h3>
-                  <p className="text-sm text-gray-400 mt-1">Podiel návštev podľa zdroja</p>
-                  <ShareBars rows={report.sources} empty="Zatiaľ nie sú dáta o zdrojoch návštev." />
-                </section>
-              )}
-
-              {visible("zariadenia") && (
-                <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
-                  <h3 className="text-white text-lg font-semibold">Mobil a počítač</h3>
-                  <p className="text-sm text-gray-400 mt-1">Na akom zariadení si web otvorili</p>
-                  <ShareBars rows={report.devices} empty="Zatiaľ nie sú dáta o zariadeniach." />
-                </section>
-              )}
-
-              {visible("obsah") && (
-                <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
-                  <StatTable
-                    title="Najnavštevovanejšie stránky"
-                    nameLabel="Stránka"
-                    valueLabel="Zobrazenia"
-                    secondaryLabel="Návštevy"
-                    rows={report.topRoutes.map((row) => ({
-                      name: row.route,
-                      value: row.pageviews,
-                      secondary: row.visitors,
-                    }))}
-                    empty="Žiadne dáta za toto obdobie."
-                  />
-                  <StatTable
-                    title="Najnavštevovanejšie vozidlá"
-                    nameLabel="Vozidlo"
-                    valueLabel="Zobrazenia"
-                    secondaryLabel="Návštevy"
-                    rows={report.topVehicles.map((row) => ({
-                      name: row.name,
-                      value: row.pageviews,
-                      secondary: row.visitors,
-                    }))}
-                    empty="Za toto obdobie nie sú dáta o vozidlách."
-                  />
-                </section>
+                  <div>
+                    <SectionHeading
+                      title="Mobil a počítač"
+                      text="Na akom zariadení si ľudia web tento týždeň otvorili."
+                    />
+                    <section className="bg-[#161616] rounded-2xl border border-white/10 p-5 sm:p-8">
+                      <ShareBars rows={report.devices} empty="Zatiaľ nie sú dáta o zariadeniach." />
+                    </section>
+                  </div>
+                </div>
               )}
 
               {report.note && <p className="text-sm text-gray-400 px-1">{report.note}</p>}
@@ -224,6 +247,15 @@ export default function AdminReportPage() {
           </>
         ) : null}
       </div>
+    </div>
+  )
+}
+
+function SectionHeading({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="mb-3">
+      <h3 className="text-white text-lg font-semibold">{title}</h3>
+      <p className="text-sm text-gray-400 mt-1">{text}</p>
     </div>
   )
 }
@@ -269,6 +301,7 @@ function StatTable({
   secondaryLabel,
   rows,
   empty,
+  className,
 }: {
   title: string
   nameLabel: string
@@ -276,9 +309,10 @@ function StatTable({
   secondaryLabel?: string
   rows: Array<{ name: string; value: number; secondary?: number }>
   empty: string
+  className?: string
 }) {
   return (
-    <div className="mt-8">
+    <div className={cn("mt-8", className)}>
       <h3 className="text-white font-semibold mb-3">{title}</h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
