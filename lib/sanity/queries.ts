@@ -322,6 +322,25 @@ export const homePageQuery = groq`*[_type == "homePage"][0] {
       },
       instagramUrl
     }
+  },
+  deliveriesSection {
+    title,
+    titleEn,
+    items[] {
+      comment,
+      commentEn,
+      mediaType,
+      image,
+      thumbnail,
+      video {
+        asset-> {
+          _id,
+          url,
+          mimeType,
+          size
+        }
+      }
+    }
   }
 }`
 

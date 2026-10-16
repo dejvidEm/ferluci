@@ -27,10 +27,17 @@ export default function Header() {
       { name: t("nav.services"), href: "/services" },
       { name: t("nav.about"), href: "/about" },
       { name: t("nav.gallery"), href: "/gallery" },
+      { name: t("nav.deliveries"), href: "/#odovzdane-auta" },
       { name: t("nav.contact"), href: "/contact" },
     ],
     [t]
   )
+
+  const goToSection = (href: string) => {
+    if (!href.startsWith("/#") || pathname !== "/") return
+    const id = href.slice(2)
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useLayoutEffect(() => {
     setMobileNavReady(true)
@@ -53,7 +60,7 @@ export default function Header() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex items-center gap-4 xl:gap-7">
             {navigation.map((item) => {
               const isActive =
                 pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
@@ -61,6 +68,7 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => goToSection(item.href)}
                   className={`text-gray-200 hover:text-primary font-medium relative pb-1 ${
                     isActive ? "text-primary" : ""
                   }`}
@@ -129,7 +137,10 @@ export default function Header() {
                           className={`text-gray-200 hover:text-primary font-medium text-lg relative pb-1 ${
                             isActive ? "text-primary" : ""
                           }`}
-                          onClick={() => setIsOpen(false)}
+                          onClick={() => {
+                            goToSection(item.href)
+                            setIsOpen(false)
+                          }}
                         >
                           {item.name}
                           {isActive && (

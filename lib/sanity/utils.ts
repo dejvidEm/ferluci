@@ -313,6 +313,8 @@ export interface SocialReel {
   thumbnailAlt: string
   videoUrl?: string
   instagramUrl?: string
+  /** Always-visible speech bubble. Used by the delivered-cars section. */
+  comment?: string
 }
 
 export interface SocialSection {
@@ -336,12 +338,20 @@ export interface HomePageData {
     }>
   }
   socialSection?: SocialSection
+  deliveriesSection?: {
+    title?: string
+    items?: SocialReel[]
+  }
 }
 
 /** Raw shape returned from GROQ (before locale/URL resolution) */
 export interface SanitySocialReel {
   title?: string
   titleEn?: string
+  comment?: string
+  commentEn?: string
+  mediaType?: "image" | "video"
+  image?: SanityImage
   thumbnail?: SanityImage
   video?: {
     asset?: {
@@ -366,14 +376,16 @@ export interface SanitySocialSection {
 export function transformSanitySocialReel(raw: SanitySocialReel, locale?: Locale): SocialReel {
   const title =
     locale === "en" && raw.titleEn?.trim() ? raw.titleEn.trim() : raw.title ?? ""
+  const comment =
+    locale === "en" && raw.commentEn?.trim() ? raw.commentEn.trim() : raw.comment
 
+  const picture = raw.mediaType === "image" ? raw.image : raw.thumbnail
   let thumbnail: string | undefined
-  let thumbnailAlt = title
-  if (raw.thumbnail) {
+  let thumbnailAlt = title || comment || ""
+  if (picture) {
     try {
-      // Slightly higher than display size so we get a crisp 9:16 image on retina.
-      thumbnail = urlFor(raw.thumbnail).width(720).height(1280).url()
-      thumbnailAlt = raw.thumbnail.alt || title
+      thumbnail = urlFor(picture).width(720).height(1280).url()
+      thumbnailAlt = picture.alt || thumbnailAlt
     } catch (error) {
       console.error("Error generating reel thumbnail URL:", error)
     }
@@ -383,8 +395,9 @@ export function transformSanitySocialReel(raw: SanitySocialReel, locale?: Locale
     title,
     thumbnail,
     thumbnailAlt,
-    videoUrl: raw.video?.asset?.url,
+    videoUrl: raw.mediaType === "image" ? undefined : raw.video?.asset?.url,
     instagramUrl: raw.instagramUrl,
+    comment,
   }
 }
 

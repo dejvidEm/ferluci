@@ -303,6 +303,19 @@ export default function Home() {
         </section>
       )}
 
+      {/* Delivered cars */}
+      {data.deliveriesSection?.items && data.deliveriesSection.items.length > 0 && (
+        <section id="odovzdane-auta" className="scroll-mt-28 py-20 bg-[#121212] relative overflow-hidden">
+          <div className="absolute top-1/3 -right-32 w-80 h-80 bg-gradient-to-br from-red-600/20 via-red-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+          <div className="container mx-auto px-4 relative z-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+              {data.deliveriesSection.title || t("home.deliveriesTitle")}
+            </h2>
+            <SocialReelsList reels={data.deliveriesSection.items} />
+          </div>
+        </section>
+      )}
+
       {/* Testimonials */}
       <Testimonials />
 

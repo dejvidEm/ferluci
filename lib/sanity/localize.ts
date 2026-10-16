@@ -6,6 +6,7 @@ import {
   type FAQData,
   type GalleryPageData,
   type HomePageData,
+  type SanitySocialReel,
   type SanitySocialSection,
   type ServicesPageData,
 } from "@/lib/sanity/utils"
@@ -28,6 +29,19 @@ function localizeSocialSection(
   }
 }
 
+function localizeDeliveriesSection(
+  raw: { title?: string; titleEn?: string; items?: SanitySocialReel[] } | undefined,
+  locale: Locale
+): HomePageData["deliveriesSection"] {
+  if (!raw) return undefined
+  return {
+    title: str(raw.title, raw.titleEn, locale) ?? raw.title,
+    items: raw.items
+      ?.map((item) => transformSanitySocialReel(item, locale))
+      .filter((item) => Boolean(item.thumbnail || item.videoUrl)),
+  }
+}
+
 /** Raw CMS shapes include optional *En fields (see GROQ queries). */
 export function localizeHomePage(raw: HomePageData, locale: Locale): HomePageData {
   const r = raw as HomePageData & {
@@ -37,14 +51,17 @@ export function localizeHomePage(raw: HomePageData, locale: Locale): HomePageDat
     heroDescription1En?: string
     heroDescription2En?: string
     socialSection?: SanitySocialSection
+    deliveriesSection?: { title?: string; titleEn?: string; items?: SanitySocialReel[] }
   }
 
   const social = localizeSocialSection(r.socialSection, locale)
+  const deliveries = localizeDeliveriesSection(r.deliveriesSection, locale)
 
   if (locale === "sk") {
     return {
       ...(raw as HomePageData),
       socialSection: social ?? raw.socialSection,
+      deliveriesSection: deliveries ?? raw.deliveriesSection,
     }
   }
 
@@ -74,6 +91,7 @@ export function localizeHomePage(raw: HomePageData, locale: Locale): HomePageDat
         }
       : r.servicesSection,
     socialSection: social,
+    deliveriesSection: deliveries,
   }
 }
 

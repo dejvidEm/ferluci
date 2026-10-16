@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 type Props = {
   reels: SocialReel[]
-  fallbackHref: string
+  fallbackHref?: string
 }
 
 /**
@@ -29,7 +29,7 @@ type Props = {
  * never run effects against real DOM (display:none stops IO from firing) so
  * the cost of rendering both is just a few React nodes.
  */
-export default function SocialReelsList({ reels, fallbackHref }: Props) {
+export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const rafIdRef = useRef<number | null>(null)
 

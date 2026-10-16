@@ -5,6 +5,7 @@
     "services": "Služby",
     "about": "O nás",
     "gallery": "Galéria",
+    "deliveries": "Odovzdané autá",
     "contact": "Kontakt",
     "contactCta": "Kontaktovať",
     "openMenu": "Otvoriť menu",
@@ -73,6 +74,7 @@
     "searchPlaceholderLong": "Hľadať podľa značky, modelu alebo kľúčových slov...",
     "searchHeading": "Rýchle vyhľadávanie vozidiel",
     "socialTitle": "Sleduj nás na sociálnych sieťach",
+    "deliveriesTitle": "Naše odovzdané autá",
     "socialHandle": "ferluci.cars",
     "openGallery": "Otvoriť galériu",
     "followUs": "Sledovať"

@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useCallback, useEffect, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useRef, useState, type Ref } from "react"
 import Image from "next/image"
 import type { SocialReel } from "@/lib/sanity/utils"
 
@@ -55,13 +55,14 @@ type Props = {
 function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) {
   const controlled = controlledActive !== undefined
 
-  const containerRef = useRef<HTMLAnchorElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const oweSlot = useRef(false)
 
   const hasVideo = Boolean(reel.videoUrl)
   const hasThumbnail = Boolean(reel.thumbnail)
   const href = reel.instagramUrl || fallbackHref
+  const Tag = href ? "a" : "div"
 
   const [shouldMountVideo, setShouldMountVideo] = useState(false)
   const [active, setActive] = useState(false)
@@ -248,17 +249,17 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
   }
 
   return (
-    <a
-      ref={containerRef}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Tag
+      ref={containerRef as Ref<HTMLAnchorElement & HTMLDivElement>}
+      {...(href ? { href, target: "_blank", rel: "noopener noreferrer" } : {})}
       onMouseEnter={activate}
       onMouseLeave={deactivate}
       onFocus={activate}
       onBlur={deactivate}
       onTouchStart={controlled ? undefined : activate}
-      className="group relative block aspect-[9/16] overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)] cursor-pointer"
+      className={`group relative block aspect-[9/16] overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)] ${
+        href ? "cursor-pointer" : ""
+      }`}
     >
       {renderBackground()}
 
@@ -304,14 +305,25 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
         />
       )}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" />
+      {!reel.comment && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" />
+      )}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 p-3 md:p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-        <p className="line-clamp-2 text-sm md:text-base font-semibold text-white drop-shadow">
-          {reel.title}
-        </p>
-      </div>
-    </a>
+      {reel.comment ? (
+        <div className="pointer-events-none absolute inset-x-3 bottom-4 z-10">
+          <div className="relative rounded-2xl bg-white px-3.5 py-2.5 text-[13px] leading-snug text-[#121212] shadow-lg">
+            <p className="line-clamp-4">{reel.comment}</p>
+            <span className="absolute -bottom-1.5 left-5 h-3 w-3 rotate-45 bg-white" />
+          </div>
+        </div>
+      ) : (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 p-3 md:p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+          <p className="line-clamp-2 text-sm md:text-base font-semibold text-white drop-shadow">
+            {reel.title}
+          </p>
+        </div>
+      )}
+    </Tag>
   )
 }
 
