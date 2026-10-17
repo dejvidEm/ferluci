@@ -257,10 +257,17 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
       onFocus={activate}
       onBlur={deactivate}
       onTouchStart={controlled ? undefined : activate}
-      className={`group relative block aspect-[9/16] overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)] ${
-        href ? "cursor-pointer" : ""
-      }`}
+      className={`group relative block aspect-[9/16] ${
+        reel.comment ? "overflow-visible" : "overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)]"
+      } ${href ? "cursor-pointer" : ""}`}
     >
+      <div
+        className={
+          reel.comment
+            ? "absolute inset-0 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)]"
+            : "contents"
+        }
+      >
       {renderBackground()}
 
       {shouldMountVideo && reel.videoUrl && !videoFailed && (
@@ -308,11 +315,12 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
       {!reel.comment && (
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" />
       )}
+      </div>
 
       {reel.comment ? (
-        <div className="pointer-events-none absolute inset-x-3 bottom-4 z-10">
-          <div className="relative rounded-2xl bg-white px-3.5 py-2.5 text-[13px] leading-snug text-[#121212] shadow-lg">
-            <p className="line-clamp-4">{reel.comment}</p>
+        <div className="pointer-events-none absolute inset-x-0 -bottom-4 z-20 flex justify-center md:-bottom-5">
+          <div className="relative w-max max-w-[calc(100%+1.5rem)] rounded-2xl bg-white px-3.5 py-2.5 text-[13px] leading-snug text-[#121212] shadow-xl md:max-w-[calc(100%+2rem)] md:px-4 md:py-3 md:text-sm">
+            <p>{reel.comment}</p>
             <span className="absolute -bottom-1.5 left-5 h-3 w-3 rotate-45 bg-white" />
           </div>
         </div>

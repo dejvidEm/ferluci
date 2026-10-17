@@ -108,6 +108,7 @@ export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
   }, [])
 
   const scrollbarVisible = thumbRatio < 0.999
+  const hasComments = reels.some((reel) => reel.comment)
 
   return (
     <>
@@ -115,7 +116,10 @@ export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
       <div className="md:hidden -mx-4">
         <div
           ref={scrollerRef}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-[10vw] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className={cn(
+            "flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-[10vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            hasComments ? "pb-10" : "pb-1"
+          )}
         >
           {reels.map((reel, index) => (
             <div key={index} className="snap-center shrink-0 w-[80vw] max-w-[360px]">
@@ -148,7 +152,8 @@ export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
       <div className="hidden md:flex md:justify-center">
         <div
           className={cn(
-            "grid w-full gap-6",
+            "grid w-full gap-x-6 gap-y-10",
+            hasComments && "pb-8",
             reels.length === 1 && "max-w-[280px] grid-cols-1",
             reels.length === 2 && "max-w-[580px] grid-cols-2",
             reels.length === 3 && "max-w-[880px] grid-cols-3",

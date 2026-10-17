@@ -361,6 +361,14 @@ export interface SanitySocialReel {
       size?: number
     }
   }
+  videoFile?: {
+    asset?: {
+      _id: string
+      url: string
+      mimeType?: string
+      size?: number
+    }
+  }
   instagramUrl?: string
 }
 
@@ -395,7 +403,8 @@ export function transformSanitySocialReel(raw: SanitySocialReel, locale?: Locale
     title,
     thumbnail,
     thumbnailAlt,
-    videoUrl: raw.mediaType === "image" ? undefined : raw.video?.asset?.url,
+    videoUrl:
+      raw.mediaType === "image" ? undefined : (raw.videoFile ?? raw.video)?.asset?.url,
     instagramUrl: raw.instagramUrl,
     comment,
   }
