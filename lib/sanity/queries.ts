@@ -332,6 +332,12 @@ export const homePageQuery = groq`*[_type == "homePage"][0] {
       mediaType,
       image,
       thumbnail,
+      video {
+        asset-> {
+          url,
+          mimeType
+        }
+      },
       videoFile {
         asset-> {
           _id,

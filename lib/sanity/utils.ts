@@ -399,12 +399,28 @@ export function transformSanitySocialReel(raw: SanitySocialReel, locale?: Locale
     }
   }
 
+  const fileUrl = (raw.videoFile ?? raw.video)?.asset?.url
+  let imageUrl: string | undefined
+  if (raw.image) {
+    try {
+      imageUrl = urlFor(raw.image).width(720).height(1280).url()
+      if (!thumbnailAlt) thumbnailAlt = raw.image.alt || thumbnailAlt
+    } catch (error) {
+      console.error("Error generating delivery image URL:", error)
+    }
+  }
+
+  const usePhoto = raw.mediaType === "image" ? Boolean(imageUrl) : !fileUrl && Boolean(imageUrl)
+  if (usePhoto && imageUrl) {
+    thumbnail = imageUrl
+    if (raw.image?.alt) thumbnailAlt = raw.image.alt
+  }
+
   return {
     title,
     thumbnail,
     thumbnailAlt,
-    videoUrl:
-      raw.mediaType === "image" ? undefined : (raw.videoFile ?? raw.video)?.asset?.url,
+    videoUrl: usePhoto ? undefined : fileUrl,
     instagramUrl: raw.instagramUrl,
     comment,
   }

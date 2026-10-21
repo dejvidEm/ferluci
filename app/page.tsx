@@ -311,7 +311,12 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
               {data.deliveriesSection.title || t("home.deliveriesTitle")}
             </h2>
-            <SocialReelsList reels={data.deliveriesSection.items} />
+            <SocialReelsList
+              reels={[...data.deliveriesSection.items].reverse()}
+              progressive
+              pageSize={8}
+              loadMoreLabel={t("home.showMoreDeliveries")}
+            />
           </div>
         </section>
       )}

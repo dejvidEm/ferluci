@@ -11,13 +11,27 @@ const MAX_CONCURRENT_PREVIEWS = 2
 let activeLoads = 0
 const pendingGrants: Array<() => void> = []
 
+function maxPreviewSlots() {
+  if (typeof navigator === "undefined") return MAX_CONCURRENT_PREVIEWS
+  const connection = (
+    navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string }
+    }
+  ).connection
+  if (!connection) return MAX_CONCURRENT_PREVIEWS
+  if (connection.saveData) return 1
+  const type = connection.effectiveType
+  if (type === "slow-2g" || type === "2g" || type === "3g") return 1
+  return MAX_CONCURRENT_PREVIEWS
+}
+
 function acquireSlot(): Promise<void> {
   return new Promise((resolve) => {
     const grant = () => {
       activeLoads++
       resolve()
     }
-    if (activeLoads < MAX_CONCURRENT_PREVIEWS) {
+    if (activeLoads < maxPreviewSlots()) {
       grant()
     } else {
       pendingGrants.push(grant)
@@ -31,28 +45,42 @@ function releaseSlot() {
   if (next) next()
 }
 
-function seekTimeForPoster(video: HTMLVideoElement): number {
-  const d = video.duration
-  if (!Number.isFinite(d) || d <= 0) return 0.1
-  const early = Math.max(0.05, d * 0.02)
-  return Math.min(1, early, Math.max(0.05, d - 0.02))
+/** Safari paints a blank white frame if we seek before data arrives. A media
+ * fragment makes it decode that frame itself. */
+function withPosterTime(url: string): string {
+  const base = url.split("#")[0]
+  return `${base}#t=0.1`
 }
 
 type Props = {
   reel: SocialReel
   fallbackHref: string
   /**
+   * When false, the card stays a shell and does not request video bytes.
+   * Used to reveal a long list gradually.
+   */
+  canLoad?: boolean
+  /**
+   * Drop the video element once the card leaves the viewport so a long list
+   * does not keep every file decoded.
+   */
+  virtualize?: boolean
+  /**
    * When provided, hover/touch events are ignored and the card plays iff
-   * this is true. Frame-fallback (loading a poster from the video) still
-   * runs when the card without a thumbnail is partially visible, so the
-   * neighbour reel in a slider always shows a preview — but only if it
-   * truly intersects the viewport (no preloading of fully-off-screen cards).
+   * this is true. In a virtualized slider only that centered card opens a
+   * video; neighbours stay dark shells until they become the active slide.
    * Undefined => default desktop behaviour (hover to play).
    */
   controlledActive?: boolean
 }
 
-function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) {
+function InstagramReelCardImpl({
+  reel,
+  fallbackHref,
+  canLoad = true,
+  virtualize = false,
+  controlledActive,
+}: Props) {
   const controlled = controlledActive !== undefined
 
   const containerRef = useRef<HTMLElement>(null)
@@ -90,48 +118,69 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
     releaseSlot()
   }, [])
 
-  // Frame-fallback IO. Runs in BOTH modes for cards without a thumbnail so
-  // the peeking neighbour in a mobile slider can still show a poster grabbed
-  // from the video. Controlled mode skips the slot semaphore (small visible
-  // set) and uses a tight rootMargin so off-screen slides never preload.
   useEffect(() => {
-    if (hasThumbnail || !hasVideo) return
+    if (canLoad) return
+    setShouldMountVideo(false)
+    setActive(false)
+    setFrameReady(false)
+    freeSlot()
+  }, [canLoad, freeSlot])
+
+  // Frame-fallback IO for desktop cards without a thumbnail. A virtualized
+  // phone slider skips this: only the centered slide mounts a video.
+  // Virtualized cards release the video again once they leave the viewport.
+  useEffect(() => {
+    if (!canLoad || hasThumbnail || !hasVideo) return
+    // On a phone slider, only the centered card may open a video. The peeking
+    // neighbour stays a lightweight shell so a weak connection is not asked
+    // for two files at once.
+    if (controlled && virtualize) return
     const root = containerRef.current
     if (!root) return
 
     let cancelled = false
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return
-        io.disconnect()
+    const visibleRef = { current: false }
+    const mount = () => {
+      if (controlled) {
+        if (cancelled || shouldMountVideoRef.current) return
+        setShouldMountVideo(true)
+        return
+      }
 
-        if (controlled) {
-          // Mobile slider path: already-mounted (e.g. via active prop)? skip.
-          if (cancelled || shouldMountVideoRef.current) return
-          setShouldMountVideo(true)
+      ;(async () => {
+        if (shouldMountVideoRef.current) return
+        await acquireSlot()
+        if (cancelled || !visibleRef.current || shouldMountVideoRef.current) {
+          releaseSlot()
           return
         }
+        oweSlot.current = true
+        setShouldMountVideo(true)
+      })()
+    }
 
-        // Desktop path: gate through the concurrency semaphore.
-        ;(async () => {
-          if (shouldMountVideoRef.current) return
-          await acquireSlot()
-          if (cancelled || shouldMountVideoRef.current) {
-            releaseSlot()
-            return
-          }
-          oweSlot.current = true
-          setShouldMountVideo(true)
-        })()
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting)
+        visibleRef.current = hit
+        if (!hit) {
+          if (!virtualize || activeRef.current) return
+          setShouldMountVideo(false)
+          setFrameReady(false)
+          freeSlot()
+          return
+        }
+        if (!virtualize) io.disconnect()
+        mount()
       },
-      { rootMargin: controlled ? "0px" : "180px", threshold: 0.01 }
+      { rootMargin: virtualize ? "0px" : controlled ? "40px" : "240px", threshold: 0.01 }
     )
     io.observe(root)
     return () => {
       cancelled = true
       io.disconnect()
     }
-  }, [controlled, hasThumbnail, hasVideo])
+  }, [canLoad, controlled, freeSlot, hasThumbnail, hasVideo, virtualize])
 
   useEffect(() => {
     return () => {
@@ -154,7 +203,7 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
 
   // Controlled mode drives `active` purely from the prop.
   useEffect(() => {
-    if (!controlled) return
+    if (!controlled || !canLoad) return
     if (!hasVideo) {
       setActive(false)
       return
@@ -164,8 +213,13 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
       setActive(true)
     } else {
       setActive(false)
+      if (virtualize) {
+        setShouldMountVideo(false)
+        setFrameReady(false)
+        freeSlot()
+      }
     }
-  }, [controlled, controlledActive, hasVideo])
+  }, [canLoad, controlled, controlledActive, freeSlot, hasVideo, virtualize])
 
   // Single play/pause effect driven by `active`.
   useEffect(() => {
@@ -173,30 +227,25 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
     const v = videoRef.current
     if (!v) return
 
-    if (active) {
-      try {
-        v.currentTime = 0
-      } catch {
-        // Seek can throw if metadata isn't loaded yet — safe to ignore.
-      }
+    const play = () => {
+      v.muted = true
       const p = v.play()
       if (p && typeof p.catch === "function") {
         p.catch(() => {
           // Autoplay restrictions; the next user gesture will retry.
         })
       }
+    }
+
+    if (active) {
+      if (v.readyState >= 2) play()
+      else v.addEventListener("loadeddata", play, { once: true })
     } else {
       v.pause()
-      // Without a thumbnail we want the still poster frame to be visible when
-      // the card is paused so the user sees a preview rather than wherever
-      // the video happened to stop.
-      if (!hasThumbnail) {
-        try {
-          v.currentTime = seekTimeForPoster(v)
-        } catch {
-          // ignore
-        }
-      }
+    }
+
+    return () => {
+      v.removeEventListener("loadeddata", play)
     }
   }, [active, shouldMountVideo, hasThumbnail])
 
@@ -241,10 +290,6 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
         />
       )
     }
-    if (!hasThumbnail && !frameReady) {
-      // Only show the skeleton until we have a real frame to display.
-      return <div className="absolute inset-0 animate-pulse bg-neutral-800/80" aria-hidden />
-    }
     return null
   }
 
@@ -272,36 +317,27 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
 
       {shouldMountVideo && reel.videoUrl && !videoFailed && (
         <video
-          ref={videoRef}
-          src={reel.videoUrl}
+          ref={(node) => {
+            videoRef.current = node
+            // Safari ignores the muted attribute for autoplay unless the property is set.
+            if (node) node.muted = true
+          }}
+          src={hasThumbnail || virtualize ? reel.videoUrl : withPosterTime(reel.videoUrl)}
           muted
           loop
           playsInline
-          preload={hasThumbnail ? "auto" : "metadata"}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-            videoVisible ? "opacity-100" : "opacity-0"
+          preload={virtualize ? "metadata" : active ? "auto" : "metadata"}
+          {...(virtualize ? { fetchPriority: "low" as const } : {})}
+          // No opacity transition on the element itself: Safari paints that as a
+          // blank white box. The skeleton covers the video until a frame exists.
+          className={`absolute inset-0 h-full w-full bg-[#1a1a1a] object-cover [transform:translateZ(0)] ${
+            hasThumbnail && !videoVisible ? "invisible" : ""
           }`}
-          onLoadedMetadata={(e) => {
-            // Has a thumbnail → no poster needed.
-            // Currently active → let the play effect drive currentTime to 0.
-            if (hasThumbnail || activeRef.current) return
+          onLoadedData={(e) => {
+            if (hasThumbnail || frameReadyRef.current) return
             const v = e.currentTarget
-            try {
-              v.currentTime = seekTimeForPoster(v)
-            } catch {
-              setVideoFailed(true)
-              freeSlot()
-            }
-          }}
-          onSeeked={(e) => {
-            if (hasThumbnail) return
-            // Subsequent seeks (play-from-0, deactivate-to-poster) are no-ops
-            // for state changes.
-            if (frameReadyRef.current) return
-            // If we're already active by the time the first seek resolves,
-            // ignore the poster path — the user is watching playback.
-            if (activeRef.current) return
-            e.currentTarget.pause()
+            if (v.readyState < 2) return
+            if (!activeRef.current) v.pause()
             setFrameReady(true)
             freeSlot()
           }}
@@ -310,6 +346,10 @@ function InstagramReelCardImpl({ reel, fallbackHref, controlledActive }: Props) 
             freeSlot()
           }}
         />
+      )}
+
+      {!hasThumbnail && shouldMountVideo && !frameReady && !videoFailed && (
+        <div className="absolute inset-0 z-[1] animate-pulse bg-neutral-800" aria-hidden />
       )}
 
       {!reel.comment && (

@@ -8,6 +8,14 @@ import { cn } from "@/lib/utils"
 type Props = {
   reels: SocialReel[]
   fallbackHref?: string
+  /**
+   * Reveal every item, but only let video bytes start from the front of the
+   * list and only for cards near the viewport.
+   */
+  progressive?: boolean
+  /** How many cards to show before the "show more" button. Omit to show all. */
+  pageSize?: number
+  loadMoreLabel?: string
 }
 
 /**
@@ -16,9 +24,8 @@ type Props = {
  * Mobile (`< md`) – snap slider:
  *   - Only the currently-centred slide loads & plays its video. Off-screen
  *     slides hold a placeholder/thumbnail and do not request any bytes.
- *   - When the user swipes, the previous slide pauses and the new active
- *     slide mounts + plays its video (sticky mount: the element stays in
- *     the DOM after first use so swiping back is instant).
+ *   - When the user swipes, the previous slide unmounts (the download stops)
+ *     and the new active slide mounts and plays.
  *   - When the entire slider scrolls out of viewport, all playback stops so
  *     we don't burn battery / CPU on a hidden element.
  *   - Scroll events are throttled via requestAnimationFrame.
@@ -29,14 +36,25 @@ type Props = {
  * never run effects against real DOM (display:none stops IO from firing) so
  * the cost of rendering both is just a few React nodes.
  */
-export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
+export default function SocialReelsList({
+  reels,
+  fallbackHref = "",
+  progressive = false,
+  pageSize,
+  loadMoreLabel = "Zobraziť ďalšie",
+}: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const gateRef = useRef<HTMLDivElement>(null)
   const rafIdRef = useRef<number | null>(null)
 
   const [progress, setProgress] = useState(0)
   const [thumbRatio, setThumbRatio] = useState(1)
   const [activeIndex, setActiveIndex] = useState(0)
   const [sliderInView, setSliderInView] = useState(false)
+  const [unlocked, setUnlocked] = useState(progressive ? 2 : reels.length)
+  const [shown, setShown] = useState(pageSize ?? reels.length)
+  const visibleReels = pageSize ? reels.slice(0, shown) : reels
+  const hasMore = Boolean(pageSize && shown < reels.length)
 
   const recalc = useCallback(() => {
     const el = scrollerRef.current
@@ -108,10 +126,45 @@ export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
   }, [])
 
   const scrollbarVisible = thumbRatio < 0.999
-  const hasComments = reels.some((reel) => reel.comment)
+  const hasComments = visibleReels.some((reel) => reel.comment)
+
+  useEffect(() => {
+    if (!progressive) return
+    const root = gateRef.current
+    if (!root) return
+
+    let timer = 0
+    let started = false
+    const begin = () => {
+      if (started) return
+      started = true
+      timer = window.setInterval(() => {
+        setUnlocked((count) => (count >= visibleReels.length ? count : count + 1))
+      }, 700)
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) begin()
+      },
+      { rootMargin: "0px", threshold: 0 }
+    )
+    io.observe(root)
+    return () => {
+      io.disconnect()
+      window.clearInterval(timer)
+    }
+  }, [progressive, visibleReels.length])
+
+  useEffect(() => {
+    if (!progressive) return
+    setUnlocked((count) => Math.max(count, activeIndex + 2))
+  }, [activeIndex, progressive])
+
+  const canLoad = (index: number) => !progressive || index < unlocked
 
   return (
-    <>
+    <div ref={gateRef}>
       {/* Mobile / small tablet: snap slider with centered active slide */}
       <div className="md:hidden -mx-4">
         <div
@@ -121,11 +174,13 @@ export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
             hasComments ? "pb-10" : "pb-1"
           )}
         >
-          {reels.map((reel, index) => (
-            <div key={index} className="snap-center shrink-0 w-[80vw] max-w-[360px]">
+          {visibleReels.map((reel, index) => (
+            <div key={`${reel.videoUrl ?? reel.thumbnail ?? "reel"}-${index}`} className="snap-center shrink-0 w-[80vw] max-w-[360px]">
               <InstagramReelCard
                 reel={reel}
                 fallbackHref={fallbackHref}
+                canLoad={canLoad(index)}
+                virtualize={progressive}
                 controlledActive={sliderInView && index === activeIndex}
               />
             </div>
@@ -154,17 +209,34 @@ export default function SocialReelsList({ reels, fallbackHref = "" }: Props) {
           className={cn(
             "grid w-full gap-x-6 gap-y-10",
             hasComments && "pb-8",
-            reels.length === 1 && "max-w-[280px] grid-cols-1",
-            reels.length === 2 && "max-w-[580px] grid-cols-2",
-            reels.length === 3 && "max-w-[880px] grid-cols-3",
-            reels.length >= 4 && "max-w-none grid-cols-4"
+            visibleReels.length === 1 && "max-w-[280px] grid-cols-1",
+            visibleReels.length === 2 && "max-w-[580px] grid-cols-2",
+            visibleReels.length === 3 && "max-w-[880px] grid-cols-3",
+            visibleReels.length >= 4 && "max-w-none grid-cols-4"
           )}
         >
-          {reels.map((reel, index) => (
-            <InstagramReelCard key={index} reel={reel} fallbackHref={fallbackHref} />
+          {visibleReels.map((reel, index) => (
+            <InstagramReelCard
+              key={`${reel.videoUrl ?? reel.thumbnail ?? "reel"}-${index}`}
+              reel={reel}
+              fallbackHref={fallbackHref}
+              canLoad={canLoad(index)}
+              virtualize={progressive}
+            />
           ))}
         </div>
       </div>
-    </>
+      {hasMore && pageSize && (
+        <div className="mt-10 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShown((count) => Math.min(reels.length, count + pageSize))}
+            className="inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
+          >
+            {loadMoreLabel}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
