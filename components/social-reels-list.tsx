@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import InstagramReelCard from "@/components/instagram-reel-card"
 import type { SocialReel } from "@/lib/sanity/utils"
 import { cn } from "@/lib/utils"
@@ -16,6 +17,8 @@ type Props = {
   /** How many cards to show before the "show more" button. Omit to show all. */
   pageSize?: number
   loadMoreLabel?: string
+  /** When set, the button opens this page instead of revealing more cards here. */
+  loadMoreHref?: string
 }
 
 /**
@@ -42,6 +45,7 @@ export default function SocialReelsList({
   progressive = false,
   pageSize,
   loadMoreLabel = "Zobraziť ďalšie",
+  loadMoreHref,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const gateRef = useRef<HTMLDivElement>(null)
@@ -54,7 +58,11 @@ export default function SocialReelsList({
   const [unlocked, setUnlocked] = useState(progressive ? 2 : reels.length)
   const [shown, setShown] = useState(pageSize ?? reels.length)
   const visibleReels = pageSize ? reels.slice(0, shown) : reels
-  const hasMore = Boolean(pageSize && shown < reels.length)
+  // Desktop deliveries stay on a single 4-up row. The rest open from the button.
+  const desktopReels = loadMoreHref ? visibleReels.slice(0, 4) : visibleReels
+  const hasMore = Boolean(
+    pageSize && reels.length > (loadMoreHref ? desktopReels.length : shown)
+  )
 
   const recalc = useCallback(() => {
     const el = scrollerRef.current
@@ -209,13 +217,13 @@ export default function SocialReelsList({
           className={cn(
             "grid w-full gap-x-6 gap-y-10",
             hasComments && "pb-8",
-            visibleReels.length === 1 && "max-w-[280px] grid-cols-1",
-            visibleReels.length === 2 && "max-w-[580px] grid-cols-2",
-            visibleReels.length === 3 && "max-w-[880px] grid-cols-3",
-            visibleReels.length >= 4 && "max-w-none grid-cols-4"
+            desktopReels.length === 1 && "max-w-[280px] grid-cols-1",
+            desktopReels.length === 2 && "max-w-[580px] grid-cols-2",
+            desktopReels.length === 3 && "max-w-[880px] grid-cols-3",
+            desktopReels.length >= 4 && "max-w-none grid-cols-4"
           )}
         >
-          {visibleReels.map((reel, index) => (
+          {desktopReels.map((reel, index) => (
             <InstagramReelCard
               key={`${reel.videoUrl ?? reel.thumbnail ?? "reel"}-${index}`}
               reel={reel}
@@ -228,13 +236,22 @@ export default function SocialReelsList({
       </div>
       {hasMore && pageSize && (
         <div className="mt-10 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setShown((count) => Math.min(reels.length, count + pageSize))}
-            className="inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
-          >
-            {loadMoreLabel}
-          </button>
+          {loadMoreHref ? (
+            <Link
+              href={loadMoreHref}
+              className="inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
+            >
+              {loadMoreLabel}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShown((count) => Math.min(reels.length, count + pageSize))}
+              className="inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
+            >
+              {loadMoreLabel}
+            </button>
+          )}
         </div>
       )}
     </div>

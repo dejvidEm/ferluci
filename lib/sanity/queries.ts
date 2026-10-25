@@ -282,6 +282,32 @@ export const contactInfoQuery = groq`*[_type == "contactInfo"][0] {
   }
 }`
 
+export const deliveriesSectionQuery = groq`*[_type == "homePage"][0].deliveriesSection {
+  title,
+  titleEn,
+  items[] {
+    comment,
+    commentEn,
+    mediaType,
+    image,
+    thumbnail,
+    video {
+      asset-> {
+        url,
+        mimeType
+      }
+    },
+    videoFile {
+      asset-> {
+        _id,
+        url,
+        mimeType,
+        size
+      }
+    }
+  }
+}`
+
 export const homePageQuery = groq`*[_type == "homePage"][0] {
   heroSubheading,
   heroSubheadingEn,

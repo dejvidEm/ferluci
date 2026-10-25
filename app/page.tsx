@@ -316,6 +316,7 @@ export default function Home() {
               progressive
               pageSize={8}
               loadMoreLabel={t("home.showMoreDeliveries")}
+              loadMoreHref="/gallery/odovzdane"
             />
           </div>
         </section>

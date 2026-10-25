@@ -224,7 +224,10 @@
     "bgAlt": "Pozadie galérie",
     "videoError": "Video sa nepodarilo načítať",
     "videoUnsupported": "Váš prehliadač nepodporuje prehrávanie videa.",
-    "dialogMedia": "Médium z galérie"
+    "dialogMedia": "Médium z galérie",
+    "delivered": "Odovzdané vozidlá",
+    "backToGallery": "Späť do galérie",
+    "deliveriesEmpty": "Zatiaľ tu nie sú žiadne odovzdané vozidlá."
   },
   "metadata": {
     "title": "Ferluci Cars - Nájdite svoje ideálne vozidlo",

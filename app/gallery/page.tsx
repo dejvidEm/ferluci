@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
 import { client, galleryImagesQuery, galleryPageQuery } from "@/lib/sanity"
@@ -86,6 +87,12 @@ export default function GalleryPage() {
                 {pageData.heroDescription}
             </p>
             )}
+            <Link
+              href="/gallery/odovzdane"
+              className="mt-8 inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
+            >
+              {t("gallery.delivered")}
+            </Link>
           </div>
         </div>
       </section>

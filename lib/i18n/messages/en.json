@@ -224,7 +224,10 @@
     "bgAlt": "Gallery background",
     "videoError": "Could not load video",
     "videoUnsupported": "Your browser does not support video playback.",
-    "dialogMedia": "Gallery media"
+    "dialogMedia": "Gallery media",
+    "delivered": "Delivered cars",
+    "backToGallery": "Back to gallery",
+    "deliveriesEmpty": "There are no delivered cars yet."
   },
   "metadata": {
     "title": "Ferluci Cars - Find your ideal vehicle",

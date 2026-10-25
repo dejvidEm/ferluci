@@ -96,6 +96,7 @@ function InstagramReelCardImpl({
   const [active, setActive] = useState(false)
   const [frameReady, setFrameReady] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
 
   // Refs mirror the latest state so event handlers (onLoadedMetadata/onSeeked)
   // can branch on the *current* values, not the values captured at mount.
@@ -110,6 +111,9 @@ function InstagramReelCardImpl({
   }, [frameReady])
   useEffect(() => {
     shouldMountVideoRef.current = shouldMountVideo
+  }, [shouldMountVideo])
+  useEffect(() => {
+    if (!shouldMountVideo) setIsPlaying(false)
   }, [shouldMountVideo])
 
   const freeSlot = useCallback(() => {
@@ -228,29 +232,39 @@ function InstagramReelCardImpl({
     if (!v) return
 
     const play = () => {
+      if (!activeRef.current) return
       v.muted = true
       const p = v.play()
       if (p && typeof p.catch === "function") {
         p.catch(() => {
-          // Autoplay restrictions; the next user gesture will retry.
+          // Autoplay can wait for a tap. The photo stays visible until then.
         })
       }
     }
 
     if (active) {
-      if (v.readyState >= 2) play()
-      else v.addEventListener("loadeddata", play, { once: true })
+      play()
+      v.addEventListener("loadeddata", play)
+      v.addEventListener("canplay", play)
     } else {
       v.pause()
     }
 
     return () => {
       v.removeEventListener("loadeddata", play)
+      v.removeEventListener("canplay", play)
     }
   }, [active, shouldMountVideo, hasThumbnail])
 
   const activate = useCallback(() => {
-    if (controlled || !hasVideo) return
+    if (controlled) {
+      const v = videoRef.current
+      if (!v) return
+      v.muted = true
+      v.play()?.catch(() => {})
+      return
+    }
+    if (!hasVideo) return
     setActive(true)
     if (hasThumbnail) {
       setShouldMountVideo(true)
@@ -264,7 +278,7 @@ function InstagramReelCardImpl({
 
   // Video is visible (opacity-100) whenever the card is playing OR has a
   // poster ready to show. Underneath sits the thumbnail / placeholder / skeleton.
-  const videoVisible = hasThumbnail ? active : active || frameReady
+  const videoVisible = hasThumbnail ? isPlaying : active || frameReady
 
   // Background underneath the video element.
   const renderBackground = () => {
@@ -301,7 +315,7 @@ function InstagramReelCardImpl({
       onMouseLeave={deactivate}
       onFocus={activate}
       onBlur={deactivate}
-      onTouchStart={controlled ? undefined : activate}
+      onTouchStart={activate}
       className={`group relative block aspect-[9/16] ${
         reel.comment ? "overflow-visible" : "overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)]"
       } ${href ? "cursor-pointer" : ""}`}
@@ -323,16 +337,19 @@ function InstagramReelCardImpl({
             if (node) node.muted = true
           }}
           src={hasThumbnail || virtualize ? reel.videoUrl : withPosterTime(reel.videoUrl)}
+          poster={hasThumbnail ? reel.thumbnail : undefined}
           muted
           loop
           playsInline
-          preload={virtualize ? "metadata" : active ? "auto" : "metadata"}
-          {...(virtualize ? { fetchPriority: "low" as const } : {})}
+          preload={active ? "auto" : "metadata"}
+          fetchPriority={active ? "high" : "low"}
           // No opacity transition on the element itself: Safari paints that as a
-          // blank white box. The skeleton covers the video until a frame exists.
-          className={`absolute inset-0 h-full w-full bg-[#1a1a1a] object-cover [transform:translateZ(0)] ${
+          // blank white box. The photo stays up until playback actually starts.
+          className={`absolute inset-0 z-[2] h-full w-full bg-transparent object-cover [transform:translateZ(0)] ${
             hasThumbnail && !videoVisible ? "invisible" : ""
           }`}
+          onPlaying={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
           onLoadedData={(e) => {
             if (hasThumbnail || frameReadyRef.current) return
             const v = e.currentTarget
