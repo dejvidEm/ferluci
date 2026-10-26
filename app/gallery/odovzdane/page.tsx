@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { Play } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import GalleryModalVideo from "@/components/gallery-modal-video"
@@ -14,6 +13,7 @@ import {
 } from "@/lib/sanity/utils"
 import { useLocale } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
+import GallerySectionSwitch from "@/components/gallery-section-switch"
 
 type Section = {
   title?: string
@@ -21,11 +21,26 @@ type Section = {
   items?: SanitySocialReel[]
 }
 
+function columnCount(width: number) {
+  if (width >= 1024) return 4
+  if (width >= 768) return 3
+  return 2
+}
+
 export default function DeliveredCarsPage() {
   const { locale, t } = useLocale()
   const [section, setSection] = useState<Section | null>(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<SocialReel | null>(null)
+  const [columns, setColumns] = useState(2)
+  const [rows, setRows] = useState(2)
+
+  useLayoutEffect(() => {
+    const update = () => setColumns(columnCount(window.innerWidth))
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -54,6 +69,9 @@ export default function DeliveredCarsPage() {
       .filter((item) => Boolean(item.thumbnail || item.videoUrl))
   }, [section, locale])
 
+  const visibleItems = items.slice(0, rows * columns)
+  const hasMore = visibleItems.length < items.length
+
   return (
     <div className="flex min-h-screen flex-col">
       <section className="relative w-full overflow-hidden py-24">
@@ -61,12 +79,6 @@ export default function DeliveredCarsPage() {
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/80 via-black/70 to-black/80" />
         <div className="container relative z-20 mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
-            <Link
-              href="/gallery"
-              className="mb-6 inline-flex text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {t("gallery.backToGallery")}
-            </Link>
             <h1 className="text-4xl font-bold text-white md:text-5xl lg:text-6xl">{title}</h1>
           </div>
         </div>
@@ -74,6 +86,11 @@ export default function DeliveredCarsPage() {
 
       <section className="bg-[#121212] py-16">
         <div className="container mx-auto px-4">
+          <GallerySectionSwitch
+            active="delivered"
+            galleryLabel={t("nav.gallery")}
+            deliveredLabel={t("gallery.delivered")}
+          />
           {loading ? (
             <div className="flex items-center justify-center py-24">
               <p className="text-gray-400">{t("gallery.loading")}</p>
@@ -84,7 +101,7 @@ export default function DeliveredCarsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 lg:grid-cols-4">
-              {items.map((item, index) => (
+              {visibleItems.map((item, index) => (
                 <button
                   key={`${item.videoUrl ?? item.thumbnail ?? "car"}-${index}`}
                   type="button"
@@ -117,6 +134,17 @@ export default function DeliveredCarsPage() {
                   ) : null}
                 </button>
               ))}
+            </div>
+          )}
+          {hasMore && (
+            <div className="mt-12 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setRows((count) => count + 2)}
+                className="inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
+              >
+                {t("home.showMoreDeliveries")}
+              </button>
             </div>
           )}
         </div>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Play } from "lucide-react"
 import { client, galleryImagesQuery, galleryPageQuery } from "@/lib/sanity"
@@ -17,6 +16,7 @@ import { useLocale } from "@/lib/i18n/context"
 import { localizeGalleryPage } from "@/lib/sanity/localize"
 import GalleryVideoThumbnail from "@/components/gallery-video-thumbnail"
 import GalleryModalVideo from "@/components/gallery-modal-video"
+import GallerySectionSwitch from "@/components/gallery-section-switch"
 import { cn } from "@/lib/utils"
 
 export default function GalleryPage() {
@@ -87,12 +87,6 @@ export default function GalleryPage() {
                 {pageData.heroDescription}
             </p>
             )}
-            <Link
-              href="/gallery/odovzdane"
-              className="mt-8 inline-flex h-11 items-center justify-center rounded-md border border-white/30 bg-transparent px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
-            >
-              {t("gallery.delivered")}
-            </Link>
           </div>
         </div>
       </section>
@@ -100,6 +94,11 @@ export default function GalleryPage() {
       {/* Gallery Grid */}
       <section className="py-16 bg-[#121212]">
         <div className="container mx-auto px-4">
+          <GallerySectionSwitch
+            active="gallery"
+            galleryLabel={t("nav.gallery")}
+            deliveredLabel={t("gallery.delivered")}
+          />
           {loading ? (
             <div className="flex items-center justify-center py-24">
               <p className="text-gray-400">{t("gallery.loading")}</p>
