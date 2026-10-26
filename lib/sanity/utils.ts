@@ -123,7 +123,13 @@ export function transformSanityGalleryImage(
     const thumbnail = galleryImage.videoThumbnail
       ? (() => {
           try {
-            return urlFor(galleryImage.videoThumbnail).width(1200).height(1200).url()
+            return urlFor(galleryImage.videoThumbnail)
+              .width(800)
+              .height(800)
+              .fit("crop")
+              .quality(60)
+              .auto("format")
+              .url()
           } catch (error) {
             console.error('Error generating video thumbnail URL:', error)
             return undefined
@@ -387,23 +393,29 @@ export function transformSanitySocialReel(raw: SanitySocialReel, locale?: Locale
   const comment =
     locale === "en" && raw.commentEn?.trim() ? raw.commentEn.trim() : raw.comment
 
-  const picture = raw.mediaType === "image" ? raw.image : raw.thumbnail
+  const fileUrl = (raw.videoFile ?? raw.video)?.asset?.url
+  const picture = raw.thumbnail ?? (raw.mediaType === "image" || !fileUrl ? raw.image : undefined)
   let thumbnail: string | undefined
   let thumbnailAlt = title || comment || ""
   if (picture) {
     try {
-      thumbnail = urlFor(picture).width(720).height(1280).url()
+      thumbnail = urlFor(picture)
+        .width(540)
+        .height(960)
+        .fit("crop")
+        .quality(60)
+        .auto("format")
+        .url()
       thumbnailAlt = picture.alt || thumbnailAlt
     } catch (error) {
       console.error("Error generating reel thumbnail URL:", error)
     }
   }
 
-  const fileUrl = (raw.videoFile ?? raw.video)?.asset?.url
   let imageUrl: string | undefined
   if (raw.image) {
     try {
-      imageUrl = urlFor(raw.image).width(720).height(1280).url()
+      imageUrl = urlFor(raw.image).width(540).height(960).fit("crop").quality(60).auto("format").url()
       if (!thumbnailAlt) thumbnailAlt = raw.image.alt || thumbnailAlt
     } catch (error) {
       console.error("Error generating delivery image URL:", error)
